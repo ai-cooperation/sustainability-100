@@ -1,0 +1,56 @@
+---
+layout: default
+---
+<article class="episode-detail">
+  <div class="episode-header">
+    <a href="{{ '/' | relative_url }}" class="back-link">&larr; 回首頁</a>
+    <span class="series-badge">{{ page.series }} {{ page.series_name }}</span>
+    <h1>{{ page.ep_id }}｜{{ page.title }}</h1>
+    <p class="outline">{{ page.outline }}</p>
+    <time>{{ page.date | date: "%Y-%m-%d" }}</time>
+  </div>
+
+  {% if page.slides and page.slides.size > 0 %}
+  <section class="slides-section">
+    <h2>簡報圖卡</h2>
+    <div class="slides-grid">
+      {% for slide in page.slides %}
+      <div class="slide-card">
+        {% if slide.image and slide.image != "" %}
+        <img src="{{ '/assets/images/' | append: page.ep_id | append: '/' | append: slide.image | relative_url }}"
+             alt="{{ slide.title }}" loading="lazy">
+        {% endif %}
+        <h3>{{ slide.title }}</h3>
+        <ul>
+          {% for point in slide.points %}
+          <li>{{ point }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="research-content">
+    <h2>研究報告</h2>
+    {{ content }}
+  </section>
+
+  <nav class="episode-nav">
+    {% assign sorted = site.episodes | sort: "number" %}
+    {% for ep in sorted %}
+      {% if ep.number == page.number %}
+        {% assign idx = forloop.index0 %}
+      {% endif %}
+    {% endfor %}
+    {% assign prev_idx = idx | minus: 1 %}
+    {% assign next_idx = idx | plus: 1 %}
+    {% if prev_idx >= 0 %}
+      <a href="{{ sorted[prev_idx].url | relative_url }}" class="nav-prev">&larr; {{ sorted[prev_idx].ep_id }}</a>
+    {% endif %}
+    {% if next_idx < sorted.size %}
+      <a href="{{ sorted[next_idx].url | relative_url }}" class="nav-next">{{ sorted[next_idx].ep_id }} &rarr;</a>
+    {% endif %}
+  </nav>
+</article>

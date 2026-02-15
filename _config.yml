@@ -1,0 +1,22 @@
+title: "低碳永續100講"
+description: "AI 驅動的永續知識系列 — 每日兩講，涵蓋淨零碳排、ESG、碳交易等 10 大主題"
+url: "https://ai-cooperation.github.io"
+baseurl: "/sustainability-100"
+lang: "zh-TW"
+
+collections:
+  episodes:
+    output: true
+    permalink: /episodes/:name/
+    sort_by: number
+
+defaults:
+  - scope:
+      path: ""
+      type: "episodes"
+    values:
+      layout: "episode"
+
+markdown: kramdown
+kramdown:
+  input: GFM

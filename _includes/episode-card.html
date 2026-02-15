@@ -1,0 +1,7 @@
+<a href="{{ include.episode.url | relative_url }}" class="episode-card" data-series="{{ include.episode.series }}">
+  <span class="ep-badge">{{ include.episode.ep_id }}</span>
+  <span class="series-tag">{{ include.episode.series }}</span>
+  <h3>{{ include.episode.title }}</h3>
+  <p>{{ include.episode.outline | truncate: 60 }}</p>
+  <time>{{ include.episode.date | date: "%Y-%m-%d" }}</time>
+</a>

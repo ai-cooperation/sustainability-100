@@ -1,0 +1,31 @@
+---
+layout: default
+---
+<div class="hero">
+  <h1>低碳永續100講</h1>
+  <p class="hero-subtitle">AI 驅動的永續知識系列 — 每日兩講，100天完成</p>
+  <div class="progress-wrapper">
+    {% assign total = site.episodes | size %}
+    {% assign pct = total | times: 1.0 | divided_by: 100 | times: 100 %}
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: {{ pct }}%"></div>
+    </div>
+    <span class="progress-text">{{ total }} / 100 完成</span>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <button class="filter-btn active" data-series="all">全部</button>
+  {% for s in site.data.series %}
+  <button class="filter-btn" data-series="{{ s.id }}">{{ s.id }}</button>
+  {% endfor %}
+</div>
+
+<div class="episodes-grid">
+  {% assign sorted = site.episodes | sort: "number" | reverse %}
+  {% for ep in sorted %}
+  {% include episode-card.html episode=ep %}
+  {% endfor %}
+</div>
+
+{{ content }}

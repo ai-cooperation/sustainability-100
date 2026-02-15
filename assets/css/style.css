@@ -1,0 +1,90 @@
+/* === Base === */
+:root {
+  --green: #2d6a4f;
+  --green-light: #95d5b2;
+  --green-bg: #f0faf4;
+  --blue: #1b4965;
+  --text: #1b1b1b;
+  --text-muted: #666;
+  --border: #e0e0e0;
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  --radius: 8px;
+  --max-w: 1100px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, "Noto Sans TC", sans-serif; color: var(--text); line-height: 1.7; background: #fafafa; }
+a { color: var(--green); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.container { max-width: var(--max-w); margin: 0 auto; padding: 0 1.5rem; }
+
+/* === Header === */
+.site-header { background: var(--green); color: #fff; padding: 0.8rem 0; }
+.site-header .container { display: flex; justify-content: space-between; align-items: center; }
+.site-title { color: #fff; font-weight: 700; font-size: 1.1rem; }
+.site-title:hover { text-decoration: none; }
+.site-header nav a { color: rgba(255,255,255,0.85); margin-left: 1.5rem; font-size: 0.9rem; }
+.site-header nav a:hover { color: #fff; text-decoration: none; }
+
+/* === Hero === */
+.hero { text-align: center; padding: 3rem 0 2rem; }
+.hero h1 { font-size: 2.2rem; color: var(--green); margin-bottom: 0.5rem; }
+.hero-subtitle { color: var(--text-muted); margin-bottom: 1.5rem; }
+.progress-wrapper { max-width: 400px; margin: 0 auto; }
+.progress-bar { background: var(--border); border-radius: 20px; height: 12px; overflow: hidden; }
+.progress-fill { background: linear-gradient(90deg, var(--green), var(--green-light)); height: 100%; border-radius: 20px; transition: width 0.3s; }
+.progress-text { display: block; margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); }
+
+/* === Filter === */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin: 1.5rem 0; }
+.filter-btn { border: 1px solid var(--border); background: #fff; padding: 0.35rem 0.9rem; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+.filter-btn:hover, .filter-btn.active { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* === Episode Grid === */
+.episodes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.2rem; padding-bottom: 3rem; }
+.episode-card { display: block; background: #fff; border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--card-shadow); border-left: 4px solid var(--green-light); transition: transform 0.15s, box-shadow 0.15s; }
+.episode-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); text-decoration: none; }
+.ep-badge { font-weight: 700; color: var(--green); font-size: 0.85rem; }
+.series-tag { float: right; font-size: 0.75rem; background: var(--green-bg); color: var(--green); padding: 0.15rem 0.5rem; border-radius: 10px; }
+.episode-card h3 { font-size: 1rem; margin: 0.5rem 0 0.3rem; color: var(--text); }
+.episode-card p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.3rem; }
+.episode-card time { font-size: 0.75rem; color: #999; }
+
+/* === Episode Detail === */
+.episode-detail { padding: 2rem 0 3rem; }
+.back-link { font-size: 0.85rem; color: var(--text-muted); display: inline-block; margin-bottom: 1rem; }
+.episode-header { margin-bottom: 2rem; }
+.series-badge { display: inline-block; background: var(--green-bg); color: var(--green); padding: 0.2rem 0.7rem; border-radius: 12px; font-size: 0.8rem; margin-bottom: 0.5rem; }
+.episode-header h1 { font-size: 1.6rem; color: var(--green); margin-bottom: 0.5rem; }
+.episode-header .outline { color: var(--text-muted); font-style: italic; }
+.episode-header time { font-size: 0.8rem; color: #999; }
+
+/* === Slides Gallery === */
+.slides-section { margin: 2rem 0; }
+.slides-section h2 { font-size: 1.2rem; color: var(--blue); margin-bottom: 1rem; border-bottom: 2px solid var(--green-light); padding-bottom: 0.3rem; }
+.slides-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+.slide-card { background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--card-shadow); }
+.slide-card img { width: 100%; height: auto; display: block; }
+.slide-card h3 { font-size: 0.95rem; padding: 0.6rem 0.8rem 0.2rem; color: var(--green); }
+.slide-card ul { padding: 0 0.8rem 0.8rem 1.6rem; font-size: 0.85rem; color: var(--text-muted); }
+
+/* === Research Content === */
+.research-content { margin: 2rem 0; }
+.research-content h2 { font-size: 1.2rem; color: var(--blue); margin-bottom: 1rem; border-bottom: 2px solid var(--green-light); padding-bottom: 0.3rem; }
+.research-content h1, .research-content h2, .research-content h3 { margin-top: 1.5rem; }
+.research-content ul, .research-content ol { padding-left: 1.5rem; }
+.research-content li { margin-bottom: 0.3rem; }
+
+/* === Episode Nav === */
+.episode-nav { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid var(--border); margin-top: 2rem; }
+.nav-prev, .nav-next { font-size: 0.9rem; }
+
+/* === Footer === */
+.site-footer { background: var(--green); color: rgba(255,255,255,0.8); padding: 1.5rem 0; text-align: center; margin-top: 3rem; }
+.site-footer .subtitle { font-size: 0.75rem; opacity: 0.6; margin-top: 0.3rem; }
+
+/* === Responsive === */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.6rem; }
+  .episodes-grid { grid-template-columns: 1fr; }
+  .slides-grid { grid-template-columns: 1fr 1fr; }
+}
