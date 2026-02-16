@@ -74,6 +74,29 @@ a:hover { text-decoration: underline; }
 .research-content ul, .research-content ol { padding-left: 1.5rem; }
 .research-content li { margin-bottom: 0.3rem; }
 
+/* === Podcast Player === */
+.podcast-section { margin: 1.5rem 0; }
+.podcast-section + .podcast-section { margin-top: 1rem; }
+.podcast-section h2 { font-size: 1.2rem; color: var(--blue); margin-bottom: 0.8rem; border-bottom: 2px solid var(--green-light); padding-bottom: 0.3rem; }
+.player-controls { display: flex; align-items: center; gap: 0.8rem; background: #fff; padding: 0.8rem 1rem; border-radius: var(--radius); box-shadow: var(--card-shadow); }
+.play-btn { background: var(--green); color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+.play-btn:hover { background: var(--blue); }
+.progress-container { flex: 1; }
+.player-progress { background: var(--border); border-radius: 4px; height: 6px; cursor: pointer; position: relative; }
+.player-progress-fill { background: linear-gradient(90deg, var(--green), var(--green-light)); height: 100%; border-radius: 4px; width: 0; transition: width 0.1s linear; }
+.time-display { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.3rem; }
+.speed-select { border: 1px solid var(--border); border-radius: 4px; padding: 0.2rem 0.3rem; font-size: 0.8rem; background: #fff; color: var(--text); cursor: pointer; flex-shrink: 0; }
+
+/* === Transcript Download === */
+.transcript-download { margin-top: 0.6rem; }
+.download-btn { display: inline-flex; align-items: center; gap: 0.4rem; background: #fff; border: 1px solid var(--green-light); color: var(--green); padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.85rem; text-decoration: none; transition: all 0.2s; }
+.download-btn:hover { background: var(--green); color: #fff; text-decoration: none; }
+
+/* === Video Section === */
+.video-section { margin: 2rem 0; }
+.video-section h2 { font-size: 1.2rem; color: var(--blue); margin-bottom: 0.8rem; border-bottom: 2px solid var(--green-light); padding-bottom: 0.3rem; }
+.video-section video { width: 100%; border-radius: var(--radius); box-shadow: var(--card-shadow); background: #000; }
+
 /* === Episode Nav === */
 .episode-nav { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid var(--border); margin-top: 2rem; }
 .nav-prev, .nav-next { font-size: 0.9rem; }
