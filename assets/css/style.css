@@ -91,6 +91,7 @@ a:hover { text-decoration: underline; }
 
 /* === Podcast Player === */
 .podcast-section { margin: 2rem 0; }
+.podcast-section + .podcast-section { margin-top: 1rem; }
 .podcast-section h2 { font-size: 1.3rem; color: var(--green); margin-bottom: 0.8rem; }
 .podcast-player {
   background: var(--green-bg);
@@ -162,6 +163,55 @@ a:hover { text-decoration: underline; }
   transition: border-color 0.2s;
 }
 .speed-btn:hover { border-color: var(--green); }
+
+/* === Transcript Download === */
+.transcript-download {
+  margin-top: 0.6rem;
+}
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #fff;
+  border: 1px solid var(--green-light);
+  color: var(--green);
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.download-btn:hover {
+  background: var(--green);
+  color: #fff;
+  text-decoration: none;
+}
+.download-btn svg {
+  flex-shrink: 0;
+}
+
+/* === Video Section === */
+.video-section {
+  margin: 2rem 0;
+}
+.video-section h2 {
+  font-size: 1.3rem;
+  color: var(--blue);
+  margin-bottom: 0.8rem;
+  border-bottom: 2px solid var(--green-light);
+  padding-bottom: 0.3rem;
+}
+.video-wrapper {
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  background: #000;
+}
+.video-wrapper video {
+  width: 100%;
+  display: block;
+}
+
 @media (max-width: 600px) {
   .player-controls { flex-wrap: wrap; }
   .play-btn { width: 40px; height: 40px; min-width: 40px; }

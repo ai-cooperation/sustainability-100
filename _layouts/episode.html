@@ -10,15 +10,17 @@ layout: default
     <time>{{ page.date | date: "%Y-%m-%d" }}</time>
   </div>
 
-  {% if page.podcast_audio %}
+  <!-- ── English Podcast ── -->
+  {% assign en_audio = page.podcast_en | default: page.podcast_audio %}
+  {% if en_audio %}
   <section class="podcast-section">
-    <h2>Podcast</h2>
-    <div class="podcast-player" id="podcast-player">
-      <audio id="podcast-audio" preload="metadata">
-        <source src="{{ '/assets/audio/' | append: page.ep_id | append: '/' | append: page.podcast_audio | relative_url }}" type="audio/mp4">
+    <h2>🎧 Podcast (English)</h2>
+    <div class="podcast-player" data-lang="en">
+      <audio class="podcast-audio" preload="metadata">
+        <source src="{{ '/assets/audio/' | append: page.ep_id | append: '/' | append: en_audio | relative_url }}" type="audio/mp4">
       </audio>
       <div class="player-controls">
-        <button class="play-btn" id="play-btn" aria-label="播放">
+        <button class="play-btn" aria-label="Play">
           <svg class="icon-play" viewBox="0 0 24 24" width="28" height="28">
             <polygon points="6,3 20,12 6,21" fill="currentColor"/>
           </svg>
@@ -28,34 +30,96 @@ layout: default
           </svg>
         </button>
         <div class="player-info">
-          <div class="player-title">{{ page.ep_id }}｜{{ page.title }}</div>
+          <div class="player-title">{{ page.podcast_en_title | default: page.title }}</div>
           <div class="player-progress">
-            <div class="progress-track" id="progress-track">
-              <div class="progress-played" id="progress-bar"></div>
+            <div class="progress-track">
+              <div class="progress-played"></div>
             </div>
             <div class="time-row">
-              <span id="time-current">0:00</span>
-              <span id="time-total">0:00</span>
+              <span class="time-current">0:00</span>
+              <span class="time-total">0:00</span>
             </div>
           </div>
         </div>
-        <button class="speed-btn" id="speed-btn">1x</button>
+        <button class="speed-btn">1x</button>
       </div>
     </div>
+    {% if page.transcript_en %}
+    <div class="transcript-download">
+      <a href="{{ '/assets/audio/' | append: page.ep_id | append: '/' | append: page.transcript_en | relative_url }}" download class="download-btn">
+        <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M10 13l-4-4h3V3h2v6h3l-4 4zm-6 2h12v2H4v-2z"/></svg>
+        Download Transcript (EN)
+      </a>
+    </div>
+    {% endif %}
   </section>
+  {% endif %}
+
+  <!-- ── Chinese Podcast ── -->
+  {% if page.podcast_zh %}
+  <section class="podcast-section">
+    <h2>🎧 Podcast（中文）</h2>
+    <div class="podcast-player" data-lang="zh">
+      <audio class="podcast-audio" preload="metadata">
+        <source src="{{ '/assets/audio/' | append: page.ep_id | append: '/' | append: page.podcast_zh | relative_url }}" type="audio/mp4">
+      </audio>
+      <div class="player-controls">
+        <button class="play-btn" aria-label="播放">
+          <svg class="icon-play" viewBox="0 0 24 24" width="28" height="28">
+            <polygon points="6,3 20,12 6,21" fill="currentColor"/>
+          </svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" width="28" height="28" style="display:none">
+            <rect x="5" y="3" width="4" height="18" fill="currentColor"/>
+            <rect x="15" y="3" width="4" height="18" fill="currentColor"/>
+          </svg>
+        </button>
+        <div class="player-info">
+          <div class="player-title">{{ page.podcast_zh_title | default: page.title }}</div>
+          <div class="player-progress">
+            <div class="progress-track">
+              <div class="progress-played"></div>
+            </div>
+            <div class="time-row">
+              <span class="time-current">0:00</span>
+              <span class="time-total">0:00</span>
+            </div>
+          </div>
+        </div>
+        <button class="speed-btn">1x</button>
+      </div>
+    </div>
+    {% if page.transcript_zh %}
+    <div class="transcript-download">
+      <a href="{{ '/assets/audio/' | append: page.ep_id | append: '/' | append: page.transcript_zh | relative_url }}" download class="download-btn">
+        <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M10 13l-4-4h3V3h2v6h3l-4 4zm-6 2h12v2H4v-2z"/></svg>
+        下載逐字稿 (中文)
+      </a>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <!-- ── Video ── -->
+  {% if page.video_file %}
+  <section class="video-section">
+    <h2>🎬 影片</h2>
+    <div class="video-wrapper">
+      <video controls preload="metadata" playsinline>
+        <source src="{{ '/assets/video/' | append: page.ep_id | append: '/' | append: page.video_file | relative_url }}" type="video/mp4">
+        您的瀏覽器不支援影片播放
+      </video>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ── Podcast Player JavaScript (class-based, multi-player) ── -->
+  {% assign en_audio = page.podcast_en | default: page.podcast_audio %}
+  {% if en_audio or page.podcast_zh %}
   <script>
   (function() {
-    var audio = document.getElementById('podcast-audio');
-    var playBtn = document.getElementById('play-btn');
-    var iconPlay = playBtn.querySelector('.icon-play');
-    var iconPause = playBtn.querySelector('.icon-pause');
-    var progressBar = document.getElementById('progress-bar');
-    var progressTrack = document.getElementById('progress-track');
-    var timeCurrent = document.getElementById('time-current');
-    var timeTotal = document.getElementById('time-total');
-    var speedBtn = document.getElementById('speed-btn');
+    var players = document.querySelectorAll('.podcast-player');
+    var allAudios = [];
     var speeds = [1, 1.25, 1.5, 2];
-    var speedIdx = 0;
 
     function fmt(s) {
       var m = Math.floor(s / 60);
@@ -63,45 +127,68 @@ layout: default
       return m + ':' + (sec < 10 ? '0' : '') + sec;
     }
 
-    playBtn.onclick = function() {
-      if (audio.paused) {
-        audio.play();
-        iconPlay.style.display = 'none';
-        iconPause.style.display = 'block';
-      } else {
-        audio.pause();
+    players.forEach(function(player) {
+      var audio = player.querySelector('.podcast-audio');
+      var playBtn = player.querySelector('.play-btn');
+      var iconPlay = playBtn.querySelector('.icon-play');
+      var iconPause = playBtn.querySelector('.icon-pause');
+      var progressBar = player.querySelector('.progress-played');
+      var progressTrack = player.querySelector('.progress-track');
+      var timeCurrent = player.querySelector('.time-current');
+      var timeTotal = player.querySelector('.time-total');
+      var speedBtn = player.querySelector('.speed-btn');
+      var speedIdx = 0;
+
+      allAudios.push({ audio: audio, iconPlay: iconPlay, iconPause: iconPause });
+
+      playBtn.onclick = function() {
+        if (audio.paused) {
+          // Pause all other players first
+          allAudios.forEach(function(item) {
+            if (item.audio !== audio && !item.audio.paused) {
+              item.audio.pause();
+              item.iconPlay.style.display = 'block';
+              item.iconPause.style.display = 'none';
+            }
+          });
+          audio.play();
+          iconPlay.style.display = 'none';
+          iconPause.style.display = 'block';
+        } else {
+          audio.pause();
+          iconPlay.style.display = 'block';
+          iconPause.style.display = 'none';
+        }
+      };
+
+      audio.addEventListener('loadedmetadata', function() {
+        timeTotal.textContent = fmt(audio.duration);
+      });
+
+      audio.addEventListener('timeupdate', function() {
+        if (audio.duration) {
+          progressBar.style.width = (audio.currentTime / audio.duration * 100) + '%';
+          timeCurrent.textContent = fmt(audio.currentTime);
+        }
+      });
+
+      audio.addEventListener('ended', function() {
         iconPlay.style.display = 'block';
         iconPause.style.display = 'none';
-      }
-    };
+      });
 
-    audio.addEventListener('loadedmetadata', function() {
-      timeTotal.textContent = fmt(audio.duration);
+      progressTrack.onclick = function(e) {
+        var rect = progressTrack.getBoundingClientRect();
+        var pct = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = pct * audio.duration;
+      };
+
+      speedBtn.onclick = function() {
+        speedIdx = (speedIdx + 1) % speeds.length;
+        audio.playbackRate = speeds[speedIdx];
+        speedBtn.textContent = speeds[speedIdx] + 'x';
+      };
     });
-
-    audio.addEventListener('timeupdate', function() {
-      if (audio.duration) {
-        progressBar.style.width = (audio.currentTime / audio.duration * 100) + '%';
-        timeCurrent.textContent = fmt(audio.currentTime);
-      }
-    });
-
-    audio.addEventListener('ended', function() {
-      iconPlay.style.display = 'block';
-      iconPause.style.display = 'none';
-    });
-
-    progressTrack.onclick = function(e) {
-      var rect = progressTrack.getBoundingClientRect();
-      var pct = (e.clientX - rect.left) / rect.width;
-      audio.currentTime = pct * audio.duration;
-    };
-
-    speedBtn.onclick = function() {
-      speedIdx = (speedIdx + 1) % speeds.length;
-      audio.playbackRate = speeds[speedIdx];
-      speedBtn.textContent = speeds[speedIdx] + 'x';
-    };
   })();
   </script>
   {% endif %}
