@@ -10,6 +10,102 @@ layout: default
     <time>{{ page.date | date: "%Y-%m-%d" }}</time>
   </div>
 
+  {% if page.podcast_audio %}
+  <section class="podcast-section">
+    <h2>Podcast</h2>
+    <div class="podcast-player" id="podcast-player">
+      <audio id="podcast-audio" preload="metadata">
+        <source src="{{ '/assets/audio/' | append: page.ep_id | append: '/' | append: page.podcast_audio | relative_url }}" type="audio/mp4">
+      </audio>
+      <div class="player-controls">
+        <button class="play-btn" id="play-btn" aria-label="播放">
+          <svg class="icon-play" viewBox="0 0 24 24" width="28" height="28">
+            <polygon points="6,3 20,12 6,21" fill="currentColor"/>
+          </svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" width="28" height="28" style="display:none">
+            <rect x="5" y="3" width="4" height="18" fill="currentColor"/>
+            <rect x="15" y="3" width="4" height="18" fill="currentColor"/>
+          </svg>
+        </button>
+        <div class="player-info">
+          <div class="player-title">{{ page.ep_id }}｜{{ page.title }}</div>
+          <div class="player-progress">
+            <div class="progress-track" id="progress-track">
+              <div class="progress-played" id="progress-bar"></div>
+            </div>
+            <div class="time-row">
+              <span id="time-current">0:00</span>
+              <span id="time-total">0:00</span>
+            </div>
+          </div>
+        </div>
+        <button class="speed-btn" id="speed-btn">1x</button>
+      </div>
+    </div>
+  </section>
+  <script>
+  (function() {
+    var audio = document.getElementById('podcast-audio');
+    var playBtn = document.getElementById('play-btn');
+    var iconPlay = playBtn.querySelector('.icon-play');
+    var iconPause = playBtn.querySelector('.icon-pause');
+    var progressBar = document.getElementById('progress-bar');
+    var progressTrack = document.getElementById('progress-track');
+    var timeCurrent = document.getElementById('time-current');
+    var timeTotal = document.getElementById('time-total');
+    var speedBtn = document.getElementById('speed-btn');
+    var speeds = [1, 1.25, 1.5, 2];
+    var speedIdx = 0;
+
+    function fmt(s) {
+      var m = Math.floor(s / 60);
+      var sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    playBtn.onclick = function() {
+      if (audio.paused) {
+        audio.play();
+        iconPlay.style.display = 'none';
+        iconPause.style.display = 'block';
+      } else {
+        audio.pause();
+        iconPlay.style.display = 'block';
+        iconPause.style.display = 'none';
+      }
+    };
+
+    audio.addEventListener('loadedmetadata', function() {
+      timeTotal.textContent = fmt(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', function() {
+      if (audio.duration) {
+        progressBar.style.width = (audio.currentTime / audio.duration * 100) + '%';
+        timeCurrent.textContent = fmt(audio.currentTime);
+      }
+    });
+
+    audio.addEventListener('ended', function() {
+      iconPlay.style.display = 'block';
+      iconPause.style.display = 'none';
+    });
+
+    progressTrack.onclick = function(e) {
+      var rect = progressTrack.getBoundingClientRect();
+      var pct = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = pct * audio.duration;
+    };
+
+    speedBtn.onclick = function() {
+      speedIdx = (speedIdx + 1) % speeds.length;
+      audio.playbackRate = speeds[speedIdx];
+      speedBtn.textContent = speeds[speedIdx] + 'x';
+    };
+  })();
+  </script>
+  {% endif %}
+
   {% if page.slides and page.slides.size > 0 %}
   <section class="slides-section">
     <h2>簡報圖卡</h2>
