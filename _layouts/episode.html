@@ -94,11 +94,12 @@ layout: default
   {% endif %}
 
   <!-- Video -->
-  {% if page.video_file %}
+  {% assign video_src = page.video_file | default: page.video_overview %}
+  {% if video_src %}
   <section class="video-section">
-    <h2>影片</h2>
+    <h2>{% if page.video_overview %}Video Overview{% else %}影片{% endif %}</h2>
     <video controls preload="metadata" playsinline>
-      <source src="{{ '/assets/video/' | append: page.ep_id | append: '/' | append: page.video_file | relative_url }}" type="video/mp4">
+      <source src="{{ '/assets/video/' | append: page.ep_id | append: '/' | append: video_src | relative_url }}" type="video/mp4">
       Your browser does not support the video tag.
     </video>
   </section>
