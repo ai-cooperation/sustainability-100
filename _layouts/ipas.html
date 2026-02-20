@@ -1,0 +1,39 @@
+---
+layout: default
+---
+<article class="ipas-detail">
+  <div class="ipas-header">
+    <a href="{{ '/ipas/' | relative_url }}" class="back-link">&larr; iPAS 補充教材總覽</a>
+    <span class="ipas-badge">iPAS 淨零碳規劃管理師 中級</span>
+    <h1>{{ page.title }}</h1>
+    {% if page.description %}
+    <p class="outline">{{ page.description }}</p>
+    {% endif %}
+  </div>
+
+  <nav class="ipas-topics-nav">
+    {% for topic in site.data.ipas_topics %}
+    <a href="{{ topic.url | relative_url }}"
+       class="ipas-topic-link{% if page.url == topic.url %} active{% endif %}">
+      {{ topic.short }}
+    </a>
+    {% endfor %}
+  </nav>
+
+  <div class="ipas-content">
+    {{ content }}
+  </div>
+
+  <nav class="episode-nav">
+    {% if page.prev_url %}
+    <a href="{{ page.prev_url | relative_url }}" class="nav-prev">&larr; {{ page.prev_title }}</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+    {% if page.next_url %}
+    <a href="{{ page.next_url | relative_url }}" class="nav-next">{{ page.next_title }} &rarr;</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+  </nav>
+</article>

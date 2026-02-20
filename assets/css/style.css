@@ -239,3 +239,51 @@ a:hover { text-decoration: underline; }
   .player-controls { flex-wrap: wrap; }
   .play-btn { width: 40px; height: 40px; min-width: 40px; }
 }
+/* === iPAS Supplement Section === */
+.ipas-index { padding: 2rem 0 3rem; }
+.ipas-index h1 { font-size: 1.8rem; color: var(--green); margin-bottom: 0.8rem; }
+.ipas-index > p { color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.8; }
+
+.ipas-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.2rem; margin: 2rem 0; }
+.ipas-card { display: block; background: #fff; border-radius: var(--radius); padding: 1.2rem; box-shadow: var(--card-shadow); border-left: 4px solid var(--green); transition: transform 0.15s, box-shadow 0.15s; position: relative; }
+.ipas-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); text-decoration: none; }
+.ipas-card-num { display: inline-block; background: var(--green); color: #fff; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; }
+.ipas-card h3 { font-size: 1.05rem; color: var(--text); margin: 0.3rem 0; }
+.ipas-card-unit { font-size: 0.75rem; color: var(--text-muted); }
+
+/* iPAS Detail Page */
+.ipas-detail { padding: 2rem 0 3rem; }
+.ipas-header { margin-bottom: 1.5rem; }
+.ipas-badge { display: inline-block; background: var(--green-bg); color: var(--green); padding: 0.2rem 0.7rem; border-radius: 12px; font-size: 0.8rem; margin-bottom: 0.5rem; }
+.ipas-header h1 { font-size: 1.6rem; color: var(--green); margin-bottom: 0.5rem; }
+
+/* iPAS Topic Nav Bar */
+.ipas-topics-nav { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+.ipas-topic-link { border: 1px solid var(--border); background: #fff; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; color: var(--text-muted); transition: all 0.2s; }
+.ipas-topic-link:hover { border-color: var(--green); color: var(--green); text-decoration: none; }
+.ipas-topic-link.active { background: var(--green); color: #fff; border-color: var(--green); }
+
+/* iPAS Content Styling */
+.ipas-content h2 { font-size: 1.3rem; color: var(--blue); margin: 2rem 0 0.8rem; border-bottom: 2px solid var(--green-light); padding-bottom: 0.3rem; }
+.ipas-content h3 { font-size: 1.1rem; color: var(--green); margin: 1.5rem 0 0.5rem; }
+.ipas-content h4 { font-size: 1rem; color: var(--text); margin: 1rem 0 0.5rem; }
+.ipas-content p { margin-bottom: 0.8rem; }
+.ipas-content ul, .ipas-content ol { padding-left: 1.5rem; margin-bottom: 0.8rem; }
+.ipas-content li { margin-bottom: 0.3rem; }
+.ipas-content table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+.ipas-content th { background: var(--green); color: #fff; padding: 0.5rem 0.8rem; text-align: left; font-size: 0.85rem; }
+.ipas-content td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); }
+.ipas-content tr:hover td { background: var(--green-bg); }
+.ipas-content blockquote { background: var(--green-bg); border-left: 4px solid var(--green); padding: 0.8rem 1rem; margin: 1rem 0; border-radius: 0 var(--radius) var(--radius) 0; }
+.ipas-content blockquote p { margin-bottom: 0; color: var(--green); font-weight: 500; }
+
+/* Exam callout box */
+.ipas-content .exam-tip { background: #fff8e1; border-left: 4px solid #f9a825; padding: 0.8rem 1rem; margin: 1rem 0; border-radius: 0 var(--radius) var(--radius) 0; }
+.ipas-content .exam-tip p { margin-bottom: 0; }
+.ipas-content .exam-questions { background: #e3f2fd; border-left: 4px solid #1565c0; padding: 0.8rem 1rem; margin: 1rem 0; border-radius: 0 var(--radius) var(--radius) 0; }
+
+@media (max-width: 600px) {
+  .ipas-cards { grid-template-columns: 1fr; }
+  .ipas-topics-nav { gap: 0.3rem; }
+  .ipas-topic-link { font-size: 0.75rem; padding: 0.25rem 0.6rem; }
+}

@@ -1,0 +1,41 @@
+- id: frontier-tech
+  short: "前瞻技術"
+  title: "前瞻節能減碳技術"
+  url: "/ipas/frontier-tech/"
+  unit: "unit1-2-5"
+
+- id: ocean-energy
+  short: "海洋能"
+  title: "海洋能與再生能源數據"
+  url: "/ipas/ocean-energy/"
+  unit: "unit1-3-1"
+
+- id: green-power
+  short: "綠電採購"
+  title: "綠電採購與 CPPA"
+  url: "/ipas/green-power/"
+  unit: "unit1-3-3"
+
+- id: tnfd-leap
+  short: "TNFD/LEAP"
+  title: "TNFD、LEAP 與 SBTN"
+  url: "/ipas/tnfd-leap/"
+  unit: "unit2-1-3"
+
+- id: carbon-assets
+  short: "碳資產"
+  title: "ICP 與碳資產管理"
+  url: "/ipas/carbon-assets/"
+  unit: "unit2-2-4"
+
+- id: scope3
+  short: "範疇三"
+  title: "範疇三 C1-C15 完整解析"
+  url: "/ipas/scope3/"
+  unit: "unit2-3-1"
+
+- id: supply-chain
+  short: "供應鏈"
+  title: "供應鏈碳管理"
+  url: "/ipas/supply-chain/"
+  unit: "unit2-3-2"
