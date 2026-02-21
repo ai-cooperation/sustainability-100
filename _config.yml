@@ -16,6 +16,11 @@ defaults:
       type: "episodes"
     values:
       layout: "episode"
+  - scope:
+      path: "_posts"
+      type: "posts"
+    values:
+      layout: "post"
 
 markdown: kramdown
 kramdown:

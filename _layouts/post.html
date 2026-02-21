@@ -1,0 +1,58 @@
+---
+layout: default
+---
+<article class="news-detail">
+  <div class="news-header">
+    <a href="{{ '/news' | relative_url }}" class="back-link">&larr; 永續動態</a>
+    <time class="news-date">{{ page.date | date: "%Y-%m-%d" }}</time>
+    {% if page.source %}
+    <span class="news-source">{{ page.source }}</span>
+    {% endif %}
+    <h1>{{ page.title }}</h1>
+    {% if page.summary %}
+    <p class="news-summary">{{ page.summary }}</p>
+    {% endif %}
+    {% if page.tags and page.tags.size > 0 %}
+    <div class="tag-list">
+      {% for tag in page.tags %}
+      <span class="news-tag">{{ tag }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if page.image %}
+  <div class="news-hero-image">
+    <img src="{{ '/assets/images/news/' | append: page.image | relative_url }}" alt="{{ page.title }}" loading="lazy">
+  </div>
+  {% endif %}
+
+  <div class="news-content">
+    {{ content }}
+  </div>
+
+  {% if page.related_episodes and page.related_episodes.size > 0 %}
+  <div class="related-episodes">
+    <h3>相關集數</h3>
+    <div class="related-grid">
+      {% assign sorted = site.episodes | sort: "number" %}
+      {% for ep_id in page.related_episodes %}
+        {% for ep in sorted %}
+          {% if ep.ep_id == ep_id %}
+          <a href="{{ ep.url | relative_url }}" class="related-card">
+            <span class="related-badge">{{ ep.ep_id }}</span>
+            <span class="related-title">{{ ep.title }}</span>
+          </a>
+          {% endif %}
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if page.source_url %}
+  <div class="news-source-link">
+    <a href="{{ page.source_url }}" target="_blank" rel="noopener">查看原文 &rarr;</a>
+  </div>
+  {% endif %}
+</article>
