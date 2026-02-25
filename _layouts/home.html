@@ -22,7 +22,7 @@ layout: default
 </div>
 
 <div class="episodes-grid">
-  {% assign sorted = site.episodes | sort: "number" | reverse %}
+  {% assign sorted = site.episodes | sort: "number" %}
   {% for ep in sorted %}
   {% include episode-card.html episode=ep %}
   {% endfor %}
