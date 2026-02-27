@@ -1,5 +1,131 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% if page.title %}{{ page.ep_id }}｜{{ page.title }} - {% endif %}{{ site.title }}</title>
-<meta name="description" content="{{ page.outline | default: site.description }}">
+<title>{% if page.title %}{{ page.ep_id | default: "" }}{% if page.ep_id %}｜{% endif %}{{ page.title }} - {% endif %}{{ site.title }}</title>
+<meta name="description" content="{{ page.outline | default: page.summary | default: site.description | truncate: 160 }}">
+<meta name="keywords" content="低碳永續,ESG,淨零碳排,碳交易,iPAS,淨零碳規劃管理師,永續發展,碳中和,綠色金融,再生能源,{{ page.tags | join: ',' }}">
+<link rel="canonical" href="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
 <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+
+<!-- Open Graph -->
+<meta property="og:type" content="{% if page.layout == 'episode' %}article{% elsif page.layout == 'post' %}article{% else %}website{% endif %}">
+<meta property="og:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}">
+<meta property="og:description" content="{{ page.outline | default: page.summary | default: site.description | truncate: 200 }}">
+<meta property="og:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+<meta property="og:site_name" content="{{ site.title }}">
+<meta property="og:locale" content="zh_TW">
+{% if page.image %}<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/images/news/{{ page.image }}">
+{% elsif page.slides %}<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/images/{{ page.ep_id }}/{{ page.slides | first }}">
+{% endif %}
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{% if page.title %}{{ page.title }}{% else %}{{ site.title }}{% endif %}">
+<meta name="twitter:description" content="{{ page.outline | default: page.summary | default: site.description | truncate: 200 }}">
+
+<!-- JSON-LD: Site-level Course (iPAS 淨零碳規劃管理師) -->
+{% if page.url == "/" %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "低碳永續100講",
+  "description": "AI 驅動的永續知識系列，涵蓋淨零碳排、ESG、碳交易等 10 大主題，對應 iPAS 淨零碳規劃管理師能力指標",
+  "provider": {
+    "@type": "Organization",
+    "name": "AI Cooperation",
+    "url": "https://ai-cooperation.github.io"
+  },
+  "educationalLevel": "Professional",
+  "inLanguage": ["zh-TW", "en"],
+  "about": [
+    {"@type": "Thing", "name": "淨零碳排"},
+    {"@type": "Thing", "name": "ESG"},
+    {"@type": "Thing", "name": "碳交易"},
+    {"@type": "Thing", "name": "再生能源"},
+    {"@type": "Thing", "name": "碳中和"},
+    {"@type": "Thing", "name": "綠色金融"}
+  ],
+  "teaches": [
+    "淨零碳排路徑規劃",
+    "ESG 報告書撰寫與揭露",
+    "碳盤查與碳足跡計算",
+    "碳權交易與碳定價機制",
+    "再生能源技術與應用",
+    "永續供應鏈管理",
+    "綠色金融與永續投資"
+  ],
+  "hasCourseInstance": {
+    "@type": "CourseInstance",
+    "courseMode": "online",
+    "courseWorkload": "PT100H"
+  },
+  "educationalCredentialAwarded": "iPAS 淨零碳規劃管理師考試準備",
+  "url": "{{ site.url }}{{ site.baseurl }}/"
+}
+</script>
+{% endif %}
+
+<!-- JSON-LD: Episode as LearningResource + PodcastEpisode -->
+{% if page.layout == "episode" %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": ["LearningResource", "PodcastEpisode"],
+  "name": "{{ page.ep_id }}｜{{ page.title }}",
+  "description": "{{ page.outline | default: page.title }}",
+  "url": "{{ site.url }}{{ site.baseurl }}{{ page.url }}",
+  "inLanguage": ["zh-TW", "en"],
+  "learningResourceType": ["podcast", "video", "infographic"],
+  "educationalLevel": "Professional",
+  "isPartOf": {
+    "@type": "Course",
+    "name": "低碳永續100講",
+    "url": "{{ site.url }}{{ site.baseurl }}/",
+    "description": "對應 iPAS 淨零碳規劃管理師能力指標"
+  },
+  "teaches": "{{ page.title }}",
+  "datePublished": "{{ page.date | date: '%Y-%m-%d' }}",
+  "keywords": "{{ page.tags | join: ', ' | default: '永續,ESG,淨零碳排,iPAS 淨零碳規劃管理師' }}",
+  {% if page.podcast_audio %}"associatedMedia": {
+    "@type": "AudioObject",
+    "contentUrl": "{{ site.url }}{{ site.baseurl }}/assets/audio/{{ page.ep_id }}/{{ page.podcast_audio }}",
+    "encodingFormat": "audio/mp4"
+  },{% endif %}
+  {% if page.video_overview %}"video": {
+    "@type": "VideoObject",
+    "name": "{{ page.title }} — Video Overview",
+    "contentUrl": "{{ site.url }}{{ site.baseurl }}/assets/video/{{ page.ep_id }}/{{ page.video_overview }}"
+  },{% endif %}
+  "provider": {
+    "@type": "Organization",
+    "name": "AI Cooperation"
+  }
+}
+</script>
+{% endif %}
+
+<!-- JSON-LD: News Article -->
+{% if page.layout == "post" %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": "{{ page.title }}",
+  "description": "{{ page.summary | default: page.title }}",
+  "url": "{{ site.url }}{{ site.baseurl }}{{ page.url }}",
+  "datePublished": "{{ page.date | date: '%Y-%m-%d' }}",
+  "inLanguage": "zh-TW",
+  "keywords": "{{ page.tags | join: ', ' | default: '永續,ESG' }}",
+  {% if page.image %}"image": "{{ site.url }}{{ site.baseurl }}/assets/images/news/{{ page.image }}",{% endif %}
+  {% if page.source %}"publisher": {
+    "@type": "Organization",
+    "name": "{{ page.source }}"
+  },{% endif %}
+  "isPartOf": {
+    "@type": "Course",
+    "name": "低碳永續100講 — 永續動態",
+    "description": "iPAS 淨零碳規劃管理師考試相關永續新聞追蹤"
+  }
+}
+</script>
+{% endif %}
