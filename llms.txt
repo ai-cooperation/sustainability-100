@@ -1,3 +1,7 @@
+---
+layout: null
+permalink: /llms.txt
+---
 # 低碳永續 100 講
 
 > AI 驅動的永續知識系列 — 涵蓋淨零碳排、ESG、碳交易等 10 大主題，每講附 Podcast 與資訊圖表。
