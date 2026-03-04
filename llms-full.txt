@@ -1,0 +1,18 @@
+---
+layout: null
+permalink: /llms-full.txt
+---
+# 低碳永續 100 講
+
+> {{ site.description }}
+
+本站提供 100 堂低碳永續主題講座，涵蓋淨零碳排、ESG、碳交易等 10 大主題。
+
+{% for episode in site.episodes %}
+## {{ episode.ep_id }} {{ episode.title }}
+
+{{ episode.content | strip_html | strip_newlines | truncatewords: 500 }}
+
+---
+
+{% endfor %}

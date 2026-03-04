@@ -1,0 +1,27 @@
+# 低碳永續 100 講
+
+> AI 驅動的永續知識系列 — 涵蓋淨零碳排、ESG、碳交易等 10 大主題，每講附 Podcast 與資訊圖表。
+
+本站提供 100 堂低碳永續主題講座，以繁體中文撰寫，適合台灣企業 ESG 從業人員、永續管理師備考者及關注氣候議題的學習者。每講包含文字講義、中英文 Podcast、資訊圖表。
+
+## 系列總覽
+
+- [S1 淨零基礎與碳盤查](https://ai-cooperation.github.io/sustainability-100/episodes/EP001/): 淨零排放定義、巴黎協定、溫室氣體盤查、碳足跡計算
+- [S2 建築節能與空調](https://ai-cooperation.github.io/sustainability-100/episodes/EP011/): 空調節能、變頻技術、冰水主機、智慧建築能源管理
+- [S3 再生能源](https://ai-cooperation.github.io/sustainability-100/episodes/EP021/): 太陽能、風力、水力、生質能、地熱、海洋能
+- [S4 碳交易與碳定價](https://ai-cooperation.github.io/sustainability-100/episodes/EP031/): Cap and Trade、碳權、EU ETS、台灣碳費制度
+- [S5 法規遵循與國際準則](https://ai-cooperation.github.io/sustainability-100/episodes/EP041/): 氣候變遷因應法、TCFD、ISSB、歐盟永續分類法
+- [S6 永續報告書](https://ai-cooperation.github.io/sustainability-100/episodes/EP051/): GRI 準則、報告書撰寫、數據呈現、品質改善
+- [S7 供應鏈碳管理](https://ai-cooperation.github.io/sustainability-100/episodes/EP061/): 範疇三估算、供應商碳排數據、生命週期評估
+- [S8 氫能與新興技術](https://ai-cooperation.github.io/sustainability-100/episodes/EP071/): 綠氫、藍氫、氫能經濟、碳捕捉、CCUS
+- [S9 AI 與碳管理](https://ai-cooperation.github.io/sustainability-100/episodes/EP081/): AI 碳盤查、排放係數匹配、異常偵測、自動化報告
+- [S10 永續治理與領導](https://ai-cooperation.github.io/sustainability-100/episodes/EP091/): 永續長角色、ESG 策略整合、董事會治理
+
+## 其他內容
+
+- [首頁](https://ai-cooperation.github.io/sustainability-100/): 課程總覽與系列導覽
+- [永續新聞](https://ai-cooperation.github.io/sustainability-100/news/): 每日永續產業新聞追蹤
+
+## Optional
+
+- [Sitemap](https://ai-cooperation.github.io/sustainability-100/sitemap.xml): 完整頁面索引
