@@ -14,7 +14,7 @@
 <meta property="og:site_name" content="{{ site.title }}">
 <meta property="og:locale" content="zh_TW">
 {% if page.image %}<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/images/news/{{ page.image }}">
-{% elsif page.slides %}<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/images/{{ page.ep_id }}/{{ page.slides | first }}">
+{% elsif page.slides %}<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/images/{{ page.ep_id }}/{{ page.slides.first.image }}">
 {% endif %}
 
 <!-- Twitter Card -->
