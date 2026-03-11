@@ -1,0 +1,46 @@
+<!-- Global Podcast Player — fixed bottom bar -->
+<div id="gp" class="gp gp--hidden" role="complementary" aria-label="Podcast Player">
+  <audio id="gp-audio" preload="metadata"></audio>
+
+  <!-- Progress bar (top of player bar, full width) -->
+  <div class="gp-progress" id="gp-progress">
+    <div class="gp-progress-fill" id="gp-progress-fill"></div>
+  </div>
+
+  <div class="gp-body">
+    <!-- Controls -->
+    <div class="gp-controls">
+      <button id="gp-prev" class="gp-btn" aria-label="Previous episode" title="上一集">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" fill="currentColor"/></svg>
+      </button>
+      <button id="gp-play" class="gp-btn gp-btn--play" aria-label="Play">
+        <svg class="gp-icon-play" viewBox="0 0 24 24" width="28" height="28"><polygon points="6,3 20,12 6,21" fill="currentColor"/></svg>
+        <svg class="gp-icon-pause" viewBox="0 0 24 24" width="28" height="28" style="display:none"><rect x="5" y="3" width="5" height="18" rx="1" fill="currentColor"/><rect x="14" y="3" width="5" height="18" rx="1" fill="currentColor"/></svg>
+      </button>
+      <button id="gp-next" class="gp-btn" aria-label="Next episode" title="下一集">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/></svg>
+      </button>
+    </div>
+
+    <!-- Info -->
+    <div class="gp-info">
+      <a id="gp-title" class="gp-title" href="#">EP001</a>
+      <span class="gp-time">
+        <span id="gp-cur">0:00</span> / <span id="gp-dur">0:00</span>
+      </span>
+    </div>
+
+    <!-- Right controls -->
+    <div class="gp-right">
+      <button id="gp-lang" class="gp-btn gp-btn--lang" aria-label="Switch language" title="切換中/英文">中</button>
+      <select id="gp-speed" class="gp-speed" aria-label="Playback speed">
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>1x</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+        <option value="2">2x</option>
+      </select>
+      <button id="gp-close" class="gp-btn gp-btn--close" aria-label="Close player" title="關閉播放器">&times;</button>
+    </div>
+  </div>
+</div>
