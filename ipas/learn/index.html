@@ -1,0 +1,64 @@
+---
+layout: default
+title: "iPAS 三問法學習系統"
+permalink: /ipas/learn/
+---
+
+<link rel="stylesheet" href="css/learn.css">
+
+<div class="learn-container">
+
+  <header class="learn-header">
+    <div class="header-inner">
+      <h1>🎯 iPAS 淨零碳規劃管理師 · 三問法學習系統</h1>
+      <p class="header-sub">先看完 S100 科普，再來這邊確認程度與學習缺口</p>
+    </div>
+  </header>
+
+  <div class="level-tabs">
+    <button class="level-tab" data-level="l1">📘 初級 L1</button>
+    <button class="level-tab active" data-level="l2">📗 中級 L2</button>
+  </div>
+
+  <div id="level-info" class="level-info"></div>
+
+  <main id="modules-view">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 12px;flex-wrap:wrap;gap:12px;">
+      <h2 class="section-title" style="margin:0">📚 模組列表</h2>
+      <button class="exam-start-btn" onclick="LearnLayer2.startExam(document.querySelector('.level-tab.active').dataset.level)">📝 開始 50 題模擬考</button>
+    </div>
+    <div id="modules-grid" class="modules-grid"></div>
+
+    <section class="method-intro">
+      <h3>🧠 三問法學習流程</h3>
+      <ol>
+        <li><strong>框架問</strong> — 先建立大局觀，理解知識點在整體中的位置</li>
+        <li><strong>爭議問</strong> — 思考爭議與灰色地帶，建立批判性思考</li>
+        <li><strong>鑑別題</strong> — 實際做題驗證理解，對比選項差異</li>
+        <li><strong>加強題</strong> — 針對弱項補強，建立牢固觀念</li>
+      </ol>
+    </section>
+  </main>
+
+  <main id="module-view" style="display:none"></main>
+  <main id="exam-view" style="display:none"></main>
+
+  <footer class="learn-footer">
+    <details>
+      <summary>🔒 隱私說明</summary>
+      <p>本系統使用匿名 ID（儲存在你的瀏覽器）記錄學習進度與答題統計，不收集個人資料、不需要登入、不連動 email。資料僅用於：</p>
+      <ul>
+        <li>顯示你自己的學習進度</li>
+        <li>聚合所有學員的盲區統計，用來優化題目品質</li>
+      </ul>
+      <p>清除瀏覽器 localStorage 即可重置所有記錄。</p>
+    </details>
+    <p class="footer-note">iPAS 三問法學習系統 · 基於 <a href="/sustainability-100/">低碳永續100講</a> · 非官方學習工具</p>
+  </footer>
+
+</div>
+
+<script src="js/learn-data.js"></script>
+<script src="js/learn-engine.js"></script>
+<script src="js/learn-ui.js"></script>
+<script src="js/learn-layer2.js"></script>
