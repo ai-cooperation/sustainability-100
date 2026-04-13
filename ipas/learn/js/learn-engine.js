@@ -16,7 +16,7 @@
 
   const DB_URL = FIREBASE_CONFIG.databaseURL;
 
-  // ========== 匿名 ID（localStorage） ==========
+  // ========== 使用者識別（優先 Google uid，否則匿名 odID） ==========
   function getOrCreateOdID() {
     let id = localStorage.getItem('ipas_odID');
     if (!id) {
@@ -24,6 +24,18 @@
       localStorage.setItem('ipas_odID', id);
     }
     return id;
+  }
+
+  function getUserId() {
+    // 登入用戶回傳 uid (以 'g:' 開頭標記 Google 帳號)
+    // 匿名用戶回傳 odID (以 'a:' 開頭標記)
+    const uid = localStorage.getItem('ipas_uid');
+    if (uid) return 'g:' + uid;
+    return 'a:' + getOrCreateOdID();
+  }
+
+  function isAuthenticated() {
+    return !!localStorage.getItem('ipas_uid');
   }
 
   // ========== Firebase REST API 包裝 ==========
@@ -87,8 +99,7 @@
     progress[key].correct = Object.values(progress[key].done).filter(x => x.correct).length;
     saveProgress(progress);
 
-    // 2. Firebase 盲區統計
-    const odID = getOrCreateOdID();
+    // 2. Firebase 盲區統計（全體聚合）
     const statsPath = `learn/analytics/questions/${level}/${moduleId}/${qId}`;
     const cur = await fbGet(statsPath) || { attempts: 0, correct: 0, wrong_choices: {} };
     cur.attempts = (cur.attempts || 0) + 1;
@@ -99,19 +110,20 @@
     }
     await fbPut(statsPath, cur);
 
-    // 3. 使用者進度
-    await fbPatch(`learn/users/${odID}/${level}/${moduleId}`, {
-      [qId]: { correct, ts: Date.now() }
+    // 3. 使用者進度（登入用戶存 authed/，匿名存 anon/）
+    const userId = getUserId();
+    const userKey = userId.startsWith('g:') ? 'authed/' + userId.slice(2) : 'anon/' + userId.slice(2);
+    await fbPatch(`learn/users/${userKey}/${level}/${moduleId}`, {
+      [qId]: { correct, chosen, ts: Date.now() }
     });
   }
 
   // ========== 題目回報 ==========
   async function reportQuestion(level, moduleId, qId, reason) {
-    const odID = getOrCreateOdID();
     const reportPath = `learn/analytics/reports/${level}_${moduleId}_${qId}_${Date.now()}`;
     return await fbPut(reportPath, {
       level, moduleId, qId, reason,
-      by: odID, ts: Date.now()
+      by: getUserId(), ts: Date.now()
     });
   }
 
@@ -128,6 +140,8 @@
   // ========== 公開 API ==========
   global.LearnEngine = {
     getOrCreateOdID,
+    getUserId,
+    isAuthenticated,
     getProgress,
     recordAnswer,
     reportQuestion,
