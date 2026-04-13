@@ -1,0 +1,386 @@
+---
+layout: default
+title: "iPAS 學習系統 · 講師後台"
+permalink: /ipas/learn/analytics/
+sitemap: false
+---
+
+<link rel="stylesheet" href="css/learn.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  .admin-container { max-width: 1100px; margin: 0 auto; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', sans-serif; }
+  .login-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; padding:2rem; }
+  .login-screen h1 { font-size: 1.6rem; color: var(--blue); margin-bottom: 1rem; }
+  .login-msg { margin-top: 1rem; font-size: 14px; min-height: 20px; }
+  .dashboard { display: none; }
+  .dashboard.active { display: block; }
+
+  .top-bar { background: var(--blue); color: #fff; padding: 12px 20px; border-radius: 10px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .top-bar h1 { font-size: 17px; margin: 0; }
+  .top-bar .user-info { font-size: 13px; opacity: .85; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+  .stat-card .num { font-size: 28px; font-weight: 800; color: var(--green); }
+  .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .section { background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .section h2 { font-size: 17px; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 2px solid var(--border); color: var(--blue); }
+
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tab { padding: 6px 14px; border: 1px solid var(--border); border-radius: 16px; cursor: pointer; font-size: 12px; background: #fff; }
+  .tab.active { background: var(--green); color: #fff; border-color: var(--green); }
+
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .data-table th { text-align: left; padding: 8px; background: var(--bg); border-bottom: 2px solid var(--border); font-weight: 700; font-size: 12px; }
+  .data-table td { padding: 8px; border-bottom: 1px solid var(--border); }
+  .data-table tr:hover { background: var(--bg); }
+
+  .bar-bg { width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+
+  canvas { max-height: 280px; }
+</style>
+
+<div class="admin-container">
+  <div id="loginScreen" class="login-screen">
+    <h1>🔐 講師後台登入</h1>
+    <p style="color: var(--muted); margin-bottom: 1.5rem;">需要授權帳號才能存取 iPAS 學習系統分析後台</p>
+    <button class="btn-google" id="btnLogin">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.5-5.2l-6.2-5.2c-2 1.5-4.6 2.4-7.3 2.4-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4 5.6l6.2 5.2C41.3 35.1 44 30 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      使用 Google 登入
+    </button>
+    <div class="login-msg" id="loginMsg"></div>
+    <a href="./" style="margin-top: 2rem; color: var(--muted); font-size: 13px;">← 回學習系統首頁</a>
+  </div>
+
+  <div id="dashboard" class="dashboard">
+    <div class="top-bar">
+      <div>
+        <h1>📊 iPAS 學習系統 · 講師後台</h1>
+      </div>
+      <div class="user-info">
+        <span id="userInfo"></span>
+        <button class="btn-signout" id="btnSignout">登出</button>
+        <a href="./" style="color: #fff; font-size: 13px; margin-left: 12px; text-decoration: underline;">回學習系統</a>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="statTotalUsers">-</div><div class="label">註冊學員（Google）</div></div>
+      <div class="stat-card"><div class="num" id="statTotalAnon">-</div><div class="label">匿名使用人次</div></div>
+      <div class="stat-card"><div class="num" id="statTotalAnswers">-</div><div class="label">累積答題數</div></div>
+      <div class="stat-card"><div class="num" id="statAvgAccuracy">-</div><div class="label">平均正確率</div></div>
+    </div>
+
+    <div class="section">
+      <h2>🎯 模組篩選</h2>
+      <div class="tabs" id="moduleTabs"></div>
+    </div>
+
+    <div class="section">
+      <h2>🔥 最難題目 Top 30（錯誤率高 → 低）</h2>
+      <table class="data-table">
+        <thead><tr><th>模組</th><th>題目 ID</th><th>答題次數</th><th>正確率</th><th>最常選錯答案</th></tr></thead>
+        <tbody id="questionBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>📈 各模組答題熱度</h2>
+      <canvas id="moduleCanvas"></canvas>
+    </div>
+
+    <div class="section">
+      <h2>👥 註冊學員（Google 登入）</h2>
+      <table class="data-table">
+        <thead><tr><th>姓名</th><th>Email</th><th>學習模組</th><th>平均正確率</th><th>最後活動</th></tr></thead>
+        <tbody id="userBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>👤 匿名學員（最近 100 筆）</h2>
+      <table class="data-table">
+        <thead><tr><th>匿名 ID</th><th>活動模組數</th><th>答題數</th><th>正確數</th><th>最後活動</th></tr></thead>
+        <tbody id="anonBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>🚩 題目回報</h2>
+      <table class="data-table">
+        <thead><tr><th>時間</th><th>模組</th><th>題號</th><th>原因</th><th>回報者</th></tr></thead>
+        <tbody id="reportBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA9c39MjsSfNmuigun9DnguUaLrM8x3JtM",
+  authDomain: "ipas-s100-70a97.firebaseapp.com",
+  databaseURL: "https://ipas-s100-70a97-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ipas-s100-70a97",
+  storageBucket: "ipas-s100-70a97.firebasestorage.app",
+  messagingSenderId: "583978561603",
+  appId: "1:583978561603:web:4376299cd2fa9c8dbca4f6"
+};
+
+const TEACHER_EMAIL = 'alan.chen75@gmail.com';
+const DB_URL = firebaseConfig.databaseURL;
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+let _idToken = null;
+let _selectedLevel = 'ALL';
+
+const MODULE_NAMES = {
+  L111: '國際氣候治理歷程', L112: '淨零管理基礎概論',
+  L121: 'ISO 14064-1 組織盤查', L122: 'ISO 14067 產品碳足跡',
+  L211: '節能減碳策略', L212: '節能技術與能源管理', L213: '再生能源與綠電',
+  L221: '氣候法與國際揭露', L222: '自願減量實務', L223: '永續供應鏈管理'
+};
+
+function esc(s){ const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+async function fbGet(path){
+  const url = `${DB_URL}/${path}.json` + (_idToken ? `?auth=${_idToken}` : '');
+  const res = await fetch(url);
+  if(!res.ok) return null;
+  return await res.json();
+}
+
+// Auth
+document.getElementById('btnLogin').onclick = () => {
+  const provider = new GoogleAuthProvider();
+  signInWithPopup(auth, provider).catch(e => {
+    document.getElementById('loginMsg').innerHTML = `<span style="color:var(--red);">${esc(e.message)}</span>`;
+  });
+};
+document.getElementById('btnSignout').onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async (user) => {
+  if(user && user.email === TEACHER_EMAIL){
+    _idToken = await user.getIdToken();
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').classList.add('active');
+    document.getElementById('userInfo').textContent = user.displayName || user.email;
+    loadAll();
+  } else if(user){
+    document.getElementById('loginMsg').innerHTML = `<span style="color:#D93025;">此帳號（${esc(user.email)}）無權限存取後台</span>`;
+    signOut(auth);
+  } else {
+    _idToken = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dashboard').classList.remove('active');
+  }
+});
+
+function loadAll(){
+  renderLevelTabs();
+  loadOverview();
+  loadQuestionStats();
+  loadModuleStats();
+  loadRegisteredUsers();
+  loadAnonUsers();
+  loadReports();
+}
+
+function renderLevelTabs(){
+  const wrap = document.getElementById('moduleTabs');
+  const mods = ['ALL', 'L111','L112','L121','L122','L211','L212','L213','L221','L222','L223'];
+  wrap.innerHTML = mods.map(m => {
+    const label = m === 'ALL' ? '全部' : `${m} ${MODULE_NAMES[m] || ''}`;
+    const cls = m === _selectedLevel ? 'tab active' : 'tab';
+    return `<div class="${cls}" onclick="window.__filter('${m}')">${label}</div>`;
+  }).join('');
+}
+window.__filter = (m) => { _selectedLevel = m; renderLevelTabs(); loadQuestionStats(); };
+
+async function loadOverview(){
+  // 註冊學員
+  const profiles = await fbGet('learn/users_profile') || {};
+  document.getElementById('statTotalUsers').textContent = Object.keys(profiles).length;
+
+  // 匿名用戶
+  const anon = await fbGet('learn/users/anon') || {};
+  document.getElementById('statTotalAnon').textContent = Object.keys(anon).length;
+
+  // 答題統計
+  const qstats = await fbGet('learn/analytics/questions') || {};
+  let totalAtt = 0, totalCor = 0;
+  for(const level of Object.keys(qstats)){
+    for(const mod of Object.keys(qstats[level] || {})){
+      for(const qid of Object.keys(qstats[level][mod] || {})){
+        const q = qstats[level][mod][qid];
+        totalAtt += q.attempts || 0;
+        totalCor += q.correct || 0;
+      }
+    }
+  }
+  document.getElementById('statTotalAnswers').textContent = totalAtt;
+  const pct = totalAtt > 0 ? Math.round(totalCor / totalAtt * 100) : 0;
+  const el = document.getElementById('statAvgAccuracy');
+  el.textContent = pct + '%';
+  el.style.color = pct >= 70 ? '#0F9D8A' : pct >= 40 ? '#F9AB00' : '#D93025';
+}
+
+async function loadQuestionStats(){
+  const qstats = await fbGet('learn/analytics/questions') || {};
+  const rows = [];
+  for(const level of Object.keys(qstats)){
+    for(const mod of Object.keys(qstats[level] || {})){
+      if(_selectedLevel !== 'ALL' && mod !== _selectedLevel) continue;
+      for(const qid of Object.keys(qstats[level][mod] || {})){
+        const q = qstats[level][mod][qid];
+        const att = q.attempts || 0;
+        const cor = q.correct || 0;
+        const acc = att > 0 ? cor / att : 0;
+        let topWrong = '-', maxW = 0;
+        if(q.wrong_choices){
+          for(const c of Object.keys(q.wrong_choices)){
+            if(q.wrong_choices[c] > maxW){ maxW = q.wrong_choices[c]; topWrong = `選項 ${String.fromCharCode(65+Number(c))} (${q.wrong_choices[c]}次)`; }
+          }
+        }
+        rows.push({ level, mod, qid, att, acc, topWrong });
+      }
+    }
+  }
+  rows.sort((a,b) => a.acc - b.acc);
+  const tbody = document.getElementById('questionBody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">尚無答題數據</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.slice(0, 30).map(r => {
+    const pct = Math.round(r.acc * 100);
+    const color = pct >= 70 ? '#0F9D8A' : pct >= 40 ? '#F9AB00' : '#D93025';
+    return `<tr><td>${esc(r.mod)}</td><td>${esc(r.qid)}</td><td>${r.att}</td>
+      <td><b style="color:${color}">${pct}%</b>
+        <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      </td>
+      <td style="font-size:12px;color:var(--muted)">${esc(r.topWrong)}</td></tr>`;
+  }).join('');
+}
+
+async function loadModuleStats(){
+  const qstats = await fbGet('learn/analytics/questions') || {};
+  const labels = Object.keys(MODULE_NAMES);
+  const counts = labels.map(mid => {
+    let att = 0;
+    for(const level of Object.keys(qstats)){
+      if(qstats[level][mid]){
+        for(const qid of Object.keys(qstats[level][mid])){
+          att += qstats[level][mid][qid].attempts || 0;
+        }
+      }
+    }
+    return att;
+  });
+  const ctx = document.getElementById('moduleCanvas').getContext('2d');
+  if(window._modChart) window._modChart.destroy();
+  window._modChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: '答題次數', data: counts, backgroundColor: 'rgba(45,106,79,0.7)', borderRadius: 6 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+}
+
+async function loadRegisteredUsers(){
+  const profiles = await fbGet('learn/users_profile') || {};
+  const authed = await fbGet('learn/users/authed') || {};
+  const rows = Object.keys(profiles).map(uid => {
+    const p = profiles[uid];
+    const userData = authed[uid] || {};
+    let att = 0, cor = 0;
+    const modules = new Set();
+    for(const level of Object.keys(userData)){
+      for(const mod of Object.keys(userData[level] || {})){
+        modules.add(mod);
+        for(const qid of Object.keys(userData[level][mod] || {})){
+          const a = userData[level][mod][qid];
+          att++;
+          if(a.correct) cor++;
+        }
+      }
+    }
+    return {
+      name: p.name || '-', email: p.email || '-',
+      modules: [...modules].join(', ') || '-',
+      acc: att > 0 ? cor / att : 0, ts: p.lastLogin || 0
+    };
+  });
+  rows.sort((a,b) => (b.ts||0) - (a.ts||0));
+  const tbody = document.getElementById('userBody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">尚無註冊學員</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const pct = Math.round(r.acc * 100);
+    const color = pct >= 70 ? '#0F9D8A' : pct >= 40 ? '#F9AB00' : '#D93025';
+    const ts = r.ts ? new Date(r.ts).toLocaleDateString('zh-TW') : '-';
+    return `<tr><td>${esc(r.name)}</td><td style="font-size:12px">${esc(r.email)}</td>
+      <td>${esc(r.modules)}</td>
+      <td><b style="color:${color}">${pct}%</b></td>
+      <td style="font-size:12px;color:var(--muted)">${ts}</td></tr>`;
+  }).join('');
+}
+
+async function loadAnonUsers(){
+  const anon = await fbGet('learn/users/anon') || {};
+  const rows = Object.keys(anon).map(odID => {
+    const u = anon[odID];
+    let att = 0, cor = 0, lastTs = 0;
+    const modules = new Set();
+    for(const level of Object.keys(u)){
+      for(const mod of Object.keys(u[level] || {})){
+        modules.add(mod);
+        for(const qid of Object.keys(u[level][mod] || {})){
+          const a = u[level][mod][qid];
+          att++;
+          if(a.correct) cor++;
+          if(a.ts > lastTs) lastTs = a.ts;
+        }
+      }
+    }
+    return { odID: odID.slice(0, 12), mods: modules.size, att, cor, ts: lastTs };
+  }).filter(r => r.att > 0);
+  rows.sort((a,b) => (b.ts||0) - (a.ts||0));
+  const tbody = document.getElementById('anonBody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">尚無匿名答題</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.slice(0, 100).map(r => {
+    const ts = r.ts ? new Date(r.ts).toLocaleString('zh-TW') : '-';
+    return `<tr><td style="font-family:monospace;font-size:12px">${esc(r.odID)}…</td>
+      <td>${r.mods}</td><td>${r.att}</td><td>${r.cor}</td>
+      <td style="font-size:12px;color:var(--muted)">${ts}</td></tr>`;
+  }).join('');
+}
+
+async function loadReports(){
+  const reports = await fbGet('learn/analytics/reports') || {};
+  const rows = Object.values(reports).sort((a,b) => (b.ts||0) - (a.ts||0));
+  const tbody = document.getElementById('reportBody');
+  if(rows.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);">尚無題目回報</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.slice(0, 30).map(r => {
+    const ts = r.ts ? new Date(r.ts).toLocaleString('zh-TW') : '-';
+    return `<tr><td style="font-size:12px;color:var(--muted)">${ts}</td>
+      <td>${esc(r.moduleId)}</td><td>${esc(r.qId)}</td>
+      <td>${esc(r.reason)}</td>
+      <td style="font-size:12px;font-family:monospace">${esc((r.by||'').slice(0, 14))}…</td></tr>`;
+  }).join('');
+}
+</script>

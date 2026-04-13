@@ -33,9 +33,15 @@ async function signOutUser() {
   try { await signOut(auth); } catch (e) { console.error(e); }
 }
 
+const TEACHER_EMAIL = 'alan.chen75@gmail.com';
+
 onAuthStateChanged(auth, (user) => {
   const status = document.getElementById('auth-status');
   if (!status) return;
+  // 顯示/隱藏後台連結
+  document.querySelectorAll('.admin-link').forEach(el => {
+    el.style.display = (user && user.email === TEACHER_EMAIL) ? 'inline-block' : 'none';
+  });
   if (user) {
     // 儲存到 localStorage 供其他 JS 讀
     localStorage.setItem('ipas_uid', user.uid);
