@@ -39,3 +39,9 @@
   title: "供應鏈碳管理"
   url: "/ipas/supply-chain/"
   unit: "unit2-3-2"
+
+- id: product-carbon-footprint
+  short: "產品碳足跡"
+  title: "ISO 14067 產品碳足跡 / LCA / PCR"
+  url: "/ipas/product-carbon-footprint/"
+  unit: "unit2-3-3"

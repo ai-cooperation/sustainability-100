@@ -5,8 +5,8 @@ description: "GHG Protocol 範疇三全部 15 個類別逐一拆解、計算方�
 permalink: /ipas/scope3/
 prev_url: /ipas/carbon-assets/
 prev_title: 碳資產
-next_url: /ipas/supply-chain/
-next_title: 供應鏈
+next_url: /ipas/product-carbon-footprint/
+next_title: 產品碳足跡
 ---
 
 ## 範疇三概述

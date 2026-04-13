@@ -3,8 +3,8 @@ layout: ipas
 title: "供應鏈碳管理"
 description: "碳風險分類、六階段管理流程、RBA/EcoVadis/CDP 三大評鑑框架"
 permalink: /ipas/supply-chain/
-prev_url: /ipas/scope3/
-prev_title: 範疇三
+prev_url: /ipas/product-carbon-footprint/
+prev_title: 產品碳足跡
 next_url: /ipas/frontier-tech/
 next_title: 前瞻技術
 ---
