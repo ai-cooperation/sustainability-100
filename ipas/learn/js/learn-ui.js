@@ -4,20 +4,10 @@
 (function(global) {
   'use strict';
 
-  let currentLevel = 'l2'; // 預設中級（學員主要需求）
+  let currentLevel = (typeof window !== 'undefined' && window.LEARN_LEVEL) || 'l2';
   let currentModule = null;
   let currentQuestionIdx = 0;
   let currentQuestions = [];
-
-  // ========== Tab 切換 ==========
-  function switchLevel(level) {
-    currentLevel = level;
-    document.querySelectorAll('.level-tab').forEach(t => {
-      t.classList.toggle('active', t.dataset.level === level);
-    });
-    renderLevelInfo();
-    renderModules();
-  }
 
   // ========== 等級資訊 ==========
   function renderLevelInfo() {
@@ -186,14 +176,10 @@
     LearnEngine.getOrCreateOdID();
     renderLevelInfo();
     renderModules();
-    document.querySelectorAll('.level-tab').forEach(tab => {
-      tab.addEventListener('click', () => switchLevel(tab.dataset.level));
-    });
   }
 
   global.LearnUI = {
     init,
-    switchLevel,
     openModule,
     showQuestion,
     selectOption,

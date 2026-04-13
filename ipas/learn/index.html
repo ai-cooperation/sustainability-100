@@ -1,64 +1,70 @@
 ---
 layout: default
-title: "iPAS 三問法學習系統"
+title: "iPAS 學習系統"
 permalink: /ipas/learn/
 ---
 
 <link rel="stylesheet" href="css/learn.css">
 
-<div class="learn-container">
+<div class="learn-container learn-home">
 
   <header class="learn-header">
     <div class="header-inner">
-      <h1>🎯 iPAS 淨零碳規劃管理師 · 三問法學習系統</h1>
+      <h1>🎯 iPAS 淨零碳規劃管理師 · 學習系統</h1>
       <p class="header-sub">先看完 S100 科普，再來這邊確認程度與學習缺口</p>
     </div>
   </header>
 
-  <div class="level-tabs">
-    <button class="level-tab" data-level="l1">📘 初級 L1</button>
-    <button class="level-tab active" data-level="l2">📗 中級 L2</button>
+  <section class="intro-block">
+    <h2>三問法智慧學習系統</h2>
+    <p class="intro-lead">用 <b>框架 × 爭議 × 鑑別題</b>，建立真正的理解</p>
+    <p class="intro-desc">2026 新型態情境學習系統：三問法 × AI 動態出題 × 盲區追蹤 — 不是刷題，是建立判斷框架</p>
+  </section>
+
+  <div class="level-cards">
+    <a href="l1/" class="level-card l1-card">
+      <div class="level-badge">初級</div>
+      <h3>📘 初級學習系統</h3>
+      <p class="level-desc">認識制度：名詞、流程、記憶</p>
+      <ul class="level-features">
+        <li>4 模組（L111 / L112 / L121 / L122）</li>
+        <li>83 題官方考古題（含標準答案）</li>
+        <li>三問法 × 鑑別題 × 加強題</li>
+        <li>單選 50 題 × 75 分鐘 × 2 科</li>
+      </ul>
+      <div class="level-cta">進入初級系統 →</div>
+    </a>
+
+    <a href="l2/" class="level-card l2-card">
+      <div class="level-badge">中級</div>
+      <h3>📗 中級學習系統</h3>
+      <p class="level-desc">決策與計算：情境、財務、判斷</p>
+      <ul class="level-features">
+        <li>6 模組（L211 / L212 / L213 / L221 / L222 / L223）</li>
+        <li>62 題 2026/04/11 首場考試風格</li>
+        <li>半對半錯 × 跨章混合 × NPV/碳費計算</li>
+        <li>單選 + 複選 + 情境題 × 90 分鐘 × 2 科</li>
+      </ul>
+      <div class="level-cta">進入中級系統 →</div>
+    </a>
   </div>
 
-  <div id="level-info" class="level-info"></div>
-
-  <main id="modules-view">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 12px;flex-wrap:wrap;gap:12px;">
-      <h2 class="section-title" style="margin:0">📚 模組列表</h2>
-      <button class="exam-start-btn" onclick="LearnLayer2.startExam(document.querySelector('.level-tab.active').dataset.level)">📝 開始 50 題模擬考</button>
-    </div>
-    <div id="modules-grid" class="modules-grid"></div>
-
-    <section class="method-intro">
-      <h3>🧠 三問法學習流程</h3>
-      <ol>
-        <li><strong>框架問</strong> — 先建立大局觀，理解知識點在整體中的位置</li>
-        <li><strong>爭議問</strong> — 思考爭議與灰色地帶，建立批判性思考</li>
-        <li><strong>鑑別題</strong> — 實際做題驗證理解，對比選項差異</li>
-        <li><strong>加強題</strong> — 針對弱項補強，建立牢固觀念</li>
-      </ol>
-    </section>
-  </main>
-
-  <main id="module-view" style="display:none"></main>
-  <main id="exam-view" style="display:none"></main>
+  <section class="method-intro">
+    <h3>🧠 三問法學習流程</h3>
+    <ol>
+      <li><strong>框架問</strong> — 先建立大局觀，理解知識點在整體中的位置</li>
+      <li><strong>爭議問</strong> — 思考爭議與灰色地帶，建立批判性思考</li>
+      <li><strong>鑑別題</strong> — 實際做題驗證理解，對比選項差異</li>
+      <li><strong>加強題</strong> — 針對弱項補強，建立牢固觀念</li>
+    </ol>
+  </section>
 
   <footer class="learn-footer">
     <details>
       <summary>🔒 隱私說明</summary>
-      <p>本系統使用匿名 ID（儲存在你的瀏覽器）記錄學習進度與答題統計，不收集個人資料、不需要登入、不連動 email。資料僅用於：</p>
-      <ul>
-        <li>顯示你自己的學習進度</li>
-        <li>聚合所有學員的盲區統計，用來優化題目品質</li>
-      </ul>
-      <p>清除瀏覽器 localStorage 即可重置所有記錄。</p>
+      <p>本系統使用匿名 ID（儲存在你的瀏覽器）記錄學習進度與答題統計，不收集個人資料、不需要登入。清除瀏覽器 localStorage 即可重置所有記錄。</p>
     </details>
-    <p class="footer-note">iPAS 三問法學習系統 · 基於 <a href="/sustainability-100/">低碳永續100講</a> · 非官方學習工具</p>
+    <p class="footer-note">iPAS 學習系統 · 基於 <a href="/sustainability-100/">低碳永續100講</a> · 非官方學習工具</p>
   </footer>
 
 </div>
-
-<script src="js/learn-data.js"></script>
-<script src="js/learn-engine.js"></script>
-<script src="js/learn-ui.js"></script>
-<script src="js/learn-layer2.js"></script>
