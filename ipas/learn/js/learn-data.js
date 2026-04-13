@@ -57,12 +57,14 @@ window.LEARN_DATA = {
     nameFull: 'iPAS 淨零碳規劃管理師（中級）',
     examFormat: '單選 + 複選 + 情境題 × 90 分鐘 × 2 科，70 分及格',
     focus: '決策與計算：情境、財務、判斷',
+    examStyle: '🎯 2026/04/11 首場考試特徵：題幹變短、跨章節混合題多、「半對半錯」選項陷阱、實務情境判斷為主。準備方向是「顧問思維」，用情境練習而非單純背誦。',
     modules: [
       {
         id: 'L211',
         name: '節能減碳策略',
         subject: '節能減碳技術實務',
         scope: '目標設定、碳排熱區辨識、NPV/IRR/回收期、財務決策',
+        examTips: '🔥 4/11 實考重點：NPV 投資決策計算題、BAU 基準設定、絕對/強度目標陷阱（半對半錯）、KPI 管理機制設計',
         frameworkQuestion: '企業要設「絕對減量」還是「強度減量」目標？兩者對成長型產業的影響差異？',
         controversy: 'NPV 正的節能案就該投嗎？回收期 5 年跟 IRR 12% 哪個判斷標準更好？',
         questions: [
@@ -354,6 +356,7 @@ window.LEARN_DATA = {
         name: '節能技術與能源管理',
         subject: '節能減碳技術實務',
         scope: '公用設施、ESCO、ISO 50001、氫能、儲能、智慧能源',
+        examTips: '🔥 4/11 實考重點：空調變頻節能實務題、ISO 50001 能源績效指標、技術「適用性」判斷（不考原理）',
         frameworkQuestion: 'ESCO 保證節能績效合約（Shared Saving vs Guaranteed Saving）的風險分攤怎麼算？',
         controversy: '綠氫、藍氫、灰氫的真實碳排差多少？國家推氫能政策是科學還是產業補貼？',
         questions: [],
@@ -364,6 +367,7 @@ window.LEARN_DATA = {
         name: '再生能源與綠電',
         subject: '節能減碳技術實務',
         scope: '再生能源種類比較（含海洋能）、T-REC、CPPA、自發自用',
+        examTips: '🔥 4/11 實考重點：再生能源定義與應用情境、綠電憑證 T-REC 轉移實務、PPA 購售電合約條款判讀',
         frameworkQuestion: '潮汐、波浪、潮流、OTEC、鹽差五種海洋能的「可預測性」、「成熟度」、「裝置容量」如何排序？',
         controversy: 'T-REC 跟實體 PPA 都是綠電，為什麼大型企業寧可簽 CPPA 十年長約？',
         questions: [
@@ -645,6 +649,7 @@ window.LEARN_DATA = {
         name: '氣候法與國際揭露',
         subject: '碳管理制度實務',
         scope: '氣候變遷因應法三子法、國際揭露架構、倡議準則接軌',
+        examTips: '🔥 4/11 實考重點：氣候法 × IFRS/GRI/TCFD/SBTi 整合題、碳費申報責任與調整機制、產業費率差異判斷',
         frameworkQuestion: '氣候變遷因應法的三個子法（碳費、自主減量、溫室氣體減量方法）各自解決什麼問題？',
         controversy: '台灣碳費 2026 開徵 $300/噸，是不是太低？跟 EU ETS $60-80 歐元比怎麼看？',
         questions: [],
@@ -655,6 +660,7 @@ window.LEARN_DATA = {
         name: '自願減量實務',
         subject: '碳管理制度實務',
         scope: '國內外自願減量、CCUS、碳匯、碳抵換、ICP、碳資產管理',
+        examTips: '🔥 4/11 實考重點：SBTi 鋼鐵/水泥年減率、碳中和指引抵換時間限制、內部碳定價實務、碳費扣減機制陷阱',
         frameworkQuestion: '17 萬噸排放的企業，用國內碳權抵 10%、國外碳權抵 5% 上限，實際碳費怎麼算？',
         controversy: '自願碳市場 Verra VCS 爭議頻發，企業還該不該買？IFRS S2 要求揭露到什麼程度？',
         questions: [
@@ -952,6 +958,7 @@ window.LEARN_DATA = {
         name: '永續供應鏈管理',
         subject: '碳管理制度實務',
         scope: '範疇三 15 類、供應鏈減碳風險評估',
+        examTips: '🔥 4/11 實考重點：Scope 3 排放歸屬判斷（高頻陷阱）、GHG Protocol 分類、永續供應鏈評估實務',
         frameworkQuestion: '範疇三 15 類哪些必盤、哪些可豁免？估算法 vs 實際數據如何取捨？',
         controversy: '範疇三佔企業碳排 80%+，但供應商給不出數據時，估算值能不能當減量證明？',
         questions: [],

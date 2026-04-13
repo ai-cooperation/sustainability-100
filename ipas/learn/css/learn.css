@@ -66,6 +66,8 @@
 }
 .level-info h2 { font-size: 18px; margin: 0 0 8px; color: var(--green); }
 .level-info p { margin: 4px 0; font-size: 14px; color: var(--text); }
+.exam-style { background: #fff4e6; border-left: 3px solid var(--gold); padding: 8px 12px; border-radius: 4px; margin-top: 10px !important; font-size: 13px !important; line-height: 1.6; }
+.module-exam-tips { background: #fff4e6; border-left: 3px solid var(--gold); padding: 8px 12px; border-radius: 4px; font-size: 13px; line-height: 1.6; margin-top: 10px; color: var(--text); }
 
 /* Section title */
 .section-title { font-size: 20px; margin: 20px 0 12px; color: var(--blue); }

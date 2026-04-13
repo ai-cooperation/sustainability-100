@@ -28,6 +28,7 @@
       <h2>${data.nameFull}</h2>
       <p class="exam-format">📝 ${data.examFormat}</p>
       <p class="focus">🎯 ${data.focus}</p>
+      ${data.examStyle ? `<p class="exam-style">${data.examStyle}</p>` : ''}
     `;
   }
 
@@ -77,6 +78,7 @@
         <span class="module-id-badge">${mod.id}</span>
         <h2>${mod.name}</h2>
         <p class="module-scope">${mod.scope}</p>
+        ${mod.examTips ? `<p class="module-exam-tips">${mod.examTips}</p>` : ''}
       </div>
 
       <section class="three-question-section">
