@@ -127,6 +127,64 @@
     });
   }
 
+  // ========== 概念維度分析 ==========
+  const META_TAGS = new Set(['陷阱','跨章','情境','計算','加強','絕對語','考古題']);
+
+  function getQuestionConcepts(question, concepts) {
+    if (!question.tag || !concepts) return [];
+    const qTags = question.tag.filter(t => !META_TAGS.has(t));
+    const result = [];
+    for (let c = 0; c < concepts.length; c++) {
+      for (let t = 0; t < concepts[c].tags.length; t++) {
+        if (qTags.indexOf(concepts[c].tags[t]) !== -1) {
+          result.push(concepts[c].id);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
+  function getWeakConcepts(level, moduleId) {
+    const mods = (LEARN_DATA[level] && LEARN_DATA[level].modules) || [];
+    const mod = mods.find(m => m.id === moduleId);
+    if (!mod || !mod.concepts) return { concepts: [], scores: {} };
+
+    const progress = getProgress();
+    const key = level + '.' + moduleId;
+    const done = (progress[key] && progress[key].done) || {};
+
+    const allQs = [...(mod.questions || []), ...(mod.reinforcement || [])];
+
+    const scores = {};
+    for (let ci = 0; ci < mod.concepts.length; ci++) {
+      scores[mod.concepts[ci].id] = { name: mod.concepts[ci].name, correct: 0, total: 0 };
+    }
+
+    for (let qi = 0; qi < allQs.length; qi++) {
+      const q = allQs[qi];
+      const answer = done[q.id];
+      if (!answer) continue;
+      const cids = getQuestionConcepts(q, mod.concepts);
+      for (let k = 0; k < cids.length; k++) {
+        if (scores[cids[k]]) {
+          scores[cids[k]].total++;
+          if (answer.correct) scores[cids[k]].correct++;
+        }
+      }
+    }
+
+    const weak = [];
+    for (let wi = 0; wi < mod.concepts.length; wi++) {
+      const s = scores[mod.concepts[wi].id];
+      if (s.total > 0 && (s.correct / s.total) < 0.5) {
+        weak.push(mod.concepts[wi].id);
+      }
+    }
+
+    return { concepts: weak, scores };
+  }
+
   // ========== 取得題目（先 static 再 Firebase cache） ==========
   async function getQuestions(level, moduleId) {
     const mod = (LEARN_DATA[level]?.modules || []).find(m => m.id === moduleId);
@@ -146,6 +204,8 @@
     recordAnswer,
     reportQuestion,
     getQuestions,
+    getQuestionConcepts,
+    getWeakConcepts,
     fbGet, fbPut, fbPatch,
     DB_URL
   };

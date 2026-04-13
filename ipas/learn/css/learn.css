@@ -550,3 +550,47 @@
   .auth-bar { flex-direction: column; align-items: flex-start; }
   .btn-google { width: 100%; justify-content: center; }
 }
+
+/* ========== Phase 4 Report ========== */
+.report-header { text-align: center; margin: 20px 0 16px; }
+.report-header h2 { font-size: 20px; color: var(--green); }
+.report-chart { max-width: 400px; margin: 0 auto 20px; }
+.report-scores { margin-bottom: 16px; }
+.score-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.score-name { flex: 0 0 140px; font-size: 13px; font-weight: 600; }
+.score-bar { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.score-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+.score-row.good .score-fill { background: var(--green); }
+.score-row.mid .score-fill { background: var(--gold); }
+.score-row.weak .score-fill { background: var(--red); }
+.score-pct { flex: 0 0 40px; text-align: right; font-size: 14px; font-weight: 700; }
+.score-badge { flex: 0 0 60px; text-align: center; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+.score-badge.good { background: #d8f3dc; color: var(--green); }
+.score-badge.mid { background: #fff3cd; color: #856404; }
+.score-badge.weak { background: #f8d7da; color: var(--red); }
+.report-msg { padding: 14px 18px; border-radius: 10px; margin: 16px 0; font-size: 14px; line-height: 1.6; }
+.report-msg.good { background: #d8f3dc; color: var(--green); }
+.report-msg.weak { background: #fff3cd; color: #856404; }
+.report-actions { text-align: center; margin-top: 20px; }
+.btn-lg { padding: 14px 28px !important; font-size: 16px !important; }
+.report-trigger { margin-top: 16px; }
+
+/* ========== Phase 5 Reinforcement ========== */
+.phase5-loading { text-align: center; padding: 60px 20px; }
+.phase5-loading h2 { color: var(--green); margin-bottom: 8px; }
+.phase5-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.phase5-badge { background: var(--red); color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+.phase5-progress { font-size: 13px; color: var(--muted); }
+.phase5-concept { font-size: 13px; color: var(--blue); font-weight: 600; margin-bottom: 12px; }
+.phase5-summary { text-align: center; padding: 40px 20px; }
+.phase5-summary h2 { color: var(--green); margin-bottom: 20px; }
+.summary-score { margin: 20px 0; }
+.score-big { font-size: 48px; font-weight: 900; color: var(--green); }
+.summary-msg { font-size: 15px; margin: 16px 0 24px; line-height: 1.6; }
+.summary-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+@media (max-width: 600px) {
+  .score-name { flex: 0 0 100px; font-size: 12px; }
+  .score-badge { flex: 0 0 50px; font-size: 10px; }
+  .report-chart { max-width: 100%; }
+}

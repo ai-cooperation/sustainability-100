@@ -95,6 +95,10 @@
              <div id="question-container"></div>`
         }
       </section>
+      ${mod.concepts ? `
+      <section class="report-trigger" style="margin-top:16px;">
+        <button class="btn-primary btn-block" onclick="LearnUI.showReport('${mod.id}')">📊 查看學習報告</button>
+      </section>` : ''}
     `;
 
     if (currentQuestions.length > 0) showQuestion(0);
@@ -171,6 +175,238 @@
     renderModules(); // 重刷進度
   }
 
+  // ========== Phase 4 Report + Phase 5 Reinforcement ==========
+
+  function loadChartJs() {
+    return new Promise(function(resolve) {
+      if (window.Chart) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4';
+      s.onload = resolve;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function showReport(moduleId) {
+    const data = LEARN_DATA[currentLevel];
+    const mod = data.modules.find(m => m.id === moduleId);
+    if (!mod || !mod.concepts) return;
+
+    const result = LearnEngine.getWeakConcepts(currentLevel, moduleId);
+    const weakIds = result.concepts;
+    const scores = result.scores;
+
+    const labels = mod.concepts.map(c => c.name);
+    const values = mod.concepts.map(c => {
+      const s = scores[c.id];
+      return s && s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+    });
+
+    document.getElementById('module-view').innerHTML =
+      '<button class="back-btn" onclick="LearnUI.backToModules()">← 返回模組</button>' +
+      '<div class="report-header"><h2>📊 ' + mod.name + ' — 學習報告</h2></div>' +
+      '<div class="report-chart"><canvas id="conceptRadar"></canvas></div>' +
+      '<div class="report-scores" id="reportScores"></div>' +
+      '<div class="report-weak" id="reportWeak"></div>' +
+      '<div class="report-actions" id="reportActions"></div>';
+
+    loadChartJs().then(() => {
+      new Chart(document.getElementById('conceptRadar'), {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '正確率 %',
+            data: values,
+            backgroundColor: 'rgba(45,106,79,.2)',
+            borderColor: '#2d6a4f',
+            pointBackgroundColor: '#2d6a4f',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { r: { min: 0, max: 100, ticks: { stepSize: 25 } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+    });
+
+    const scoresHtml = mod.concepts.map(c => {
+      const s = scores[c.id];
+      const pct = s && s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+      const lv = pct >= 70 ? 'good' : pct >= 40 ? 'mid' : 'weak';
+      const lvText = { good: '掌握良好', mid: '需複習', weak: '需加強' }[lv];
+      return '<div class="score-row ' + lv + '">' +
+        '<span class="score-name">' + c.name + '</span>' +
+        '<span class="score-bar"><span class="score-fill" style="width:' + pct + '%"></span></span>' +
+        '<span class="score-pct">' + pct + '%</span>' +
+        '<span class="score-badge ' + lv + '">' + lvText + '</span>' +
+        '</div>';
+    }).join('');
+    document.getElementById('reportScores').innerHTML = scoresHtml;
+
+    if (weakIds.length === 0) {
+      document.getElementById('reportWeak').innerHTML = '<div class="report-msg good">✅ 表現優秀！所有概念維度都掌握得不錯。</div>';
+      document.getElementById('reportActions').innerHTML = '<button class="btn-primary" onclick="LearnUI.backToModules()">返回模組列表</button>';
+    } else {
+      const weakNames = weakIds.map(id => {
+        const found = mod.concepts.find(c => c.id === id);
+        return found ? found.name : '';
+      }).filter(Boolean);
+      document.getElementById('reportWeak').innerHTML =
+        '<div class="report-msg weak">⚠️ 發現 ' + weakIds.length + ' 個需要加強的概念維度：<strong>' + weakNames.join('、') + '</strong></div>';
+      document.getElementById('reportActions').innerHTML =
+        '<button class="btn-primary btn-lg" onclick="LearnUI.startPhase5(\'' + moduleId + '\')">🎯 開始弱項加強練習 →</button>' +
+        '<button class="btn-secondary" onclick="LearnUI.backToModules()" style="margin-top:8px;display:block;width:100%;text-align:center;">跳過，返回模組</button>';
+    }
+  }
+
+  // ========== Phase 5 ==========
+
+  let p5State = null;
+
+  async function startPhase5(moduleId) {
+    const data = LEARN_DATA[currentLevel];
+    const mod = data.modules.find(m => m.id === moduleId);
+    if (!mod) return;
+
+    const result = LearnEngine.getWeakConcepts(currentLevel, moduleId);
+    const weakIds = result.concepts;
+    if (weakIds.length === 0) return;
+
+    // 收集 reinforcement 題（只取弱項相關的）
+    const reinforceQs = (mod.reinforcement || []).filter(q => {
+      const cids = LearnEngine.getQuestionConcepts(q, mod.concepts);
+      return cids.some(c => weakIds.indexOf(c) !== -1);
+    });
+
+    let allQs = reinforceQs.slice();
+
+    // 如果不夠 5 題，用 AI 補
+    if (allQs.length < 5 && typeof LearnLayer2 !== 'undefined' && LearnLayer2.generateReinforcement) {
+      document.getElementById('module-view').innerHTML =
+        '<div class="phase5-loading">' +
+        '<h2>🎯 準備弱項加強題...</h2>' +
+        '<p>AI 正在根據你的弱項生成針對性題目</p>' +
+        '<div class="loading-spinner"></div>' +
+        '</div>';
+      try {
+        const aiQs = await LearnLayer2.generateReinforcement(currentLevel, moduleId, weakIds);
+        allQs = allQs.concat(aiQs);
+      } catch(e) { console.error('AI reinforcement failed:', e); }
+    }
+
+    if (allQs.length === 0) {
+      document.getElementById('module-view').innerHTML =
+        '<button class="back-btn" onclick="LearnUI.backToModules()">← 返回</button>' +
+        '<div class="report-msg">目前沒有加強題可用，請稍後再試。</div>';
+      return;
+    }
+
+    p5State = { allQs, idx: 0, answers: {}, mod, moduleId, weakIds };
+    renderP5Question();
+  }
+
+  function renderP5Question() {
+    if (!p5State) return;
+    if (p5State.idx >= p5State.allQs.length) {
+      renderP5Summary();
+      return;
+    }
+    const q = p5State.allQs[p5State.idx];
+    const cids = LearnEngine.getQuestionConcepts(q, p5State.mod.concepts);
+    let conceptName = '';
+    if (cids.length > 0) {
+      const found = p5State.mod.concepts.find(c => c.id === cids[0]);
+      conceptName = found ? found.name : '';
+    }
+
+    document.getElementById('module-view').innerHTML =
+      '<div class="phase5-header">' +
+        '<span class="phase5-badge">🎯 弱項加強</span>' +
+        '<span class="phase5-progress">' + (p5State.idx + 1) + ' / ' + p5State.allQs.length + '</span>' +
+      '</div>' +
+      (conceptName ? '<div class="phase5-concept">聚焦：' + conceptName + '</div>' : '') +
+      '<div class="question-card">' +
+        '<p class="q-text">' + q.q + '</p>' +
+        '<div class="q-options" id="p5options">' +
+          (q.options || []).map((opt, i) =>
+            '<button class="q-option" data-idx="' + i + '" onclick="LearnUI._p5answer(' + i + ')">' +
+              '<span class="opt-letter">' + String.fromCharCode(65 + i) + '</span>' +
+              '<span class="opt-text">' + opt + '</span>' +
+              '</button>'
+          ).join('') +
+        '</div>' +
+        '<div id="p5feedback" class="q-feedback" style="display:none"></div>' +
+      '</div>';
+  }
+
+  function _p5answer(idx) {
+    if (!p5State) return;
+    const q = p5State.allQs[p5State.idx];
+    const correct = idx === q.correct;
+    p5State.answers[q.id || p5State.idx] = { correct, chosen: idx };
+
+    const buttons = document.querySelectorAll('#p5options .q-option');
+    buttons.forEach((btn, i) => {
+      btn.disabled = true;
+      if (i === q.correct) btn.classList.add('correct');
+      if (i === idx && !correct) btn.classList.add('wrong');
+    });
+
+    const fb = document.getElementById('p5feedback');
+    fb.style.display = 'block';
+    fb.className = 'q-feedback ' + (correct ? 'correct' : 'wrong');
+    fb.innerHTML =
+      '<div class="feedback-head">' + (correct ? '✅ 答對了！' : '❌ 再想想') + '</div>' +
+      (q.explain ? '<div class="feedback-explain">' + q.explain + '</div>' : '') +
+      '<button class="btn-primary" onclick="LearnUI._p5next()" style="margin-top:12px;">' +
+        (p5State.idx < p5State.allQs.length - 1 ? '下一題 →' : '查看加強結果') +
+      '</button>';
+
+    LearnEngine.recordAnswer(currentLevel, p5State.moduleId, q.id || ('p5_' + p5State.idx), correct, idx);
+  }
+
+  function _p5next() {
+    if (!p5State) return;
+    p5State.idx++;
+    renderP5Question();
+  }
+
+  function renderP5Summary() {
+    if (!p5State) return;
+    const keys = Object.keys(p5State.answers);
+    const total = keys.length;
+    let correct = 0;
+    for (let i = 0; i < keys.length; i++) {
+      if (p5State.answers[keys[i]].correct) correct++;
+    }
+    const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+    const msg = pct >= 70
+      ? '✅ 加強效果良好！弱項已有明顯改善。'
+      : pct >= 40
+        ? '⚠️ 還有進步空間，建議回去複習 S100 相關章節。'
+        : '❌ 這些概念仍需要加強，建議重新學習相關內容。';
+    const mid = p5State.moduleId;
+
+    document.getElementById('module-view').innerHTML =
+      '<div class="phase5-summary">' +
+        '<h2>🎯 弱項加強完成</h2>' +
+        '<div class="summary-score">' +
+          '<div class="score-big">' + correct + '/' + total + '</div>' +
+          '<div class="score-label">答對</div>' +
+        '</div>' +
+        '<div class="summary-msg">' + msg + '</div>' +
+        '<div class="summary-actions">' +
+          '<button class="btn-primary" onclick="LearnUI.showReport(\'' + mid + '\')">📊 重看學習報告</button>' +
+          '<button class="btn-secondary" onclick="LearnUI.backToModules()">返回模組列表</button>' +
+        '</div>' +
+      '</div>';
+
+    p5State = null;
+  }
+
   // ========== 初始化 ==========
   function init() {
     LearnEngine.getOrCreateOdID();
@@ -184,7 +420,11 @@
     showQuestion,
     selectOption,
     reportCurrentQ,
-    backToModules
+    backToModules,
+    showReport,
+    startPhase5,
+    _p5answer,
+    _p5next
   };
 
   if (document.readyState === 'loading') {

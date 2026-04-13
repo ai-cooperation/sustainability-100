@@ -28,6 +28,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 1,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -45,6 +46,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 1,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -62,6 +64,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 1,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -79,6 +82,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 1,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -87,15 +91,16 @@ window.LEARN_DATA = {
           {
             "id": "L111_Kogu_348",
             "type": "考古題",
-            "q": "什麼是巴黎協定(Paris Agreement)？ Utilization, CCU)？",
+            "q": "什麼是巴黎協定 (Paris Agreement)？",
             "options": [
+              "2015 年簽署的國際環境協議，旨在限制全球升溫",
               "從大氣中移除二氧化碳的技術",
-              "2015 年簽署的國際貿易協議，旨在促進自由",
-              "2015 年簽署的國際環境協議，旨在保護生物",
-              "以上皆非"
+              "2015 年簽署的國際貿易協議，旨在促進自由貿易",
+              "促進各國碳交易的市場機制"
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 1,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -113,6 +118,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 1,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -130,27 +136,139 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "ICA 是非附件一國家使用，附件一國家應使用 IAR (國際評估及審查",
+            "epRef": 1,
             "source": "kogu",
             "tag": [
               "考古題"
             ]
           },
           {
-            "id": "L111_Kogu_324",
-            "type": "考古題",
-            "q": "2% Q4 《京都議定書》於哪㇐年正式生效？ 巴黎協定旨在將全球溫室氣體排放限制在遠低於幾度攝 氏的水平？ 由於COVID-19大流行，哪㇐年COP未能舉行實體會 議？",
+            "id": "L111_S01",
+            "type": "補充",
+            "q": "聯合國氣候變化綱要公約 (UNFCCC) 最早於哪一年通過？",
             "options": [
-              "1℃",
-              "2001 年",
-              "2005 年",
-              "2008 年"
+              "1987 年蒙特婁",
+              "1992 年里約",
+              "1997 年京都",
+              "2005 年蒙特婁"
+            ],
+            "correct": 1,
+            "explain": "UNFCCC 於 1992 年里約地球高峰會通過，是國際氣候治理的基礎框架。",
+            "epRef": 1,
+            "source": "supplement",
+            "tag": ["UNFCCC"]
+          },
+          {
+            "id": "L111_S02",
+            "type": "補充",
+            "q": "巴黎協定的核心目標是將全球升溫控制在工業化前水平以上多少度以內？",
+            "options": [
+              "控制在 1.0°C 以內",
+              "控制在 1.5°C 以內",
+              "控制在 2°C 以內，並努力限制在 1.5°C",
+              "控制在 3°C 以內"
             ],
             "correct": 2,
-            "explain": "（考古題，官方答案）",
-            "source": "kogu",
-            "tag": [
-              "考古題"
-            ]
+            "explain": "巴黎協定目標為「遠低於 2°C，並努力限制在 1.5°C」，選項 C 最完整。",
+            "epRef": 1,
+            "source": "supplement",
+            "tag": ["巴黎協定"]
+          },
+          {
+            "id": "L111_S03",
+            "type": "補充",
+            "q": "「國家自定貢獻」(Nationally Determined Contribution, NDC) 機制的核心特色為何？",
+            "options": [
+              "各國由聯合國統一分配減碳配額",
+              "各國自主提出減碳目標，每五年更新一次",
+              "僅已開發國家需要提交減碳計畫",
+              "各國碳排放量不得超過 1990 年水準"
+            ],
+            "correct": 1,
+            "explain": "NDC 是巴黎協定的核心機制，由各國自主設定目標，每五年逐步提高雄心。",
+            "epRef": 1,
+            "source": "supplement",
+            "tag": ["NDC"]
+          },
+          {
+            "id": "L111_S04",
+            "type": "補充",
+            "q": "COP26（格拉斯哥氣候協議）首次在 COP 決議文中明確提到要逐步減少的化石燃料是？",
+            "options": [
+              "石油",
+              "天然氣",
+              "煤炭",
+              "所有化石燃料"
+            ],
+            "correct": 2,
+            "explain": "格拉斯哥氣候協議首次在 COP 決議中明確提到「逐步減少」(phase down) 煤炭使用。",
+            "epRef": 33,
+            "source": "supplement",
+            "tag": ["COP26"]
+          },
+          {
+            "id": "L111_S05",
+            "type": "補充",
+            "q": "京都議定書與巴黎協定的主要差異為何？",
+            "options": [
+              "京都議定書涵蓋所有國家，巴黎協定僅涵蓋已開發國家",
+              "京都議定書僅約束已開發國家減碳，巴黎協定要求所有締約方提交 NDC",
+              "京都議定書採自願減碳，巴黎協定採強制分配",
+              "兩者對減碳義務的要求完全相同"
+            ],
+            "correct": 1,
+            "explain": "京都議定書僅對附件一（已開發）國家設定強制目標；巴黎協定改為所有締約方自主貢獻。",
+            "epRef": 1,
+            "source": "supplement",
+            "tag": ["京都議定書","巴黎協定"]
+          },
+          {
+            "id": "L111_S06",
+            "type": "補充",
+            "q": "台灣「2050 淨零排放路徑」規劃中，下列哪一項不是官方公布的四大轉型策略？",
+            "options": [
+              "能源轉型",
+              "產業轉型",
+              "碳交易轉型",
+              "生活轉型"
+            ],
+            "correct": 2,
+            "explain": "台灣四大轉型策略為：能源轉型、產業轉型、生活轉型、社會轉型。碳交易非四大轉型之一。",
+            "epRef": 41,
+            "source": "supplement",
+            "tag": ["台灣淨零"]
+          },
+          {
+            "id": "L111_S07",
+            "type": "補充",
+            "q": "下列何者正確描述「碳中和」(Carbon Neutrality) 與「淨零排放」(Net Zero) 的差異？",
+            "options": [
+              "兩者完全相同，只是不同語言的翻譯",
+              "碳中和僅涵蓋 CO₂，淨零排放涵蓋所有溫室氣體",
+              "淨零排放允許使用碳抵換，碳中和不允許",
+              "碳中和是企業用語，淨零排放是國家用語"
+            ],
+            "correct": 1,
+            "explain": "碳中和通常指 CO₂ 排放與移除平衡；淨零排放涵蓋所有溫室氣體（CO₂、CH₄、N₂O 等），範圍更廣。",
+            "epRef": 37,
+            "source": "supplement",
+            "tag": ["碳中和","淨零"]
+          },
+          {
+            "id": "L111_S08",
+            "type": "補充",
+            "q": "IPCC 第六次評估報告 (AR6) 指出，若要控制升溫在 1.5°C 以內，全球溫室氣體排放需在何時達到淨零？",
+            "options": [
+              "2030 年前",
+              "2040 年前",
+              "2050 年前後",
+              "2070 年前"
+            ],
+            "correct": 2,
+            "explain": "IPCC AR6 指出 1.5°C 情境下，全球需在 2050 年前後達到 CO₂ 淨零排放。",
+            "epRef": 1,
+            "source": "supplement",
+            "tag": ["IPCC","AR6"]
           }
         ],
         "reinforcement": []
@@ -166,7 +284,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_349",
             "type": "考古題",
-            "q": "什 麼 是 氣 候 變 遷 減 緩 (Climate change",
+            "q": "什麼是氣候變遷減緩 (Climate Change Mitigation)？",
             "options": [
               "減緩氣候變遷的行動",
               "研究環境污染的學科",
@@ -175,6 +293,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -192,6 +311,7 @@ window.LEARN_DATA = {
             ],
             "correct": 3,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -209,6 +329,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -226,6 +347,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -243,6 +365,7 @@ window.LEARN_DATA = {
             ],
             "correct": 3,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -260,6 +383,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -268,7 +392,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_350",
             "type": "考古題",
-            "q": "什麼是碳排放交易系統 (Emissions Trading",
+            "q": "什麼是碳排放交易系統 (Emissions Trading System, ETS)？",
             "options": [
               "政府對碳排放設定上限並允許企業交易排放",
               "政府對低碳產品提供補貼的政策工具",
@@ -277,6 +401,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -285,7 +410,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_332",
             "type": "考古題",
-            "q": "下 列 何 者 不 是 生 命 週 期 評 估 (Life Cycle",
+            "q": "下列何者不是生命週期評估 (Life Cycle Assessment) 的步驟？",
             "options": [
               "目標與範疇定義",
               "清單分析",
@@ -294,6 +419,7 @@ window.LEARN_DATA = {
             ],
             "correct": 3,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -302,7 +428,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_353",
             "type": "考古題",
-            "q": "什 麼 是 氣 候 變 遷 調 適 (Climate change vulnerability assessment)？ adaptation)？",
+            "q": "什麼是氣候變遷調適 (Climate Change Adaptation)？",
             "options": [
               "評估企業因氣候變遷導致財務損失的風險",
               "評估社區或生態系統對氣候變遷的敏感性和",
@@ -311,6 +437,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -319,7 +446,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_339",
             "type": "考古題",
-            "q": "什麼是環境、社會和公司治理(Environmental,",
+            "q": "什麼是環境、社會和公司治理 (ESG)？",
             "options": [
               "企業評估投資風險的指標",
               "企業評估永續發展績效的指標",
@@ -328,6 +455,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -336,15 +464,16 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_355",
             "type": "考古題",
-            "q": "什 麼 是 氣 候 變 遷 減 緩 (Climate change mitigation)？",
+            "q": "什麼是氣候變遷減緩 (Climate Change Mitigation)？",
             "options": [
               "減少溫室氣體排放和增加碳匯的行動",
               "適應氣候變遷影響的行動",
-              "",
-              ""
+              "監測氣候變遷數據的科學研究",
+              "評估氣候風險對企業的財務影響"
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -353,7 +482,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_344",
             "type": "考古題",
-            "q": "什麼是氣候變遷情境分析(Climate change",
+            "q": "什麼是氣候變遷情境分析 (Climate Change Scenario Analysis)？",
             "options": [
               "分析不同氣候變遷情境對企業的影響",
               "分析不同氣候變遷情境對社會的影響",
@@ -362,6 +491,7 @@ window.LEARN_DATA = {
             ],
             "correct": 3,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -370,7 +500,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_335",
             "type": "考古題",
-            "q": "什 麼 是 氣 候 變 遷 調 適 (Climate change",
+            "q": "什麼是氣候變遷調適 (Climate Change Adaptation)？",
             "options": [
               "減緩氣候變遷的行動",
               "適應氣候變遷的行動",
@@ -379,6 +509,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -387,7 +518,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_326",
             "type": "考古題",
-            "q": "什 麼 是 科 學 基 礎 減 量 目 標 (Science Based 量 Targets, SBTi)？",
+            "q": "什麼是科學基礎減量目標 (Science Based Targets, SBTi)？",
             "options": [
               "企業根據自身產業特性設定的減碳目標",
               "企業根據國際減碳趨勢設定的減碳目標",
@@ -396,6 +527,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -413,6 +545,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -432,6 +565,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -440,7 +574,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_333",
             "type": "考古題",
-            "q": "什 麼 是 全 球 暖 化 潛 勢 (Global Warming Potential, GWP)？",
+            "q": "什麼是全球暖化潛勢 (Global Warming Potential, GWP)？",
             "options": [
               "一種溫室氣體吸收熱量的能力",
               "一種溫室氣體在大氣中停留的時間",
@@ -449,6 +583,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -457,7 +592,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_347",
             "type": "考古題",
-            "q": "什麼是綠色供應鏈(Green supply chain)？ Adjustment Mechanism, CBAM)？",
+            "q": "什麼是碳邊境調整機制 (Carbon Border Adjustment Mechanism, CBAM)？",
             "options": [
               "僅使用環保材料的供應鏈",
               "對出口產品提供碳補貼的機制",
@@ -466,6 +601,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -483,6 +619,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -500,6 +637,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "CDP 揭露範疇為：氣候變遷、水安全、森林、塑膠（含生物多樣性",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -517,6 +655,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -534,6 +673,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -551,6 +691,7 @@ window.LEARN_DATA = {
             ],
             "correct": 3,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -568,6 +709,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -576,7 +718,7 @@ window.LEARN_DATA = {
           {
             "id": "L112_Kogu_357",
             "type": "考古題",
-            "q": "什麼是綠色金融(Green finance)？ adaptation)？",
+            "q": "什麼是綠色金融 (Green Finance)？",
             "options": [
               "減少溫室氣體排放和增加碳匯的行動",
               "適應氣候變遷影響的行動",
@@ -585,6 +727,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 5,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -612,6 +755,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -629,6 +773,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -646,6 +791,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -663,6 +809,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -680,6 +827,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -697,6 +845,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -714,6 +863,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -731,6 +881,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -748,6 +899,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -765,6 +917,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -782,6 +935,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -790,7 +944,7 @@ window.LEARN_DATA = {
           {
             "id": "L121_Kogu_264",
             "type": "考古題",
-            "q": "溫室氣體盤查報告原則中，何者是為了使溫 則？ 室氣體相關資訊能有意義比較，以及容許有意義",
+            "q": "溫室氣體盤查報告原則中，何者是為了使溫室氣體相關資訊能有意義地比較？",
             "options": [
               "準確性",
               "一致性",
@@ -799,6 +953,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -807,7 +962,7 @@ window.LEARN_DATA = {
           {
             "id": "L121_Kogu_265",
             "type": "考古題",
-            "q": "依據標準組織型溫室氣體盤查須納入所有相",
+            "q": "依據標準，組織型溫室氣體盤查須納入所有相關排放源，此為哪項原則？",
             "options": [
               "準確性",
               "完整性",
@@ -816,6 +971,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -833,6 +989,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -850,6 +1007,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -869,6 +1027,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -877,7 +1036,7 @@ window.LEARN_DATA = {
           {
             "id": "L121_Kogu_271",
             "type": "考古題",
-            "q": "請說明溫室氣體量化方法中，排放係數法的 和流率來量測溫室氣體排放量？ 計算公式，何者正確？",
+            "q": "溫室氣體量化方法中，排放係數法的計算公式，下列何者正確？",
             "options": [
               "CO2 排放當量=活動數據×排放係數×GWP",
               "CO2 排放當量=活動數據×人口數量×GWP",
@@ -886,6 +1045,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -903,6 +1063,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -920,6 +1081,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -937,6 +1099,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -954,6 +1117,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -971,6 +1135,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -988,6 +1153,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1005,6 +1171,7 @@ window.LEARN_DATA = {
             ],
             "correct": 3,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1022,6 +1189,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 2,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1049,6 +1217,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1066,6 +1235,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1083,6 +1253,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1100,6 +1271,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1108,7 +1280,7 @@ window.LEARN_DATA = {
           {
             "id": "L122_Kogu_286",
             "type": "考古題",
-            "q": "衝擊評估階段屬於生命週期評估作業 LCA",
+            "q": "衝擊評估階段屬於生命週期評估 (LCA) 作業的哪個階段？",
             "options": [
               "第一階段",
               "第二階段",
@@ -1117,6 +1289,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1134,6 +1307,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1151,6 +1325,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1168,6 +1343,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1185,6 +1361,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1202,6 +1379,7 @@ window.LEARN_DATA = {
             ],
             "correct": 3,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1210,7 +1388,7 @@ window.LEARN_DATA = {
           {
             "id": "L122_Kogu_278",
             "type": "考古題",
-            "q": "產品碳足跡(CFP)量化時，為何需要考慮產 的重複計算？ 品/活動的整個生命週期？",
+            "q": "產品碳足跡 (CFP) 量化時，為何需要考慮產品的整個生命週期？",
             "options": [
               "降低成本",
               "僅計算一次相同的 GHG 排放與移除",
@@ -1219,6 +1397,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1236,6 +1415,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1253,6 +1433,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1270,6 +1451,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1287,6 +1469,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1306,6 +1489,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1323,6 +1507,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1340,6 +1525,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1357,6 +1543,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1374,6 +1561,7 @@ window.LEARN_DATA = {
             ],
             "correct": 3,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1391,6 +1579,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1408,6 +1597,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1425,6 +1615,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1442,6 +1633,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1459,6 +1651,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "（考古題，官方答案）",
+            "epRef": 38,
             "source": "kogu",
             "tag": [
               "考古題"
@@ -1481,6 +1674,12 @@ window.LEARN_DATA = {
         "subject": "節能減碳技術實務",
         "scope": "目標設定、碳排熱區辨識、NPV/IRR/回收期、財務決策",
         "examTips": "🔥 4/11 實考重點：NPV 投資決策計算題、BAU 基準設定、絕對/強度目標陷阱（半對半錯）、KPI 管理機制設計",
+        "concepts": [
+          { "id": "finance", "name": "財務決策與投資分析", "tags": ["NPV","IRR","回收期","財務決策","MACC","ESCO"] },
+          { "id": "target", "name": "目標設定與基準線", "tags": ["BAU","SBTi","KPI","自主減量"] },
+          { "id": "carbon-cost", "name": "碳成本與內部定價", "tags": ["碳費","ICP","EnPI"] },
+          { "id": "strategy", "name": "減碳策略整合", "tags": ["ISO50001","整合","管理"] }
+        ],
         "frameworkQuestion": "企業要設「絕對減量」還是「強度減量」目標？兩者對成長型產業的影響差異？",
         "controversy": "NPV 正的節能案就該投嗎？回收期 5 年跟 IRR 12% 哪個判斷標準更好？",
         "questions": [
@@ -1496,7 +1695,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "AF(10%,6)=3.9927...實際 4.3553；200×4.3553=870.6 萬；NPV=870.6-800=70.6≈71 萬。A 未折現；C 用錯折現率；D 漏扣初投。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "NPV",
               "計算"
@@ -1514,7 +1713,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "簡單回收期=初投/年節省=1200/300=4 年。題幹明確不考慮折現，故非折現回收期。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "回收期",
               "計算"
@@ -1532,7 +1731,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "600=900/(1+r)^5 → (1+r)^5=1.5 → r=1.5^0.2-1≈8.45%。C 混淆總報酬與年化；D 未年化。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "IRR",
               "計算"
@@ -1550,7 +1749,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "逐年折現加總≈654.1 萬，NPV=654.1-500≈154 萬。A 未扣初投；C 符號錯。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "NPV",
               "計算"
@@ -1564,11 +1763,11 @@ window.LEARN_DATA = {
               "EnPI 必須以絕對用電量表示，且不得隨產量調整",
               "EnPI 應依使用情境標準化（如每單位產品耗能），EnB 需在條件改變時重新建立",
               "EnB 一旦建立後即為永久基準，完全不可更動",
-              "只要 EnPI 下降就代表節能有效，無需考量產量變化"
+              "只要 EnPI 下降就代表節能有效，無需考量產量變化，因為指標本身已排除產量影響因素"
             ],
             "correct": 1,
             "explain": "B 符合 ISO 50001。A「不得隨產量調整」錯；C「完全不可更動」絕對語陷阱；D 忽略產量變化是半對半錯經典。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "EnPI",
               "陷阱",
@@ -1580,14 +1779,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "工廠年排 2 萬噸 CO2e，主管欲設 KPI 驅動減碳。下列 KPI 設計最符合實務管理精神？",
             "options": [
-              "僅設定總排放量絕對減量目標，不設製程別指標",
+              "僅設定總排放量絕對減量目標，不分解至製程或部門別指標",
               "設定總量目標，並拆解至各製程強度指標，搭配月度檢討",
               "完全以碳費支出作為唯一 KPI，排放量次要",
               "KPI 僅由高階主管掌握，產線人員無須知悉"
             ],
             "correct": 1,
             "explain": "B 結合總量+強度+定期檢討為最佳實務。A 缺乏拆解；C「唯一」絕對語；D 違背全員參與原則。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "KPI",
               "情境"
@@ -1600,12 +1799,12 @@ window.LEARN_DATA = {
             "options": [
               "BAU 應反映若不採行減碳措施的預期排放軌跡，含產能擴張與能耗趨勢",
               "BAU 必須等於基準年靜態排放，完全不得外推",
-              "BAU 設定後即鎖定 10 年，期間絕對不可修正",
+              "BAU 設定後即鎖定 10 年不可修正，以維持基準線一致性並避免人為操縱",
               "BAU 只適用於國家層級，企業層級不得使用"
             ],
             "correct": 0,
             "explain": "A 正確。B「完全不得外推」、C「絕對不可修正」、D「不得使用」皆為絕對語陷阱。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "BAU",
               "陷阱",
@@ -1617,14 +1816,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "某廠考慮汰換老舊鍋爐，初估 NPV 為正但邊際（+30 萬），主管應如何決策最符合策略？",
             "options": [
-              "NPV 為正就立即投資，不考慮其他因素",
+              "NPV 為正就立即投資，不需考慮碳費變動、設備殘值或政策風險等因素",
               "檢視與 SBTi 減碳路徑、碳費曝險、設備殘值風險後再定",
               "一律否決，因 NPV 太低",
               "以 IRR 單一指標決定，忽略 NPV"
             ],
             "correct": 1,
             "explain": "邊際案件應納入策略面（SBTi 路徑、碳費風險）綜合判斷。A 忽略風險；C 僵化；D 單一指標偏誤。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "財務決策",
               "情境",
@@ -1638,12 +1837,12 @@ window.LEARN_DATA = {
             "options": [
               "僅計節能電費，不計碳費扣減",
               "節能電費 + 碳費減少（以優惠費率 50/噸計年減 5,000 噸=25 萬）",
-              "節能電費 + 碳費減少（以一般費率 300/噸計）",
+              "節能電費 + 碳費減少（以一般費率 300/噸 × 年減 5,000 噸 = 150 萬計入）",
               "僅計碳費扣減，不計電費"
             ],
             "correct": 1,
             "explain": "若適用自主減量計畫優惠費率，碳費扣減應以 50/噸計，否則高估效益。C 是常見陷阱（用一般費率）。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "跨章",
               "NPV",
@@ -1658,11 +1857,11 @@ window.LEARN_DATA = {
               "100 萬（僅計電費）",
               "200 萬（100 萬電費 + 2000×500=100 萬 ICP 影子收益）",
               "約 700 萬",
-              "60 萬（用碳費 300 計）"
+              "60 萬（僅計碳費 300×2,000 噸，不計 ICP 影子收益與節能電費減免效益）"
             ],
             "correct": 1,
             "explain": "ICP 為影子價格，評估時以 ICP 而非實收碳費計算，強化長期減碳案競爭力。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "ICP",
               "整合",
@@ -1681,7 +1880,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "B 符合 ISO 50001。A「不必每年更新」半對半錯；C 缺分析；D「永久有效」絕對語。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "ISO50001",
               "陷阱"
@@ -1695,11 +1894,11 @@ window.LEARN_DATA = {
               "更換高效變頻馬達",
               "導入能源監控系統並建立月度檢討機制",
               "加裝熱回收設備",
-              "更換 LED 照明"
+              "更換 LED 照明即可達成全部節能目標"
             ],
             "correct": 1,
             "explain": "管理面強調制度、監控、檢討；A/C/D 皆屬技術設備面。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "管理",
               "情境"
@@ -1717,7 +1916,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "互斥方案以 NPV 為準（規模效應）。A 後半錯；C「永遠優於」絕對語；D 錯誤。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "NPV",
               "IRR",
@@ -1732,11 +1931,11 @@ window.LEARN_DATA = {
               "單一設備採購決策",
               "企業盤點多項減碳措施並排序投資順序",
               "替代碳足跡計算",
-              "取代 LCA 分析"
+              "取代 LCA 分析作為企業碳管理唯一工具"
             ],
             "correct": 1,
             "explain": "MACC 列出各措施單位減碳成本並排序，適用整體減碳投資組合規劃。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "MACC",
               "情境"
@@ -1749,12 +1948,12 @@ window.LEARN_DATA = {
             "options": [
               "保證節能績效型（Guaranteed Savings）由業主融資，ESCO 保證節能量",
               "ESCO 永遠承擔全部財務風險",
-              "分享節能績效（Shared Savings）由業主全額融資",
+              "分享節能績效（Shared Savings）由業主全額融資並承擔技術風險，ESCO 僅負責分潤",
               "ESCO 合約完全不需要 M&V（量測驗證）"
             ],
             "correct": 0,
             "explain": "A 正確。B「永遠承擔全部」絕對語；C 定義顛倒（Shared 由 ESCO 融資）；D「完全不需 M&V」錯。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "ESCO",
               "陷阱"
@@ -1774,7 +1973,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "AF(8%,5)=3.9927，250×3.9927=998.2，NPV≈-1.8 萬，邊際案件。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "NPV",
               "加強"
@@ -1786,13 +1985,13 @@ window.LEARN_DATA = {
             "q": "提交自主減量計畫時，下列何者為必要要件？",
             "options": [
               "承諾達特定減量率（目前 SBTi 或國家路徑）並附查驗",
-              "只要提交即可獲優惠費率",
+              "只要提交自主減量計畫文件即可獲優惠費率，無需達成實質減量目標",
               "僅需口頭承諾",
               "無需第三方查驗"
             ],
             "correct": 0,
             "explain": "自主減量計畫需達指定減量率並經查驗，始適用優惠費率。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "自主減量",
               "跨章"
@@ -1806,11 +2005,11 @@ window.LEARN_DATA = {
               "以折現後現金流累積達初投之年數，通常長於簡單回收期",
               "永遠等於簡單回收期",
               "僅適用於單次現金流",
-              "與 NPV 計算無關"
+              "與 NPV 計算無關，僅用於會計帳面折舊處理而非投資決策"
             ],
             "correct": 0,
             "explain": "折現回收期納入時間價值，故通常長於簡單回收期。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "回收期",
               "加強"
@@ -1821,14 +2020,14 @@ window.LEARN_DATA = {
             "type": "整合",
             "q": "某企業年排 3 萬噸直接排放，已承諾 SBTi 短期目標路徑，面臨碳費徵收，評估節能投資方案時應如何決策？",
             "options": [
-              "只看 NPV 不管 SBTi",
+              "只看 NPV 是否為正即可決策，不需對齊 SBTi 路徑或考量碳費遞增",
               "納入逐年碳費遞增、SBTi 路徑合規性、ICP 情境分析",
               "只看碳費省下金額",
               "忽略 SBTi，法規未強制"
             ],
             "correct": 1,
             "explain": "策略性投資需綜合財務、法規曝險、科學目標路徑。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "跨章",
               "SBTi",
@@ -1843,11 +2042,11 @@ window.LEARN_DATA = {
               "節能無效",
               "產量成長大於節能效果（強度下降但總量上升）",
               "計算錯誤",
-              "EnPI 定義錯誤"
+              "EnPI 定義錯誤導致指標失真，與實際耗能無關"
             ],
             "correct": 1,
             "explain": "EnPI 為強度指標，產量成長可致總量上升但強度下降，顯示節能有效但需額外管理。",
-            "epRef": null,
+            "epRef": 4,
             "tag": [
               "EnPI",
               "加強"
@@ -1861,6 +2060,12 @@ window.LEARN_DATA = {
         "subject": "節能減碳技術實務",
         "scope": "公用設施、ESCO、ISO 50001、氫能、儲能、智慧能源",
         "examTips": "🔥 4/11 實考重點：空調變頻節能實務題、ISO 50001 能源績效指標、技術「適用性」判斷（不考原理）",
+        "concepts": [
+          { "id": "iso50001", "name": "ISO 50001 能源管理", "tags": ["ISO50001","EnPI","EnB","SEU","M&V"] },
+          { "id": "esco", "name": "ESCO 節能服務", "tags": ["ESCO"] },
+          { "id": "equipment", "name": "設備節能技術", "tags": ["空調","變頻","馬達","LED","照明"] },
+          { "id": "future-energy", "name": "前瞻能源技術", "tags": ["氫能","儲能","V2G","需量反應","DR","AMI","EMS","智慧能源"] }
+        ],
         "frameworkQuestion": "ESCO 保證節能績效合約（Shared Saving vs Guaranteed Saving）的風險分攤怎麼算？",
         "controversy": "綠氫、藍氫、灰氫的真實碳排差多少？國家推氫能政策是科學還是產業補貼？",
         "questions": [
@@ -1870,13 +2075,13 @@ window.LEARN_DATA = {
             "q": "某紡織廠評估導入節能改善，公司資金充裕但缺乏專業技術與節能量評估能力，希望由外部廠商承諾節能績效，若達不到目標由對方補足差額。此情境最適合採用何種 ESCO 合約模式？",
             "options": [
                   "節能保證型（Guaranteed Saving）",
-                  "節能分享型（Shared Saving）",
+                  "節能分享型（Shared Saving），由業主全額出資",
                   "能源費用包乾型（Chauffage）",
                   "BOT 委外營運模式"
             ],
             "correct": 0,
             "explain": "業主出資、廠商保證節能量並承擔績效風險，屬於 Guaranteed Saving。Shared Saving 則由 ESCO 出資。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "ESCO"
             ]
@@ -1893,7 +2098,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "Shared Saving 由 ESCO 出資承擔投資風險，節能效益依比例分享予雙方，適合資金不足但想改善的業主。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "ESCO"
             ]
@@ -1910,7 +2115,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "簽約前需建立能源基線（EnB）作為 M&V 節能量驗證依據，否則無法客觀認定節能績效。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "ESCO",
                   "M&V"
@@ -1928,7 +2133,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "氣候為典型修正因子，需納入迴歸模型以消除環境變數對能源績效的干擾，才能反映真實改善成效。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "ISO50001",
                   "EnPI"
@@ -1940,13 +2145,13 @@ window.LEARN_DATA = {
             "q": "在 ISO 50001 能源審查中辨識「重大能源使用（SEU）」之目的，下列何者最為正確？",
             "options": [
                   "找出耗能占比高或改善潛力大的設備以優先管理",
-                  "列出廠內所有設備做為盤查清單",
+                  "列出廠內所有設備做為盤查清單，不論耗能占比高低均同等管理",
                   "決定再生能源採購比例",
                   "作為碳權交易的抵換依據"
             ],
             "correct": 0,
             "explain": "SEU 聚焦於耗能占比大或具顯著改善潛力者，便於資源集中投入；非全廠清單，也與碳權交易無直接關聯。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "ISO50001",
                   "SEU"
@@ -1964,7 +2169,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "基準期應能代表正常營運條件並具完整可驗證資料；當結構性變化發生時應重新設定，而非挑最有利的一年。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "ISO50001",
                   "EnB"
@@ -1982,7 +2187,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "天然氣重組（SMR）產氫並搭配 CCUS 捕捉減少碳排者為藍氫；若無 CCUS 即為灰氫，再生能源電解才是綠氫。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "氫能"
             ]
@@ -1992,14 +2197,14 @@ window.LEARN_DATA = {
             "type": "氫能",
             "q": "關於各類氫能的敘述，下列何者正確？",
             "options": [
-                  "粉紅氫以燃煤電力電解水製成，碳強度最低",
+                  "粉紅氫以燃煤電力電解水製成，碳強度最低且成本最便宜",
                   "黃氫碳強度固定為零，因其使用電網電力",
                   "綠氫由再生能源電解水產生，生命週期碳排接近零",
                   "灰氫搭配碳捕捉後即成為綠氫"
             ],
             "correct": 2,
             "explain": "綠氫為再生能源電解，碳排最低；粉紅氫為核能電解；黃氫碳排依電網組合而定；灰氫加 CCUS 為藍氫而非綠氫。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "氫能"
             ]
@@ -2016,7 +2221,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "部分負載情境下變頻控制可依實際需求調整轉速，節能效益顯著；選項D後半關閉外氣會影響室內空氣品質。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "空調",
                   "變頻"
@@ -2030,11 +2235,11 @@ window.LEARN_DATA = {
                   "一律選最大功率以保留裕度",
                   "依實際負載選擇高效率等級（如 IE3 以上）並避免長期輕載運轉",
                   "選購二手馬達以降低初始成本",
-                  "所有設備改為直流馬達即可達最佳節能"
+                  "所有設備一律改為直流馬達即可達最佳節能效果，無需依據負載特性選型"
             ],
             "correct": 1,
             "explain": "應依實際負載匹配功率與高效率等級；馬達過大導致長期輕載會降低效率，並非功率越大越好。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "馬達"
             ]
@@ -2051,7 +2256,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "LED 雖單價高但壽命與效率優勢需以生命週期成本評估；僅看單價易忽略長期營運效益。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "LED",
                   "照明"
@@ -2069,7 +2274,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "液流電池功率與容量可獨立設計、循環壽命長，適合長時儲能；飛輪與超電容為短時高功率，鋰電池長時成本偏高。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "儲能"
             ]
@@ -2086,7 +2291,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "飛輪響應速度極快、適合短時高功率調頻；抽蓄與 CAES 屬大型長時儲能，液流電池適合長時穩定放電。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "儲能"
             ]
@@ -2103,7 +2308,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "需量反應為業者依通知主動降載以換取電費回饋，非強制停電；工業與商業用戶為主要參與者。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "需量反應",
                   "DR"
@@ -2121,7 +2326,7 @@ window.LEARN_DATA = {
             ],
             "correct": 0,
             "explain": "EMS + AMI 提供即時監測與異常診斷，支援 PDCA 改善；不能取代管理系統文件或直接產生碳權。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "EMS",
                   "AMI"
@@ -2135,13 +2340,13 @@ window.LEARN_DATA = {
             "q": "關於 ESCO 三種合約模式的風險與資金歸屬，下列敘述何者正確？",
             "options": [
                   "Shared Saving 由業主出資，ESCO 保證節能量",
-                  "Guaranteed Saving 由 ESCO 出資，業主保證付費",
+                  "Guaranteed Saving 由 ESCO 出資並承擔全部技術風險，業主僅保證按月付費",
                   "Chauffage 模式下 ESCO 負責提供能源服務並收取固定費用，承擔供能風險",
                   "三種模式下 ESCO 皆不承擔任何財務風險"
             ],
             "correct": 2,
             "explain": "Chauffage 為能源服務包乾制，ESCO 承擔供能效率風險；Shared 由 ESCO 出資，Guaranteed 由業主出資並由 ESCO 保證績效。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "ESCO"
             ]
@@ -2152,13 +2357,13 @@ window.LEARN_DATA = {
             "q": "某工廠去年導入節能措施後總用電下降 8%，但同期產量亦下降 12%。若僅以總用電變化評估節能績效，可能產生何種偏誤？",
             "options": [
                   "高估節能績效，因未將產量變化做標準化處理",
-                  "低估節能績效，因產量下降會掩蓋改善成效",
+                  "低估節能績效，因產量下降會掩蓋實際改善成效",
                   "無偏誤，總用電下降即代表節能成功",
                   "僅須比較電費金額即可避免偏誤"
             ],
             "correct": 0,
             "explain": "產量下降本身會使總能耗降低，若未以單位產品耗能（EnPI）進行標準化，可能把營運萎縮誤認為節能改善。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "ISO50001",
                   "EnPI"
@@ -2169,14 +2374,14 @@ window.LEARN_DATA = {
             "type": "加強",
             "q": "關於綠氫與藍氫的比較，下列敘述何者正確？",
             "options": [
-                  "綠氫目前生產成本普遍低於藍氫，已全面取代化石來源氫",
+                  "綠氫目前生產成本普遍低於藍氫，已全面取代化石來源氫能供應",
                   "藍氫依賴天然氣與 CCUS，綠氫則依賴再生能源電解設備",
                   "兩者碳排相同，差異僅在原料來源名稱",
                   "藍氫屬於零碳氫，綠氫因需用電反而碳排較高"
             ],
             "correct": 1,
             "explain": "藍氫為 SMR + CCUS，綠氫為再生能源電解。目前綠氫成本仍高於藍氫，藍氫非零碳（僅捕捉部分 CO2）。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "氫能"
             ]
@@ -2187,13 +2392,13 @@ window.LEARN_DATA = {
             "q": "比較鋰離子電池與液流電池的特性，下列敘述何者最正確？",
             "options": [
                   "鋰電池能量密度高、響應快，適合電動車與短中時應用",
-                  "液流電池能量密度高於鋰電池，適合可攜式裝置",
+                  "液流電池能量密度高於鋰電池，適合可攜式裝置與電動車應用",
                   "兩者循環壽命相當，應用場景可完全互換",
                   "鋰電池的功率與容量可獨立擴充，液流電池則否"
             ],
             "correct": 0,
             "explain": "鋰電池能量密度高但循環壽命較短；液流電池能量密度低但功率與容量可獨立設計、壽命長，適合固定式長時儲能。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "儲能"
             ]
@@ -2206,11 +2411,11 @@ window.LEARN_DATA = {
                   "V2G 利用電動車閒置時的電池雙向供電參與電網服務，具分散式特性",
                   "V2G 僅能單向由電網對車輛充電，無法回饋電力",
                   "V2G 與固定式儲能完全相同，只是名稱不同",
-                  "V2G 僅限於再生能源場域使用，不得併入一般電網"
+                  "V2G 僅限於再生能源場域使用，不得併入一般電網調度且無法參與輔助服務"
             ],
             "correct": 0,
             "explain": "V2G 的核心為雙向充放電，利用車輛閒置電池支援電網調頻與削峰，屬分散式資源；單向者稱 V1G。",
-            "epRef": null,
+            "epRef": 11,
             "tag": [
                   "V2G",
                   "智慧能源"
@@ -2224,6 +2429,12 @@ window.LEARN_DATA = {
         "subject": "節能減碳技術實務",
         "scope": "再生能源種類比較（含海洋能）、T-REC、CPPA、自發自用",
         "examTips": "🔥 4/11 實考重點：再生能源定義與應用情境、綠電憑證 T-REC 轉移實務、PPA 購售電合約條款判讀",
+        "concepts": [
+          { "id": "re-types", "name": "再生能源種類與特性", "tags": ["風電","地熱","海洋能","生質能","容量因數"] },
+          { "id": "green-cert", "name": "綠電憑證與交易", "tags": ["TREC","憑證","RE100","綠電主張","自發自用"] },
+          { "id": "ppa", "name": "購售電合約實務", "tags": ["CPPA","Scope2"] },
+          { "id": "re-finance", "name": "再生能源投資與儲能", "tags": ["NPV","儲能","SBTi","雙重計算"] }
+        ],
         "frameworkQuestion": "潮汐、波浪、潮流、OTEC、鹽差五種海洋能的「可預測性」、「成熟度」、「裝置容量」如何排序？",
         "controversy": "T-REC 跟實體 PPA 都是綠電，為什麼大型企業寧可簽 CPPA 十年長約？",
         "questions": [
@@ -2232,14 +2443,14 @@ window.LEARN_DATA = {
             "type": "單選",
             "q": "關於海洋能與其他再生能源比較，何者正確？",
             "options": [
-              "海洋能（潮汐、波浪）發電量大且完全不受地理限制",
+              "海洋能（潮汐、波浪）發電量大且完全不受地理限制，可在任何海岸部署",
               "海洋能可預測性高（潮汐），但受地理位置限制，商轉規模仍有限",
               "海洋能是目前台灣佔比最高的再生能源",
               "海洋能完全不需要電網併接考量"
             ],
             "correct": 1,
             "explain": "B 正確。A「完全不受地理限制」絕對語；C 事實錯（台灣主力為太陽能、風力）；D「完全不需」絕對語。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "海洋能",
               "陷阱",
@@ -2251,14 +2462,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "某半導體廠 RE100 承諾 2030 年達標，年用電 50 億度，目前綠電採購 0%。最合適的綠電策略為？",
             "options": [
-              "只買 T-REC 憑證，便宜且彈性",
+              "只買 T-REC 憑證即可滿足所有綠電需求，價格便宜且不受合約年限約束",
               "簽 CPPA 鎖定長期電量（10-20 年），輔以 T-REC 補短期缺口",
               "等 2029 年再一次買齊",
               "完全自建光電，不簽任何 PPA"
             ],
             "correct": 1,
             "explain": "大用電戶 RE100 需穩定長期供給，CPPA 為主、T-REC 為輔是實務常見配置。A 僅憑證不含實體電；C 延後風險；D 自建規模不足。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "CPPA",
               "TREC",
@@ -2270,14 +2481,14 @@ window.LEARN_DATA = {
             "type": "單選",
             "q": "關於 T-REC（台灣再生能源憑證）移轉：",
             "options": [
-              "T-REC 可無限次轉讓，且抵用範圍不受時間限制",
+              "T-REC 可無限次轉讓且抵用範圍不受時間限制，同一張憑證可供多家企業主張",
               "T-REC 具唯一序號、一次性使用（抵用後註銷），不得重複主張",
               "T-REC 只能由發電業使用，企業不得購買",
               "T-REC 與實體電力可分離，但抵用後仍可再轉售"
             ],
             "correct": 1,
             "explain": "B 正確，憑證抵用即註銷。A「無限次」錯；C 錯誤；D「抵用後仍可轉售」為雙重計算陷阱。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "TREC",
               "陷阱"
@@ -2295,7 +2506,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "溢價=5000 萬度×(4.5-3.5)=5,000 萬元/年。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "CPPA",
               "計算"
@@ -2306,14 +2517,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "CPPA 與 T-REC 主要差異中，最關鍵的為？",
             "options": [
-              "CPPA 僅涵蓋憑證；T-REC 含實體電",
+              "CPPA 僅涵蓋憑證移轉不含實體電力供應；T-REC 則同時涵蓋實體電力與憑證",
               "CPPA 含實體電力 + 憑證長期綁定；T-REC 為憑證移轉，可獨立於實體電",
               "兩者完全相同，僅名稱不同",
               "T-REC 一定比 CPPA 貴"
             ],
             "correct": 1,
             "explain": "B 為核心差異。A 定義顛倒；C/D 皆錯。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "CPPA",
               "TREC",
@@ -2325,14 +2536,14 @@ window.LEARN_DATA = {
             "type": "單選",
             "q": "關於自發自用太陽光電：",
             "options": [
-              "自發自用產生的綠電可同時申請 T-REC 憑證並售出，不影響自用抵減",
+              "自發自用產生的綠電可同時申請 T-REC 憑證並售出，不影響自用抵減，因為自用與售憑是獨立系統",
               "自發自用如申請 T-REC 並售出，該部分電力不得再主張為自己的綠電使用（雙重計算）",
               "自發自用永遠比購買綠電便宜",
               "自發自用完全不需要電表驗證"
             ],
             "correct": 1,
             "explain": "B 正確，避免雙重計算。A 為典型陷阱；C「永遠」絕對語；D「完全不需要」絕對語。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "自發自用",
               "雙重計算",
@@ -2346,12 +2557,12 @@ window.LEARN_DATA = {
             "options": [
               "取代再生能源發電",
               "平抑再生能源間歇性、削峰填谷、提供輔助服務",
-              "降低 T-REC 價格",
+              "降低 T-REC 價格並增加憑證供給量，使綠電主張門檻下降",
               "取代電網"
             ],
             "correct": 1,
             "explain": "儲能功能為平抑間歇性、削峰填谷、輔助服務，並非取代。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "儲能",
               "情境"
@@ -2362,14 +2573,14 @@ window.LEARN_DATA = {
             "type": "單選",
             "q": "綠電採購對 Scope 2 排放計算（市場基礎法）的影響：",
             "options": [
-              "只要用綠電即可零排放，無須任何憑證",
+              "只要實際使用綠電即可於 Scope 2 主張零排放，無須取得任何憑證或書面證明",
               "採購綠電並取得有效憑證（如 T-REC、I-REC）才能於市場基礎法主張為零排放",
               "綠電僅影響 Scope 1",
               "綠電對 Scope 2 完全沒影響"
             ],
             "correct": 1,
             "explain": "B 正確。A 缺憑證主張會被視為雙重計算；C/D 認知錯誤。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "Scope2",
               "陷阱",
@@ -2381,14 +2592,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "離岸風電 vs 陸域風電比較，何者正確？",
             "options": [
-              "離岸容量因數較低且成本較低",
+              "離岸風電容量因數較低且建置成本也低於陸域，適合小型試驗",
               "離岸容量因數較高但單位建置成本也較高，適合大型商轉",
               "陸域風電完全不受地理限制",
               "兩者對電網影響完全相同"
             ],
             "correct": 1,
             "explain": "B 正確。A 容量因數陳述錯；C/D 絕對語錯誤。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "風電",
               "情境"
@@ -2397,16 +2608,16 @@ window.LEARN_DATA = {
           {
             "id": "L213_Q10",
             "type": "單選",
-            "q": "地熱發電特性：",
+            "q": "關於地熱發電的特性，下列敘述何者正確？",
             "options": [
-              "屬間歇性發電，與太陽能類似",
+              "屬間歇性發電且受天候影響大，特性與太陽能類似",
               "為基載型再生能源，容量因數可達 70% 以上",
               "完全無環境影響",
               "只能用於發電，不能用於熱能"
             ],
             "correct": 1,
             "explain": "B 正確，地熱為基載型。A 錯誤（地熱非間歇）；C/D 絕對語誤。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "地熱",
               "陷阱"
@@ -2424,7 +2635,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "5,000 萬×11.47≈5.735 億。C 為未折現直接 5000×20=10 億的陷阱。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "跨章",
               "NPV",
@@ -2438,12 +2649,12 @@ window.LEARN_DATA = {
             "options": [
               "綠電只能抵減 Scope 1",
               "綠電採購可於 Scope 2（市場基礎法）主張減量，且需揭露於 SBTi 進度報告",
-              "綠電可同時抵 Scope 1 與 Scope 3",
+              "綠電可同時用於抵減 Scope 1 直接排放與 Scope 3 供應鏈排放，不限於 Scope 2",
               "SBTi 不承認綠電採購"
             ],
             "correct": 1,
             "explain": "B 正確。綠電屬 Scope 2 市場基礎法範疇，SBTi 承認。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "跨章",
               "SBTi",
@@ -2457,12 +2668,12 @@ window.LEARN_DATA = {
             "options": [
               "簽長期 CPPA",
               "購買 T-REC 憑證 90 萬度，彈性高、門檻低",
-              "自建光電 90 萬度，需大量土地",
+              "自建光電 90 萬度需大量土地面積，且建置期長達 3-5 年才能穩定供電",
               "等補助"
             ],
             "correct": 1,
             "explain": "小用量且預算有限，T-REC 為最務實門檻最低方案。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "TREC",
               "情境"
@@ -2474,13 +2685,13 @@ window.LEARN_DATA = {
             "q": "關於綠電類別（國際上）：",
             "options": [
               "I-REC 為國際通用憑證，T-REC 為台灣專用，兩者不可直接互換",
-              "T-REC 可於全球任何國家抵用",
+              "T-REC 可於全球任何國家主張綠電使用，不限台灣地區且與 I-REC 完全互通",
               "I-REC 僅限歐洲使用",
               "所有再生能源憑證通用"
             ],
             "correct": 0,
             "explain": "A 正確。B/C/D 皆為絕對語或事實錯誤。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "憑證",
               "陷阱"
@@ -2498,7 +2709,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "台灣太陽能容量因數約 14-17%；離岸風電約 40%+；地熱約 70%+。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "容量因數",
               "情境"
@@ -2514,11 +2725,11 @@ window.LEARN_DATA = {
               "RE100 聚焦 100% 再生電力；SBTi 聚焦科學化減碳路徑（含非電力排放）",
               "兩者完全相同",
               "SBTi 僅限電力業",
-              "RE100 包含 Scope 1 所有排放"
+              "RE100 涵蓋 Scope 1 所有排放源的減量承諾，不僅限於電力使用端的綠化"
             ],
             "correct": 0,
             "explain": "A 正確，兩者互補但範疇不同。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "RE100",
               "SBTi",
@@ -2528,16 +2739,16 @@ window.LEARN_DATA = {
           {
             "id": "L213_R02",
             "type": "單選",
-            "q": "生質能利用：",
+            "q": "關於生質能利用，下列敘述何者正確？",
             "options": [
-              "凡生質能一律碳中和，無須盤查",
+              "凡生質能一律視為碳中和，燃燒排放不需納入溫室氣體盤查清冊",
               "生質能是否碳中和取決於來源、生命週期排放，仍需 LCA 評估",
               "生質能完全不產生 PM2.5",
               "生質能只能發電不能產熱"
             ],
             "correct": 1,
             "explain": "B 正確。A/C 絕對語錯；D 事實錯。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "生質能",
               "加強"
@@ -2551,11 +2762,11 @@ window.LEARN_DATA = {
               "綠電量足額且憑證對應註銷，避免雙重計算",
               "只需內部宣稱",
               "完全不需憑證",
-              "僅需有光電板即可"
+              "僅需安裝光電板即可主張綠電，無須憑證註銷程序"
             ],
             "correct": 0,
             "explain": "主張綠電需憑證註銷佐證，避免雙重計算。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "綠電主張",
               "加強"
@@ -2567,13 +2778,13 @@ window.LEARN_DATA = {
             "q": "台灣綠電轉供與自發自用搭配儲能時：",
             "options": [
               "儲能可延長綠電時間彈性、提升自用率；轉供則須走電業制度",
-              "儲能必然降低綠電憑證價值",
+              "儲能設施必然降低綠電憑證的市場價值，因為時移效果稀釋了尖峰綠電溢價",
               "自發自用無須任何法規遵循",
               "轉供完全不計費"
             ],
             "correct": 0,
             "explain": "A 正確。B/C/D 皆為絕對語或事實錯誤。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "跨章",
               "儲能",
@@ -2592,7 +2803,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "500 萬度×$2=1,000 萬元。",
-            "epRef": null,
+            "epRef": 21,
             "tag": [
               "TREC",
               "計算"
@@ -2606,6 +2817,11 @@ window.LEARN_DATA = {
         "subject": "碳管理制度實務",
         "scope": "氣候變遷因應法三子法、國際揭露架構、倡議準則接軌",
         "examTips": "🔥 4/11 實考重點：氣候法 × IFRS/GRI/TCFD/SBTi 整合題、碳費申報責任與調整機制、產業費率差異判斷",
+        "concepts": [
+          { "id": "climate-law", "name": "氣候變遷因應法", "tags": ["氣候法","三子法","碳費","費率","門檻","台灣時程","適用範圍","過渡期","自主減量"] },
+          { "id": "disclosure", "name": "國際揭露架構", "tags": ["IFRS","ISSB","TCFD","GRI","SASB","雙重重大性","情境分析"] },
+          { "id": "sbti-cbam", "name": "國際倡議與碳邊境", "tags": ["SBTi","CBAM","額度交易","路徑","淨零","盤查"] }
+        ],
         "frameworkQuestion": "氣候變遷因應法的三個子法（碳費、自主減量、溫室氣體減量方法）各自解決什麼問題？",
         "controversy": "台灣碳費 2026 開徵 $300/噸，是不是太低？跟 EU ETS $60-80 歐元比怎麼看？",
         "questions": [
@@ -2621,7 +2837,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "要申請優惠費率的關鍵動作是『提出減量計畫』，屬於自主減量計畫管理辦法的核心。碳費收費辦法規範費率本身，額度交易辦法規範抵換機制，盤查辦法則是上游前置作業。陷阱在考生常以為『申請費率=碳費收費辦法』。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "氣候法",
                   "三子法"
@@ -2635,11 +2851,11 @@ window.LEARN_DATA = {
                   "應依碳費收費辦法直接計算抵減額度",
                   "應依自主減量計畫管理辦法申請認可",
                   "應依溫室氣體減量額度交易管理辦法辦理額度移轉與使用",
-                  "應依氣候變遷因應法母法直接執行即可"
+                  "應依氣候變遷因應法母法直接執行即可，不需額外子法規範"
             ],
             "correct": 2,
             "explain": "自願減量額度的取得、移轉、註銷、抵換上限皆由額度交易管理辦法規範。碳費收費辦法只規定『可抵多少比例』的應用面，不規範額度本身。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "氣候法",
                   "額度交易"
@@ -2652,12 +2868,12 @@ window.LEARN_DATA = {
             "options": [
                   "碳費收費辦法的年度申報程序",
                   "自主減量計畫管理辦法的計畫核定程序",
-                  "額度交易管理辦法的額度認可程序",
+                  "額度交易管理辦法的額度認可程序，由碳交所審定",
                   "盤查登錄辦法的查驗程序"
             ],
             "correct": 1,
             "explain": "行業基準的達成與否屬於『減量計畫』的審查內容，須於計畫核定階段認定。收費辦法只在費率適用時引用此結果。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "氣候法",
                   "自主減量"
@@ -2669,13 +2885,13 @@ window.LEARN_DATA = {
             "q": "某製造業年直接排放量為 6 萬噸 CO2e，已通過自主減量計畫並符合行業別基準，但未達 SBTi 1.5°C 路徑的更嚴格門檻。其碳費計算基礎（噸數與適用費率組合）最接近下列何者？",
             "options": [
                   "6 萬噸全額適用一般費率",
-                  "扣除免費額度後餘額適用優惠費率 A",
+                  "扣除免費額度後餘額適用優惠費率 A，免費配額比照歐盟",
                   "全額 6 萬噸適用優惠費率 A，不扣除任何額度",
                   "全額 6 萬噸適用優惠費率 B"
             ],
             "correct": 2,
             "explain": "優惠費率適用者『不再扣除 2.5 萬噸免費額度』，免費扣除僅一般費率適用。此外未達 SBTi 較嚴格要求，故只能適用較寬鬆的優惠等級，非更低的優惠等級。陷阱在『優惠又扣除』的雙重好處誤解。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "碳費",
                   "費率"
@@ -2693,7 +2909,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "現行收費對象鎖定年直接排放達門檻者，甲廠未達門檻不屬徵收對象（非『免費扣除』概念）。陷阱在混淆『徵收門檻』與『免費額度』：前者是『有沒有資格被徵』，後者是『被徵者可扣多少』。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "碳費",
                   "門檻"
@@ -2704,14 +2920,14 @@ window.LEARN_DATA = {
             "type": "觀念",
             "q": "關於國際永續揭露準則自 2024 年生效後，與 TCFD 建議之間的關係，下列敘述何者最準確？",
             "options": [
-                  "該準則完全取代 TCFD，TCFD 即刻失效且不可再引用",
+                  "該準則完全取代 TCFD 四大支柱，TCFD 即刻失效且企業不可再引用其框架進行揭露",
                   "該準則延續 TCFD 四大支柱架構，並由 ISSB 接手維護相關監督工作",
                   "該準則僅規範財務揭露，氣候議題仍由 TCFD 獨立維護",
                   "該準則與 TCFD 為平行體系，企業須同時符合兩者"
             ],
             "correct": 1,
             "explain": "ISSB 於準則生效後承接 TCFD 的監督角色，準則延用治理/策略/風險管理/指標目標四支柱。『即刻失效不可引用』與『平行體系同時符合』皆為陷阱說法。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "IFRS",
                   "TCFD"
@@ -2723,13 +2939,13 @@ window.LEARN_DATA = {
             "q": "我國金管會規劃將國際永續揭露準則導入上市櫃公司。依目前分階段安排，大型企業與全體適用的兩個時點設計原則，下列何者最符合？",
             "options": [
                   "大型企業先行，之後全體適用，兩階段間隔數年",
-                  "全體同步適用，不分企業規模",
+                  "全體同步適用，不分企業規模大小，所有上市櫃公司同年度開始揭露",
                   "僅金融業適用，製造業不納入",
                   "採自願申請，無強制時程"
             ],
             "correct": 0,
             "explain": "金管會採『由大到小、分階段上路』。同步適用、僅金融業、純自願皆為誤解。考生需記住『先大後全』的設計哲學，具體年份可能調整。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "IFRS",
                   "台灣時程"
@@ -2741,13 +2957,13 @@ window.LEARN_DATA = {
             "q": "關於 GRI、SASB、ISSB 三套揭露體系的定位與雙重重大性概念，下列敘述何者正確？",
             "options": [
                   "GRI 強調企業對外部（環境社會）的影響，屬影響重大性取向",
-                  "SASB 涵蓋所有產業通用指標，不具產業特定性",
+                  "SASB 涵蓋所有產業通用指標，不具產業特定性，且不區分財務重大性",
                   "ISSB 要求同時呈現影響重大性與財務重大性",
                   "雙重重大性僅適用於上市公司，未上市公司無須考慮"
             ],
             "correct": 0,
             "explain": "GRI 取向為『Inside-out』影響重大性；SASB 為產業別特定指標（非通用）；ISSB 以財務重大性（Outside-in）為主，而非雙重；雙重重大性源自歐盟 CSRD，非僅限上市公司。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "GRI",
                   "SASB",
@@ -2762,11 +2978,11 @@ window.LEARN_DATA = {
                   "僅採 GRI 單一準則即可涵蓋全部",
                   "僅採 ISSB 準則即可涵蓋全部",
                   "採 GRI 揭露影響面，搭配 ISSB（含延用 SASB 產業指標）揭露財務面",
-                  "僅採 TCFD 四支柱即可取代全部揭露"
+                  "僅採 TCFD 四支柱即可取代全部揭露義務，不需額外適用 GRI 或 ISSB 準則"
             ],
             "correct": 2,
             "explain": "影響重大性面向由 GRI 覆蓋，財務重大性與產業指標由 ISSB（吸收 SASB）覆蓋。單一準則都不足以同時滿足雙面向的投資人與利害關係人需求。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "GRI",
                   "ISSB",
@@ -2781,11 +2997,11 @@ window.LEARN_DATA = {
                   "兩者皆要求同樣的年減率，僅目標年度不同",
                   "近期目標涵蓋 5-10 年減量斜率，長期目標須對齊淨零並含中和剩餘排放",
                   "長期目標可不涵蓋範疇三，僅近期需納入",
-                  "近期目標僅適用服務業，長期目標僅適用製造業"
+                  "近期目標僅適用服務業的範疇一減量，長期目標僅適用製造業的全範疇淨零"
             ],
             "correct": 1,
             "explain": "SBTi Net-Zero Standard 要求近期目標（5-10 年內）定義減量斜率，長期目標須對齊 1.5°C 淨零，並處理剩餘排放的中和。範疇三納入與否依占比判定，非依期間區分。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "SBTi",
                   "淨零"
@@ -2803,7 +3019,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "1.5°C 路徑年減 4.2%（線性），10 年累積約 42%。WB2°C 年減 2.5% 則約 25%。此為 SBTi 最核心的數字記憶，考試高頻。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "SBTi",
                   "路徑"
@@ -2814,14 +3030,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "某台灣螺絲製造商輸出產品至歐盟。關於 CBAM 的適用判斷，下列何者正確？",
             "options": [
-                  "螺絲屬一般機械，不在 CBAM 涵蓋產品範圍",
+                  "螺絲屬一般機械零件，不在 CBAM 涵蓋產品範圍內，僅原材料（鋼鐵）才需申報",
                   "鋼鐵下游產品可能納入 CBAM 範圍，須依歐盟公告的 CN Code 認定",
                   "CBAM 僅規範原料進口，成品加工件一律排除",
                   "只要產品不含水泥、鋁、肥料即不屬 CBAM"
             ],
             "correct": 1,
             "explain": "CBAM 以歐盟 CN Code 清單認定，鋼鐵及其部分下游產品（含螺絲、螺栓等）已納入範圍。以『不屬五大類原料』或『僅原料』判斷皆為陷阱。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "CBAM",
                   "適用範圍"
@@ -2834,12 +3050,12 @@ window.LEARN_DATA = {
             "options": [
                   "過渡期已需購買憑證，只是價格較低",
                   "過渡期僅需申報 Embedded Emissions，正式期起才須購買憑證並繳交",
-                  "過渡期與正式期規定相同，僅企業熟悉度不同",
+                  "過渡期與正式期的碳排申報規定完全相同，差別僅在於企業熟悉度與查驗頻率",
                   "正式期可用任何國際碳權全額抵換憑證"
             ],
             "correct": 1,
             "explain": "過渡期為季報義務、無收費；正式期起須依 EE 購買 CBAM 憑證。過渡期付費、兩期相同、全額抵換皆為常見陷阱。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "CBAM",
                   "過渡期"
@@ -2853,11 +3069,11 @@ window.LEARN_DATA = {
                   "氣候法自主減量計畫對接 SBTi 路徑作為基準依據，揭露面以 ISSB（含 TCFD 四支柱）呈現策略與指標，CBAM 面則以產品 EE 申報",
                   "三項業務彼此獨立，無須互相引用",
                   "僅揭露 GRI 即可同時滿足三項需求",
-                  "以 CDP 評分取代 ISSB 揭露義務"
+                  "以 CDP 評分取代 ISSB 揭露義務，因 CDP 已涵蓋 TCFD 四支柱且評分機制較國際化，同時可免除 CBAM 碳排申報要求"
             ],
             "correct": 0,
             "explain": "整合邏輯：減量計畫（氣候法）→ 以 SBTi 為路徑依據 → ISSB/TCFD 揭露策略指標 → CBAM 申報產品 EE。三者共用盤查與減量基礎資料。CDP 是自願揭露工具，不取代法定義務。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "整合",
                   "氣候法",
@@ -2872,12 +3088,12 @@ window.LEARN_DATA = {
             "options": [
                   "自願減量額度可全額抵減應繳碳費",
                   "自願減量額度抵減有法定上限，國內與國外來源各有不同比例限制",
-                  "SBTi 承諾即等同通過核准，可直接主張優惠費率",
+                  "SBTi 承諾即等同通過核准審查，企業可直接據此主張優惠費率而無需額外查驗",
                   "範疇一、二盤查不須第三方查驗即可申報碳費"
             ],
             "correct": 1,
             "explain": "額度抵減有法定上限（國內、國外比例不同），非全額；SBTi『承諾』與『核准』是兩階段，僅承諾不等於核准；碳費申報需以查驗後排放量為準。此題整合 L221（法規）× L222（碳費操作）× L211（盤查）。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "整合",
                   "碳費",
@@ -2892,14 +3108,14 @@ window.LEARN_DATA = {
             "type": "加強",
             "q": "關於自主減量計畫的申請條件與計畫期效，下列敘述何者正確？",
             "options": [
-                  "任何排放源皆可申請，無排放量門檻限制",
+                  "任何排放源皆可申請自主減量計畫，無排放量門檻限制且計畫期間無年限上限",
                   "申請者須達行業別基準或對應國際科學基礎路徑，計畫期有年限上限並屆期須檢討",
                   "計畫一經核定永久有效，不需再檢討",
                   "計畫僅適用服務業，製造業另有專屬管道"
             ],
             "correct": 1,
             "explain": "自主減量計畫以『達行業基準或 SBTi 等科學路徑』為核心門檻，期滿須檢討更新。永久有效、行業限制皆為陷阱。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "自主減量"
             ]
@@ -2912,11 +3128,11 @@ window.LEARN_DATA = {
                   "過渡期採季度申報，無憑證購買義務",
                   "正式期須依 EE 購買並繳交憑證",
                   "過渡期與正式期對 EE 計算方法要求完全一致，不因階段調整",
-                  "正式期對預設值的使用限制將比過渡期嚴格"
+                  "正式期對預設值的使用限制將比過渡期嚴格，且不允許使用來源國的排放係數"
             ],
             "correct": 2,
             "explain": "過渡期允許較寬鬆的預設值使用，正式期逐步限縮並要求實測數據。EE 方法在兩期有差異，並非完全一致。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "CBAM"
             ]
@@ -2928,12 +3144,12 @@ window.LEARN_DATA = {
             "options": [
                   "同時檢視轉型風險（嚴格政策）與實體風險（氣候失控）的雙向衝擊",
                   "僅為符合揭露字數要求",
-                  "1.5°C 與 3°C 結果相同，只是呈現格式不同",
+                  "1.5°C 與 3°C 情境分析結果相同，差別只在呈現格式與報告模板不同",
                   "兩情境僅適用能源業"
             ],
             "correct": 0,
             "explain": "低溫情境放大轉型風險（碳定價、法規），高溫情境放大實體風險（極端天氣、資產損失）。雙情境可避免企業僅看單一面向而低估風險。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "TCFD",
                   "情境分析"
@@ -2944,14 +3160,14 @@ window.LEARN_DATA = {
             "type": "加強",
             "q": "關於雙重重大性（Double Materiality）的兩個維度，下列敘述何者正確？",
             "options": [
-                  "指財務年度與永續年度兩個時間維度",
+                  "指財務年度與永續年度兩個時間維度的報告週期差異，非影響面與財務面的區分",
                   "指影響重大性（企業對環境社會影響）與財務重大性（環境社會對企業財務影響）",
                   "指母公司與子公司兩層組織維度",
                   "指本國與跨國兩個地理維度"
             ],
             "correct": 1,
             "explain": "雙重重大性源自歐盟 CSRD，強調 Inside-out（企業對外影響）與 Outside-in（外部對企業財務影響）兩面向。GRI 偏前者，ISSB 偏後者。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "雙重重大性"
             ]
@@ -2961,14 +3177,14 @@ window.LEARN_DATA = {
             "type": "加強",
             "q": "關於 SBTi『承諾（Commit）』與『核准（Validated/Approved）』的差異，下列敘述何者正確？",
             "options": [
-                  "兩者意義相同，皆代表目標已通過審查",
+                  "兩者意義相同，承諾與核准皆代表企業減碳目標已通過 SBTi 正式審查並公開登錄",
                   "承諾僅表達意向並登錄，核准則是目標經 SBTi 審查通過；企業需在時限內提交目標以免承諾失效",
                   "承諾已具法律效力，核准僅為行銷用途",
                   "核准後目標不再需要更新"
             ],
             "correct": 1,
             "explain": "承諾是第一步意向登錄，需於期限（通常 24 個月）內提交具體目標受審並取得核准，否則地位撤銷。核准後若情境重大變動仍須更新。",
-            "epRef": null,
+            "epRef": 41,
             "tag": [
                   "SBTi"
             ]
@@ -2981,6 +3197,12 @@ window.LEARN_DATA = {
         "subject": "碳管理制度實務",
         "scope": "國內外自願減量、CCUS、碳匯、碳抵換、ICP、碳資產管理",
         "examTips": "🔥 4/11 實考重點：SBTi 鋼鐵/水泥年減率、碳中和指引抵換時間限制、內部碳定價實務、碳費扣減機制陷阱",
+        "concepts": [
+          { "id": "carbon-pricing", "name": "碳費與減量機制", "tags": ["碳費","抵減上限","法規門檻","法規","自主減量"] },
+          { "id": "sbti-path", "name": "SBTi 路徑與目標", "tags": ["SBTi","SDA","年減率","Scope3","Scope歸屬","歸屬判斷"] },
+          { "id": "offset", "name": "碳權與抵換", "tags": ["碳中和","碳權分類","碳權類型","抵換","額外性","時效"] },
+          { "id": "integration", "name": "碳資產整合管理", "tags": ["CBAM","揭露","整合","碳資產","碳中和"] }
+        ],
         "frameworkQuestion": "17 萬噸排放的企業，用國內碳權抵 10%、國外碳權抵 5% 上限，實際碳費怎麼算？",
         "controversy": "自願碳市場 Verra VCS 爭議頻發，企業還該不該買？IFRS S2 要求揭露到什麼程度？",
         "questions": [
@@ -2996,7 +3218,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "國內上限 17,000 噸（未超）、國外上限 8,500 噸（實購 10,000 超上限，只能抵 8,500）。(170000-15000-8500)×300=146,500×300=43,950,000。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳費",
               "計算",
@@ -3015,7 +3237,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "正確為國內 10%、國外 5%。A 順序顛倒是常見陷阱；C/D 錯。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳費",
               "陷阱",
@@ -3034,7 +3256,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "年省=30,000×(300-50)=30,000×250=7,500,000。C 為總成本非省下金額。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳費",
               "自主減量",
@@ -3044,7 +3266,7 @@ window.LEARN_DATA = {
           {
             "id": "L222_Q04",
             "type": "單選",
-            "q": "台灣碳費徵收門檻：",
+            "q": "關於台灣碳費徵收門檻，下列敘述何者正確？",
             "options": [
               "10,000 tCO2e/年",
               "25,000 tCO2e/年",
@@ -3053,7 +3275,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "首波徵收對象為年排 25,000 tCO2e 以上的電力、製造業。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳費",
               "法規門檻"
@@ -3064,14 +3286,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "某公司取得 2018 年簽發的碳權，欲用於 2026 年宣告碳中和。下列何者正確？",
             "options": [
-              "任何年份簽發的碳權皆可用於碳中和",
+              "任何年份簽發的碳權皆可用於碳中和主張，不受簽發日期或有效期限制",
               "依碳中和指引，碳權簽發年期有時效限制（通常 5 年內），過舊碳權不被接受",
               "只要是國際認證的碳權永遠有效",
               "碳權無時效概念"
             ],
             "correct": 1,
             "explain": "碳中和主張要求碳權近期簽發（多為 5 年內），避免陳舊額度問題。A/C/D 為絕對語陷阱。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳中和",
               "時效",
@@ -3090,7 +3312,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "SBTi 1.5°C 絕對收縮法要求年減約 4.2%（至 2030 年前）。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "SBTi",
               "年減率"
@@ -3108,7 +3330,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "線性=100×(1-0.042×10)=58 萬噸。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "SBTi",
               "計算"
@@ -3119,14 +3341,14 @@ window.LEARN_DATA = {
             "type": "單選",
             "q": "自願性碳權（VCS、GS 等）與合規性碳權差異：",
             "options": [
-              "自願性碳權與合規性碳權可完全互換使用",
+              "自願性碳權與合規性碳權可完全互換使用，且在任何法域下均具同等法律效力",
               "自願性碳權用於自願主張（如碳中和），合規性碳權用於法規義務抵減，抵減規則不同",
               "合規性碳權永遠比自願碳權便宜",
               "自願碳權不需第三方查驗"
             ],
             "correct": 1,
             "explain": "B 正確。A「完全互換」錯；C「永遠便宜」絕對語；D 錯（需查驗）。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳權分類",
               "陷阱"
@@ -3137,14 +3359,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "下列何種情境最適合使用「移除類（Removal）」而非「減量類（Avoidance）」碳權？",
             "options": [
-              "企業短期補足少量剩餘排放，成本敏感",
+              "企業短期補足少量剩餘排放且高度成本敏感，優先選擇市場上最便宜的抵換額度即可",
               "企業追求科學化長期淨零、欲抵「殘餘排放」（residual emissions）",
               "取代電費支出",
               "取代 SBTi 減量路徑"
             ],
             "correct": 1,
             "explain": "移除類（如造林、DAC）適於抵殘餘排放，符合淨零目標；減量類則多用於過渡期。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳權類型",
               "情境"
@@ -3157,12 +3379,12 @@ window.LEARN_DATA = {
             "options": [
               "只要買碳權即可主張碳中和，無須優先減量",
               "應優先減量（Avoid-Reduce），殘餘才用抵換，且須符合額外性、永久性原則",
-              "抵換可同時用於 SBTi 與法規抵減，不計上限",
+              "抵換可同時用於 SBTi 路徑承諾與法規碳費抵減，不計上限且不要求額外性證明",
               "抵換後碳權可重複使用"
             ],
             "correct": 1,
             "explain": "B 符合減量層級原則與碳權四大要件（額外性、永久性、可量化、不雙重計算）。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "抵換",
               "陷阱"
@@ -3175,12 +3397,12 @@ window.LEARN_DATA = {
             "options": [
               "企業規模",
               "產業整體減碳斜率與產品基準（如 tCO2/t 熟料）",
-              "碳權市場價格",
+              "碳權市場價格走勢，因為減碳斜率應參考碳交易市場供需決定",
               "員工人數"
             ],
             "correct": 1,
             "explain": "SDA（產業去碳化法）以產業脫碳斜率與產品強度基準制定目標。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "SBTi",
               "SDA",
@@ -3192,14 +3414,14 @@ window.LEARN_DATA = {
             "type": "整合",
             "q": "A 廠年排 2 萬噸（未達 25,000 門檻），但客戶要求 SBTi 揭露。該廠應：",
             "options": [
-              "因未達碳費門檻，無須任何減碳",
+              "因未達碳費門檻故無須進行任何減碳規劃，也不需要揭露排放數據或回應供應鏈要求",
               "雖未達碳費門檻，仍可自願提 SBTi、揭露 Scope 1/2/3，回應供應鏈要求",
               "等法規強制再做",
               "只揭露 Scope 1 即可"
             ],
             "correct": 1,
             "explain": "法規門檻與供應鏈揭露要求分屬不同層次，SBTi 為自願性但供應鏈壓力驅動。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "跨章",
               "SBTi",
@@ -3211,14 +3433,14 @@ window.LEARN_DATA = {
             "type": "單選",
             "q": "範疇三（Scope 3）排放包含下列何項？",
             "options": [
-              "自有車隊燃油（Scope 1）",
+              "自有車隊燃油屬 Scope 1 直接排放，非 Scope 3 間接排放",
               "員工商務差旅、上下游運輸、採購商品的隱含排放",
               "自用電力（Scope 2）",
               "完全不含下游使用階段"
             ],
             "correct": 1,
             "explain": "B 為 Scope 3 典型 15 類別範圍。A 屬 Scope 1；C 屬 Scope 2；D「完全不含」絕對語錯。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "Scope3",
               "陷阱",
@@ -3232,12 +3454,12 @@ window.LEARN_DATA = {
             "options": [
               "Scope 1",
               "Scope 2（若租戶承擔電費及控制權）或 Scope 3 類別 8（若房東控制）",
-              "一律 Scope 3",
+              "一律歸入 Scope 3 類別 8 上游租賃資產，不論租戶或房東誰承擔電費控制權",
               "完全不歸租戶"
             ],
             "correct": 1,
             "explain": "依財務/營運控制權判斷。實務上需視合約與電費歸屬，此為 4/11 實考點。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "Scope歸屬",
               "陷阱",
@@ -3252,11 +3474,11 @@ window.LEARN_DATA = {
               "全部 100% 納入",
               "依持股 50% 比例納入",
               "完全不納入",
-              "僅納入 Scope 3"
+              "僅納入 Scope 3 類別 15 投資，不計入 Scope 1 或 2"
             ],
             "correct": 1,
             "explain": "股權比例法依持股比例納入；若採營運控制法且無控制則不納。題目明確用股權比例法。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "歸屬判斷",
               "情境"
@@ -3267,14 +3489,14 @@ window.LEARN_DATA = {
             "type": "單選",
             "q": "關於碳權「額外性（Additionality）」：",
             "options": [
-              "只要專案產生減碳量即具額外性",
+              "只要專案實際產生可量測的減碳量即自動具備額外性，無需證明 BAU 基線外之增量",
               "須證明若無碳權收入，該減碳行動不會發生（Business-as-usual 情境外）",
               "額外性與基準線無關",
               "政府法規要求的減碳也具額外性"
             ],
             "correct": 1,
             "explain": "B 為標準定義。A/C/D 皆為常見陷阱（法規要求者不具額外性）。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "額外性",
               "陷阱"
@@ -3288,11 +3510,11 @@ window.LEARN_DATA = {
               "國內抵上限 10%=5,000 噸（3,000 未超），若計畫達標可適用優惠費率",
               "國內上限 5%、適用一般費率",
               "完全不可抵",
-              "國內上限 20%、適用優惠費率"
+              "國內碳權抵減上限為 20%（即 10,000 噸），且自動適用優惠費率 A 而無需提交計畫"
             ],
             "correct": 0,
             "explain": "國內抵上限 10% 即 5,000 噸，3,000 未超。自主減量計畫達標適用優惠費率（如 50 元/噸）。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "跨章",
               "法規",
@@ -3313,7 +3535,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "國內上限 10%=30,000（等於實購，全抵）、國外上限 5%=15,000（實購 20,000 超，只抵 15,000）。(300000-30000-15000)×300=255,000×300=76,500,000=7,650 萬。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳費",
               "計算",
@@ -3327,12 +3549,12 @@ window.LEARN_DATA = {
             "options": [
               "僅需揭露 Scope 1",
               "需揭露 Scope 1+2，Scope 3 達門檻（佔總排 40%）亦須設目標",
-              "完全不必揭露 Scope 3",
+              "完全不必揭露 Scope 3 排放數據，因 SBTi 近期目標僅涵蓋 Scope 1 與 Scope 2",
               "僅需每 10 年揭露一次"
             ],
             "correct": 1,
             "explain": "B 正確。SBTi 對 Scope 3 佔比 40% 以上者要求設目標。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "SBTi",
               "揭露",
@@ -3344,14 +3566,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "宣告「碳中和產品」需遵守？",
             "options": [
-              "僅公司內部宣稱即可",
+              "僅由公司內部宣稱即可達成碳中和，不需第三方查驗或依循國際標準流程",
               "依 PAS 2060 或相關指引，需量化、減量、抵換、查驗四步驟",
               "只要買碳權即可",
               "不需第三方確證"
             ],
             "correct": 1,
             "explain": "PAS 2060 或 ISO 14068 要求四步驟並第三方確證。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "碳中和",
               "加強"
@@ -3362,14 +3584,14 @@ window.LEARN_DATA = {
             "type": "整合",
             "q": "企業面對歐盟 CBAM（碳邊境調整機制）時：",
             "options": [
-              "只繳台灣碳費即可，CBAM 不影響",
+              "只繳台灣碳費即可滿足所有碳定價義務，歐盟 CBAM 不影響出口產品的碳成本",
               "出口至歐盟產品需申報隱含排放；台灣已付碳費部分可於 CBAM 扣減",
               "CBAM 僅針對歐盟企業",
               "完全與 Scope 3 無關"
             ],
             "correct": 1,
             "explain": "B 正確。CBAM 避免雙重課稅，已付碳費可扣抵，且涉及供應鏈 Scope 3 揭露。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "CBAM",
               "跨章",
@@ -3381,14 +3603,14 @@ window.LEARN_DATA = {
             "type": "單選",
             "q": "關於自主減量計畫（台灣）：",
             "options": [
-              "不需實質減量，提交文件即享優惠費率",
+              "不需實質達成減量目標，只要提交自主減量計畫文件即可持續享有優惠費率",
               "須承諾達指定減量目標（對應 SBTi 或國家路徑），達標才維持優惠費率",
               "一次申請永久適用",
               "無須查驗"
             ],
             "correct": 1,
             "explain": "B 正確，未達標將追補差額。A/C/D 為常見誤解。",
-            "epRef": null,
+            "epRef": 31,
             "tag": [
               "自主減量",
               "加強"
@@ -3402,6 +3624,12 @@ window.LEARN_DATA = {
         "subject": "碳管理制度實務",
         "scope": "範疇三 15 類、供應鏈減碳風險評估",
         "examTips": "🔥 4/11 實考重點：Scope 3 排放歸屬判斷（高頻陷阱）、GHG Protocol 分類、永續供應鏈評估實務",
+        "concepts": [
+          { "id": "scope3-class", "name": "Scope 3 分類與歸屬", "tags": ["Scope3","控制權","租賃","差旅","通勤","合資","加盟","組織邊界","運輸","類11","類15"] },
+          { "id": "data-method", "name": "數據品質與估算方法", "tags": ["估算方法","混合法","熱點分析","數據品質","market-based","Scope2","雙重計算"] },
+          { "id": "supplier-mgmt", "name": "供應商分級管理", "tags": ["供應商管理","分級","CDP","產業"] },
+          { "id": "asset-link", "name": "碳資產與投資整合", "tags": ["整合","L222","碳資產","投資","金融"] }
+        ],
         "frameworkQuestion": "範疇三 15 類哪些必盤、哪些可豁免？估算法 vs 實際數據如何取捨？",
         "controversy": "範疇三佔企業碳排 80%+，但供應商給不出數據時，估算值能不能當減量證明？",
         "questions": [
@@ -3412,12 +3640,12 @@ window.LEARN_DATA = {
             "options": [
                   "納入 Scope 1,因車輛所有權屬於公司",
                   "納入 Scope 3 類別 13 下游租賃資產",
-                  "納入 Scope 3 類別 8 上游租賃資產",
+                  "納入 Scope 3 類別 8 上游租賃資產，因使用權歸屬承租方",
                   "納入 Scope 3 類別 4 上游運輸配送"
             ],
             "correct": 1,
             "explain": "車輛由公司持有並出租給外部使用,公司無營運控制權,依 GHG Protocol 應歸屬下游租賃資產(類 13),而非自身 Scope 1。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "Scope3",
                   "租賃"
@@ -3435,7 +3663,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "承租人具營運控制權且自行採購電力時,應納入自身 Scope 2,而非以上游租賃形式歸入 Scope 3 類 8。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "Scope2",
                   "租賃",
@@ -3450,11 +3678,11 @@ window.LEARN_DATA = {
                   "全部納入 Scope 3 類別 6 商務差旅",
                   "高鐵與飛機屬 Scope 3 類 6,公務車屬 Scope 1",
                   "全部納入 Scope 1,因屬員工執行公務",
-                  "高鐵飛機屬 Scope 3 類 7,公務車屬 Scope 1"
+                  "高鐵飛機屬 Scope 3 類別 7 員工通勤,公務車屬 Scope 1 直接排放"
             ],
             "correct": 1,
             "explain": "公司車燃料直接受公司控制屬 Scope 1;搭乘外部運輸工具(高鐵、飛機)屬差旅類別 6;類 7 為員工通勤,與差旅不同。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "Scope3",
                   "差旅",
@@ -3473,7 +3701,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "員工往返住家與辦公場所的日常通勤屬於獨立類別,與商務差旅(類 6)及運輸配送(類 4)需加以區分。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "Scope3",
                   "通勤"
@@ -3485,13 +3713,13 @@ window.LEARN_DATA = {
             "q": "甲公司持有乙合資企業 40% 股權,依合資協議,甲公司對乙之財務與營運政策均無主導權。甲公司採用股權比例法進行盤查時,對乙合資企業之排放應如何處理?",
             "options": [
                   "不納入甲公司盤查,因無控制權",
-                  "全額納入甲公司 Scope 1 與 Scope 2",
+                  "全額納入甲公司 Scope 1 與 Scope 2，因為合資企業應以經營控制權全額認列",
                   "依 40% 比例納入甲公司相對應的 Scope 1 與 Scope 2",
                   "全額納入甲公司 Scope 3 類別 15"
             ],
             "correct": 2,
             "explain": "採股權比例法時,按股權比例認列合資方之直接與能源間接排放;若改採營運控制權法則視控制情況處理。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "合資",
                   "組織邊界"
@@ -3503,13 +3731,13 @@ window.LEARN_DATA = {
             "q": "某製造商將原料從供應商工廠運至自家廠區之運輸作業,委外給第三方物流業者執行,運費由製造商支付。此段運輸排放對製造商而言應歸屬於?",
             "options": [
                   "Scope 3 類別 4 上游運輸與配送",
-                  "Scope 3 類別 9 下游運輸與配送",
+                  "Scope 3 類別 9 下游運輸與配送，因貨物已脫離工廠控制",
                   "Scope 1,因運費由公司支付",
                   "Scope 3 類別 1 採購商品與服務"
             ],
             "correct": 0,
             "explain": "報告公司付費委外、將採購原料運入廠區之運輸屬於上游運輸配送;下游運輸(類 9)指產品售出後之運送。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "Scope3",
                   "運輸"
@@ -3527,7 +3755,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "耐久性用電產品在使用階段長期耗電,其累積排放通常遠超過製造與物流階段,屬下游類 11。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "Scope3",
                   "使用階段"
@@ -3545,7 +3773,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "加盟店雖獨立營運,仍屬品牌方下游價值鏈,GHG Protocol 另設類別 14 專門歸屬其排放。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "Scope3",
                   "加盟"
@@ -3563,7 +3791,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "首次盤查且供應商數據不足時,以財務支出乘排放係數可快速完成全面性估算,後續再逐年改採更精準方法。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "估算方法"
             ]
@@ -3575,12 +3803,12 @@ window.LEARN_DATA = {
             "options": [
                   "全面改用支出法以維持一致性",
                   "關鍵供應商改採供應商特定法或數量法,其餘維持支出法",
-                  "全品項改採供應商特定法,不論佔比",
+                  "全品項一律改採供應商特定法以提升數據品質,不論該品項排放佔比高低",
                   "全品項改採預設國家平均值"
             ],
             "correct": 1,
             "explain": "混合法策略中,對重大排放源深化數據品質、次要項維持既有方法,可在效益與成本間取得平衡。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "估算方法",
                   "混合法"
@@ -3594,11 +3822,11 @@ window.LEARN_DATA = {
                   "類 2 資本財、類 5 廢棄物、類 8 上游租賃",
                   "類 1 採購、類 4/9 運輸、類 11 產品使用",
                   "類 6 差旅、類 7 通勤、類 13 下游租賃",
-                  "類 3 燃料相關、類 14 加盟店、類 15 投資"
+                  "類 3 燃料與能源相關、類 14 加盟店營運、類 15 投資組合排放"
             ],
             "correct": 1,
             "explain": "多數製造業熱點集中於原料採購、上下游物流及產品使用階段,應納入首要盤查範疇。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "熱點分析"
             ]
@@ -3609,13 +3837,13 @@ window.LEARN_DATA = {
             "q": "金融控股公司、家電製造商、連鎖餐飲品牌三者進行 Scope 3 重大性分析,其各自最顯著之排放類別最可能為何?",
             "options": [
                   "金控:類 15;家電:類 11;連鎖餐飲:類 1",
-                  "金控:類 1;家電:類 12;連鎖餐飲:類 14",
+                  "金控:類 1 採購商品;家電:類 12 產品處置;連鎖餐飲:類 14 加盟",
                   "金控:類 6;家電:類 9;連鎖餐飲:類 7",
                   "金控:類 15;家電:類 1;連鎖餐飲:類 11"
             ],
             "correct": 0,
             "explain": "不同產業熱點差異顯著:金融業投資組合排放最大;耐久電器使用階段主導;餐飲業食材原料採購為主要來源。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "熱點分析",
                   "產業"
@@ -3626,14 +3854,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "某上市公司為系統化推動供應鏈減碳,規劃每年向關鍵供應商蒐集氣候資訊、設定減量目標並追蹤進度。下列何者是國際間最常被採用、且能與 CDP 主問卷銜接的供應鏈揭露機制?",
             "options": [
-                  "ISO 14064-1",
+                  "ISO 14064-1 組織型盤查，因其涵蓋 Scope 3 揭露要求",
                   "CDP Supply Chain 計畫",
                   "GRI 標準",
                   "TCFD 架構"
             ],
             "correct": 1,
             "explain": "CDP Supply Chain 專為買方主導向供應商蒐集碳資訊而設計,與 CDP 企業揭露體系一致,廣為跨國企業採用。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "供應商管理",
                   "CDP"
@@ -3646,12 +3874,12 @@ window.LEARN_DATA = {
             "options": [
                   "A 級應採供應商特定法、定期稽核;C 級可採支出法與問卷",
                   "所有級別一律要求提供產品碳足跡證書",
-                  "A 級與 C 級投入資源相同以維持公平",
+                  "A 級與 C 級供應商投入的稽核資源和數據要求應完全相同，以維持管理公平性",
                   "分級僅依供應商規模,不考慮排放熱點"
             ],
             "correct": 0,
             "explain": "核心高排放供應商應深化數據品質與稽核強度,次要供應商採較輕量方法以兼顧推動效益與資源配置。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "供應商管理",
                   "分級"
@@ -3669,7 +3897,7 @@ window.LEARN_DATA = {
             ],
             "correct": 1,
             "explain": "內部累積之盤查方法、減量專案經驗與數據管理能力,可複製輔導供應商,並作為選商與分級依據,形成價值鏈綜效。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "整合",
                   "L222",
@@ -3683,14 +3911,14 @@ window.LEARN_DATA = {
             "type": "情境",
             "q": "某公司外購電力同時採用市場基礎法(market-based)與區位基礎法(location-based)進行 Scope 2 盤查,其用電量相同但兩法結果差異顯著。下列對此差異最合理的解釋為?",
             "options": [
-                  "兩法計算公式不同,結果必然不同,無法比較",
+                  "兩法計算公式不同且採用不同係數來源,結果必然不同且無法進行有意義的比較",
                   "市場基礎法反映所購買之電力產品(如再生能源憑證)排放係數,區位法反映電網平均",
                   "區位法僅適用於離岸企業",
                   "市場基礎法僅計算自發自用電力"
             ],
             "correct": 1,
             "explain": "市場基礎法採用契約或憑證對應之排放係數,可反映企業採購再生能源之減量;區位基礎法使用電網平均值。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "Scope2",
                   "market-based"
@@ -3704,11 +3932,11 @@ window.LEARN_DATA = {
                   "屬雙重計算錯誤,應由其中一方剔除",
                   "屬價值鏈盤查正常現象,非報告邊界內之雙重計算",
                   "A 公司應改列為 Scope 2",
-                  "B 公司應將其歸入 Scope 3 類 11"
+                  "B 公司應將該零組件製造排放歸入 Scope 3 類別 11 售出產品使用"
             ],
             "correct": 1,
             "explain": "Scope 3 設計原意即讓排放在價值鏈上可被多方認列以驅動共同減量,不同組織邊界內不構成報告層級之雙重計算。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "雙重計算"
             ]
@@ -3720,12 +3948,12 @@ window.LEARN_DATA = {
             "options": [
                   "優先使用預設值以簡化流程",
                   "關鍵重大排放源優先取得主要數據,次要項可用資料庫,低重要性項方用預設值",
-                  "一律採用次要數據以維持一致性",
+                  "一律採用次要數據（產業資料庫）以維持各排放源間的計算一致性與可比較性",
                   "僅在查驗期才需要主要數據"
             ],
             "correct": 1,
             "explain": "數據品質應與排放重大性連動,熱點項目需供應商主要數據以降低不確定性,非熱點項可接受較低品質來源。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "數據品質"
             ]
@@ -3742,7 +3970,7 @@ window.LEARN_DATA = {
             ],
             "correct": 2,
             "explain": "金融機構之投融資活動衍生之受資方排放屬下游類 15,是金融業 Scope 3 最重大之類別,PCAF 提供分資產類別歸因方法。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "類15",
                   "投資",
@@ -3756,12 +3984,12 @@ window.LEARN_DATA = {
             "options": [
                   "兩者計算方法完全相同,無差異",
                   "冷氣機需考量使用年限與耗電量累積,洗髮精使用階段排放相對微小且可能非熱點",
-                  "洗髮精因產量大,使用階段排放必然大於冷氣",
+                  "洗髮精因年產量遠大於冷氣機,使用階段的總碳排放量必然高於冷氣機的耗電累積",
                   "耐久財不需納入類別 11"
             ],
             "correct": 1,
             "explain": "類 11 對耐久用電產品為高度重大(長期耗能累積),對一般消耗品則通常佔比有限,重大性分析結果將影響盤查深度。",
-            "epRef": null,
+            "epRef": 61,
             "tag": [
                   "類11",
                   "使用階段"

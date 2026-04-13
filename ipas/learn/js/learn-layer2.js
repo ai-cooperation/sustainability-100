@@ -115,6 +115,66 @@ correct 是正解的 index（0-3）。`;
     }
   }
 
+  // ========== Phase 5: AI 弱項加強題 ==========
+  async function generateReinforcement(level, moduleId, weakConceptIds) {
+    const data = LEARN_DATA[level];
+    const mod = data && data.modules ? data.modules.find(m => m.id === moduleId) : null;
+    if (!mod || !mod.concepts) return [];
+
+    const weakConcepts = mod.concepts.filter(c => weakConceptIds.indexOf(c.id) !== -1);
+    if (weakConcepts.length === 0) return [];
+
+    const conceptInfo = weakConcepts.map(c => '「' + c.name + '」（涵蓋：' + c.tags.join('、') + '）').join('\n');
+    const count = Math.min(weakConcepts.length * 2, 8);
+
+    const levelName = level === 'l1' ? '初級' : '中級';
+    const typeHint = level === 'l1'
+      ? '單選題為主，重點在名詞記憶與流程理解'
+      : '情境判斷題為主，設計「半對半錯」陷阱，重點在活用與判斷';
+
+    const prompt = '你是 iPAS 淨零碳規劃管理師' + levelName + '考試的弱項加強出題專家。\n\n' +
+      '學生在模組「' + mod.name + '」的以下概念維度表現較弱，請針對性出題幫助加強：\n\n' +
+      conceptInfo + '\n\n' +
+      '模組範圍：' + mod.scope + '\n' +
+      (mod.examTips ? '實考重點：' + mod.examTips + '\n' : '') +
+      '\n題型要求：' + typeHint + '\n' +
+      '要求：' + count + ' 題選擇題（4 選 1），專門針對上述弱項概念。\n\n' +
+      '【出題原則】\n' +
+      '1. 每題聚焦一個弱項概念，換角度重新考\n' +
+      '2. 每個選項 30-60 字，四個選項字數接近\n' +
+      '3. 錯誤選項要有說服力的誤解理由，不能一看就錯\n' +
+      '4. 解析要點出「常見誤解」和「正確理解」的差異\n' +
+      '5. 每題標注對應的概念維度 ID\n\n' +
+      '回傳純 JSON 陣列（無 markdown code block）：\n' +
+      '[{"stem":"題幹","options":["A","B","C","D"],"correct":0,"explanation":"解析","conceptId":"finance"}]\n\n' +
+      'correct 是正解 index（0-3），conceptId 是上述概念維度的 id。';
+
+    try {
+      const text = await callGroq(prompt, 8192);
+      const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const questions = JSON.parse(cleaned);
+      const result = questions.map(function(q, i) {
+        return {
+          id: 'RI-' + moduleId + '-' + Date.now() + '-' + i,
+          type: '加強',
+          q: q.stem,
+          options: q.options,
+          correct: q.correct,
+          explain: q.explanation,
+          tag: [q.conceptId || 'reinforcement'],
+          source: 'ai_reinforcement',
+          ts: Date.now()
+        };
+      });
+      // 寫入 cache 飛輪
+      cacheQuestions(level, moduleId, result);
+      return result;
+    } catch (e) {
+      console.error('generateReinforcement failed:', e);
+      return [];
+    }
+  }
+
   // ========== 模擬考狀態 ==========
   const exam = {
     level: null,
@@ -416,6 +476,7 @@ correct 是正解的 index（0-3）。`;
   }
 
   global.LearnLayer2 = {
+    generateReinforcement,
     startExam,
     answerExam,
     nextQuestion,
