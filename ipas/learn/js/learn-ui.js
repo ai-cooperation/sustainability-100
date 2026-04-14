@@ -72,14 +72,48 @@
       </div>
 
       <section class="three-question-section">
+        ${mod.frameworkQ ? `
+        <div class="q-block framework">
+          <h3>🧭 框架問</h3>
+          <p class="q-block-question">${mod.frameworkQ.question}</p>
+          <p class="q-block-hint">${mod.frameworkQ.hint}</p>
+          <div class="q-block-answer" id="fwAnswer" style="display:none">
+            <p>${mod.frameworkQ.answer}</p>
+          </div>
+          <button class="btn-reveal" id="fwRevealBtn" onclick="LearnUI._toggleAnswer('fwAnswer','fwRevealBtn')">💡 看參考解析</button>
+        </div>` : `
         <div class="q-block framework">
           <h3>🧭 框架問</h3>
           <p>${mod.frameworkQuestion}</p>
-        </div>
+        </div>`}
+
+        ${mod.controversyQ ? `
+        <div class="q-block controversy">
+          <h3>⚡ 爭議問</h3>
+          <p class="q-block-scenario">${mod.controversyQ.scenario}</p>
+          <div class="side-btns">
+            <button class="side-btn" id="sideABtn" onclick="LearnUI._chooseSide('A')">${mod.controversyQ.sideA.label}</button>
+            <button class="side-btn" id="sideBBtn" onclick="LearnUI._chooseSide('B')">${mod.controversyQ.sideB.label}</button>
+          </div>
+          <div class="controversy-reveal" id="controversyReveal" style="display:none">
+            <div class="side-argument side-a">
+              <strong>🅰️ ${mod.controversyQ.sideA.label}</strong>
+              <p>${mod.controversyQ.sideA.argument}</p>
+            </div>
+            <div class="side-argument side-b">
+              <strong>🅱️ ${mod.controversyQ.sideB.label}</strong>
+              <p>${mod.controversyQ.sideB.argument}</p>
+            </div>
+            <div class="controversy-insight">
+              <strong>🔍 整合觀點</strong>
+              <p>${mod.controversyQ.insight}</p>
+            </div>
+          </div>
+        </div>` : `
         <div class="q-block controversy">
           <h3>⚡ 爭議問</h3>
           <p>${mod.controversy}</p>
-        </div>
+        </div>`}
       </section>
 
       <section class="questions-section">
@@ -173,6 +207,32 @@
     document.getElementById('modules-view').style.display = 'block';
     currentModule = null;
     renderModules(); // 重刷進度
+  }
+
+  // ========== 框架問 / 爭議問互動 ==========
+  function _toggleAnswer(answerId, btnId) {
+    const answer = document.getElementById(answerId);
+    const btn = document.getElementById(btnId);
+    if (!answer || !btn) return;
+    if (answer.style.display === 'none') {
+      answer.style.display = 'block';
+      btn.textContent = '收起解析';
+      btn.classList.add('revealed');
+    } else {
+      answer.style.display = 'none';
+      btn.textContent = '💡 看參考解析';
+      btn.classList.remove('revealed');
+    }
+  }
+
+  function _chooseSide(side) {
+    const btnA = document.getElementById('sideABtn');
+    const btnB = document.getElementById('sideBBtn');
+    const reveal = document.getElementById('controversyReveal');
+    if (!btnA || !btnB || !reveal) return;
+    btnA.classList.toggle('chosen', side === 'A');
+    btnB.classList.toggle('chosen', side === 'B');
+    reveal.style.display = 'block';
   }
 
   // ========== Phase 4 Report + Phase 5 Reinforcement ==========
@@ -423,6 +483,8 @@
     backToModules,
     showReport,
     startPhase5,
+    _toggleAnswer,
+    _chooseSide,
     _p5answer,
     _p5next
   };

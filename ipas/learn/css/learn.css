@@ -594,3 +594,31 @@
   .score-badge { flex: 0 0 50px; font-size: 10px; }
   .report-chart { max-width: 100%; }
 }
+
+/* Framework Q / Controversy Q Interactive */
+.q-block-question { font-size: 15px; font-weight: 600; line-height: 1.7; margin-bottom: 8px; }
+.q-block-hint { font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 12px; }
+.q-block-answer { background: var(--bg); border-left: 3px solid var(--green); padding: 12px 16px; border-radius: 0 8px 8px 0; margin-bottom: 12px; font-size: 14px; line-height: 1.8; animation: fadeIn .3s; }
+.btn-reveal { display: inline-block; padding: 8px 16px; background: var(--green); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+.btn-reveal:hover { opacity: .85; }
+.btn-reveal.revealed { background: var(--muted); }
+
+.q-block-scenario { font-size: 15px; font-weight: 600; line-height: 1.7; margin-bottom: 12px; }
+.side-btns { display: flex; gap: 10px; margin-bottom: 12px; }
+.side-btn { flex: 1; padding: 12px 16px; border: 2px solid var(--border); border-radius: 10px; background: #fff; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 700; text-align: center; transition: all .2s; }
+.side-btn:hover { border-color: var(--blue); background: #eef6ff; }
+.side-btn.chosen { border-color: var(--green); background: #d8f3dc; color: var(--green); }
+.controversy-reveal { animation: fadeIn .3s; }
+.side-argument { padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; line-height: 1.7; }
+.side-argument.side-a { background: #eef6ff; border-left: 3px solid var(--blue); }
+.side-argument.side-b { background: #fff3cd; border-left: 3px solid var(--gold); }
+.side-argument strong { display: block; margin-bottom: 4px; }
+.controversy-insight { background: var(--bg); border-left: 3px solid var(--green); padding: 12px 16px; border-radius: 0 8px 8px 0; margin-top: 8px; font-size: 14px; line-height: 1.7; }
+.controversy-insight strong { display: block; margin-bottom: 4px; color: var(--green); }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 600px) {
+  .side-btns { flex-direction: column; }
+  .side-btn { padding: 10px 12px; }
+}
