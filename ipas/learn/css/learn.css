@@ -622,3 +622,51 @@
   .side-btns { flex-direction: column; }
   .side-btn { padding: 10px 12px; }
 }
+
+/* ========== Phase bar ========== */
+.phase-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.phase-tag { color: #fff; padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+.phase-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.phase-progress { flex: 1; height: 4px; background: var(--border); border-radius: 2px; min-width: 60px; }
+.phase-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width .4s; }
+.phase-intro { margin-bottom: 16px; }
+
+/* ========== Framework cards (Phase 1) ========== */
+.fw-card { background: #fff; border: 2px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; transition: border-color .2s; }
+.fw-card:hover { border-color: var(--green); }
+.fw-num { display: inline-block; width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: #fff; text-align: center; line-height: 26px; font-size: 13px; font-weight: 700; margin-right: 8px; vertical-align: middle; }
+.fw-title { font-weight: 700; font-size: 15px; vertical-align: middle; }
+.fw-desc { margin-top: 6px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.self-rate { margin-top: 8px; display: flex; align-items: center; gap: 2px; }
+.rate-label { font-size: 13px; color: var(--muted); margin-right: 4px; }
+.star { font-size: 22px; cursor: pointer; opacity: .25; transition: opacity .15s; user-select: none; }
+.star.lit { opacity: 1; color: #f77f00; }
+
+/* ========== Question nav states (Phase 3) ========== */
+.qnav-btn.current { border-color: var(--green); background: var(--green); color: #fff; }
+.qnav-btn.done-correct { background: #d8f3dc; border-color: var(--green); color: var(--green); }
+.qnav-btn.done-wrong { background: #f8d7da; border-color: var(--red); color: var(--red); }
+.q-option.locked { cursor: default; }
+
+/* ========== AI Chat (Phase 3) ========== */
+.ai-chat { border: 2px solid var(--green); border-radius: 10px; overflow: hidden; margin-top: 12px; }
+.ai-chat-header { background: var(--green); color: #fff; padding: 6px 14px; font-size: 13px; font-weight: 700; }
+.ai-chat-body { padding: 12px; max-height: 240px; overflow-y: auto; background: #fafafa; }
+.ai-msg { margin-bottom: 8px; font-size: 14px; line-height: 1.7; padding: 8px 12px; border-radius: 8px; }
+.ai-msg.from-ai { background: #fff; border: 1px solid var(--border); }
+.ai-msg.from-user { background: var(--green); color: #fff; margin-left: 20%; text-align: right; }
+.ai-input-row { display: flex; border-top: 1px solid var(--border); }
+.ai-input-row input { flex: 1; border: none; padding: 10px 14px; font-size: 14px; font-family: inherit; outline: none; }
+.ai-input-row button { padding: 10px 16px; background: var(--green); color: #fff; border: none; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+/* ========== Common buttons ========== */
+.btn-primary { display: inline-block; padding: 10px 20px; background: var(--green); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all .15s; }
+.btn-primary:hover { opacity: .85; }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+.btn-secondary { display: inline-block; padding: 10px 20px; background: var(--border); color: var(--text); border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-block { display: block; width: 100%; text-align: center; margin-top: 16px; }
+
+@media (max-width: 600px) {
+  .ai-msg.from-user { margin-left: 10%; }
+  .ai-chat-body { max-height: 200px; }
+}
