@@ -47,6 +47,10 @@ function renderEntry(){
   var pack = TQE.getConfig().contentPack;
   if(!pack) return;
 
+  // Toggle teacher link visibility
+  var teacherLink = document.getElementById('tqeTeacherLink');
+  if(teacherLink) teacherLink.style.display = TQE.isTeacher() ? 'inline-block' : 'none';
+
   var moduleListEl = document.getElementById('tqeModuleList');
   if(!moduleListEl) return;
 

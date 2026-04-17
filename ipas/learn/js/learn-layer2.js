@@ -557,42 +557,189 @@ function generateExamQuestions(){
   }
   if(examModules.length === 0) return;
 
-  // Collect questions from all modules in subject
-  var pool = [];
+  var targetTotal = subject ? (subject.total || 50) : 50;
+  var scopeEl = document.getElementById('tqeExamLoadProgress');
+  var scopeLabel = subject ? subject.name : (examModules[0].examSubject ? examModules[0].examSubject.name : examModules[0].name);
+  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong>（' + targetTotal + ' 題）<br>組卷中...';
+
+  // ─── Step 1: Assess learner ability from Phase 3 scores ───
+  var totalScore = 0, totalCount = 0;
   examModules.forEach(function(m){
     m.questions.forEach(function(q){
-      pool.push(Object.assign({}, q, { _sourceModule: m.id }));
+      if(state.phase3.scores && state.phase3.scores[q.id]){
+        totalScore += state.phase3.scores[q.id];
+        totalCount++;
+      }
     });
   });
-  // Shuffle pool
-  for(var i = pool.length - 1; i > 0; i--){
-    var j = Math.floor(Math.random() * (i + 1));
-    var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+  // avg 0-4 scale; default to medium (2) if no data
+  var avgAbility = totalCount > 0 ? totalScore / totalCount : 2;
+  // Classify: high (avg>=3), medium (1.5-3), low (<1.5)
+  var diffRatioHard, diffRatioEasy;
+  if(avgAbility >= 3){
+    diffRatioHard = 0.6; diffRatioEasy = 0.4; // 高手：60% 高中 / 40% 一般基礎
+  } else if(avgAbility >= 1.5){
+    diffRatioHard = 0.5; diffRatioEasy = 0.5; // 一般：50/50
+  } else {
+    diffRatioHard = 0.4; diffRatioEasy = 0.6; // 需加強：40% 高中 / 60% 一般基礎
   }
+  var abilityLabel = avgAbility >= 3 ? '進階' : avgAbility >= 1.5 ? '中等' : '基礎';
 
-  // Use all pool questions — no AI dependency
-  exam.questions = pool.map(function(q){
+  // ─── Step 2: Module-balanced allocation ───
+  var perModule = Math.floor(targetTotal / examModules.length);
+  var remainder = targetTotal - perModule * examModules.length;
+
+  // Collect pool per module, shuffle each
+  var moduleQuotas = [];
+  examModules.forEach(function(m, idx){
+    var quota = perModule + (idx < remainder ? 1 : 0);
+    var qs = m.questions.map(function(q){
+      return Object.assign({}, q, { _sourceModule: m.id, _difficulty: classifyDifficulty(q) });
+    });
+    // Shuffle
+    for(var i = qs.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = qs[i]; qs[i] = qs[j]; qs[j] = tmp;
+    }
+    moduleQuotas.push({ module: m, questions: qs, quota: quota });
+  });
+
+  // ─── Step 3: Difficulty-tiered selection from pool ───
+  var poolSelected = [];
+  moduleQuotas.forEach(function(mq){
+    var hardCount = Math.round(mq.quota * diffRatioHard);
+    var easyCount = mq.quota - hardCount;
+
+    var hardQs = mq.questions.filter(function(q){ return q._difficulty === 'hard' || q._difficulty === 'medium'; });
+    var easyQs = mq.questions.filter(function(q){ return q._difficulty === 'easy' || q._difficulty === 'basic'; });
+    // If not enough in a tier, take from the other
+    var selected = [];
+    selected = selected.concat(hardQs.slice(0, hardCount));
+    selected = selected.concat(easyQs.slice(0, easyCount));
+    // Fill remainder from any available
+    if(selected.length < mq.quota){
+      var usedIds = {};
+      selected.forEach(function(q){ usedIds[q.id] = true; });
+      var rest = mq.questions.filter(function(q){ return !usedIds[q.id]; });
+      selected = selected.concat(rest.slice(0, mq.quota - selected.length));
+    }
+    poolSelected = poolSelected.concat(selected);
+  });
+
+  // Tag as pool source
+  exam.questions = poolSelected.map(function(q){
     return Object.assign({}, q, { id: 'EX-' + q.id, source: 'pool' });
   });
 
-  var scopeEl = document.getElementById('tqeExamLoadProgress');
-  var scopeLabel = subject ? subject.name : (examModules[0].examSubject ? examModules[0].examSubject.name : examModules[0].name);
-  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong>（' + exam.questions.length + ' 題）';
+  var poolCount = exam.questions.length;
+  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong><br>' +
+    '程度：' + abilityLabel + '（難題比例 ' + Math.round(diffRatioHard * 100) + '%）<br>' +
+    '題庫已選 ' + poolCount + ' / ' + targetTotal + ' 題' +
+    (poolCount < targetTotal ? '，AI 補題中...' : '');
 
-  Promise.resolve().then(function(){
-    if(scopeEl) scopeEl.textContent = '組卷完成！共 ' + exam.questions.length + ' 題';
+  // ─── Step 4: AI supplements remaining (background, non-blocking) ───
+  var needed = targetTotal - poolCount;
+  if(needed <= 0){
+    _startExamNow(scopeEl);
+    return;
+  }
 
-    // Shuffle
-    for(var i = exam.questions.length - 1; i > 0; i--){
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = exam.questions[i]; exam.questions[i] = exam.questions[j]; exam.questions[j] = tmp;
-    }
-
-    exam.startTime = Date.now();
-    exam.timerInterval = setInterval(updateExamTimer, 1000);
-    updateExamTimer();
-    renderExamQuestion();
+  // Collect frameworks across all modules
+  var allFrameworks = [];
+  var fwIdsSeen = {};
+  examModules.forEach(function(m){
+    m.frameworks.forEach(function(f){
+      if(!fwIdsSeen[f.id]){ fwIdsSeen[f.id] = true; allFrameworks.push(f); }
+    });
   });
+
+  // Determine AI difficulty level based on learner ability
+  var aiLevel = avgAbility >= 3 ? 4 : avgAbility >= 1.5 ? 3 : 2;
+  var promptMod = examModules[0];
+
+  // Start exam immediately with pool, AI adds in background
+  _startExamNow(scopeEl);
+
+  // Background AI generation (adds questions while exam is in progress)
+  var batchSize = 10;
+  var batches = Math.ceil(needed / batchSize);
+  var chain = Promise.resolve();
+  for(var b = 0; b < batches; b++){
+    (function(batchIdx){
+      chain = chain.then(function(){
+        var count = Math.min(batchSize, needed - batchIdx * batchSize);
+        // Distribute across modules evenly
+        var targetModIdx = batchIdx % examModules.length;
+        var targetMod = examModules[targetModIdx];
+        var prompt = TQE.buildQuestionPrompt(targetMod, allFrameworks.map(function(f){ return f.id; }), aiLevel, count);
+
+        return TQE.callGroq(prompt, 8192).then(function(text){
+          var aiQs = TQE.parseAIQuestions(text);
+          var mapped = aiQs.map(function(q, idx){
+            var diag = q.diagnosis || {};
+            (q.options || []).filter(function(o){ return o.key !== q.correct; }).forEach(function(o){
+              if(!diag[o.key] || !diag[o.key].followup){
+                var correctText = (q.options.find(function(x){ return x.key === q.correct; }) || {}).text || '';
+                diag[o.key] = {
+                  gap: diag[o.key]?.gap || q.explanation || '',
+                  followup: '你選的「' + o.text.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。差異在哪？'
+                };
+              }
+            });
+            return Object.assign({}, q, {
+              id: 'EX-AI-' + (batchIdx * batchSize + idx + 1),
+              framework: allFrameworks[Math.floor(Math.random() * allFrameworks.length)]?.id || 'F1',
+              source: 'groq', _sourceModule: targetMod.id, diagnosis: diag
+            });
+          });
+          TQE.postProcessQuestions(mapped);
+          exam.questions = exam.questions.concat(mapped);
+          cacheQuestions(targetMod.id, aiLevel, mapped);
+        }).catch(function(e){
+          console.warn('Exam AI batch failed:', e.message);
+        }).then(function(){
+          if(batchIdx < batches - 1) return new Promise(function(r){ setTimeout(r, 1500); });
+        });
+      });
+    })(b);
+  }
+}
+
+// Classify question difficulty by stem length, option complexity, framework depth
+function classifyDifficulty(q){
+  var stemLen = (q.stem || '').length;
+  var avgOptLen = 0;
+  (q.options || []).forEach(function(o){ avgOptLen += (o.text || '').length; });
+  avgOptLen = q.options ? avgOptLen / q.options.length : 0;
+  // Heuristic: longer stem + longer options = harder
+  var score = 0;
+  if(stemLen > 80) score += 2;
+  else if(stemLen > 50) score += 1;
+  if(avgOptLen > 42) score += 2;
+  else if(avgOptLen > 35) score += 1;
+  // depth of wrong options: more depth=2 means more plausible = harder
+  var depth2Count = (q.options || []).filter(function(o){ return o.depth === 2; }).length;
+  if(depth2Count >= 3) score += 1;
+
+  if(score >= 4) return 'hard';
+  if(score >= 3) return 'medium';
+  if(score >= 2) return 'easy';
+  return 'basic';
+}
+
+function _startExamNow(scopeEl){
+  if(scopeEl) scopeEl.textContent = '組卷完成！共 ' + exam.questions.length + ' 題';
+
+  // Shuffle
+  for(var i = exam.questions.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = exam.questions[i]; exam.questions[i] = exam.questions[j]; exam.questions[j] = tmp;
+  }
+
+  exam.startTime = Date.now();
+  exam.timerInterval = setInterval(updateExamTimer, 1000);
+  updateExamTimer();
+  renderExamQuestion();
 }
 
 function renderExamQuestion(){
