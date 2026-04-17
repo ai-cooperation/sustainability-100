@@ -1,767 +1,723 @@
-// iPAS 三問法學習系統 — UI 控制（5 Phase 完整流程）
-// Phase 0: 模組列表 → Phase 1: 框架卡片+自評 → Phase 2: 爭議選邊
-// → Phase 3: 鑑別題+AI追問 → Phase 4: 報告(雷達圖) → Phase 5: 弱項加強
+// ═══════════════════════════════════════════════════════
+//  Three-Question Engine — UI Renderer v1.0
+//  Renders Phase 0-5 + Exam using content pack data
+//  Depends on: learn-engine.js (ThreeQuestionEngine)
+// ═══════════════════════════════════════════════════════
 
-(function(global) {
-  'use strict';
+(function(global){
+'use strict';
 
-  let currentLevel = (typeof window !== 'undefined' && window.LEARN_LEVEL) || 'l2';
-  let currentModule = null;
-  let currentQuestions = [];
+const TQE = global.ThreeQuestionEngine;
+if(!TQE) throw new Error('learn-engine.js must be loaded before learn-ui.js');
 
-  let state = {
-    moduleId: null,
-    phase: 0,
-    phase1: { ratings: {} },
-    phase2: { choice: null },
-    phase3: { answers: {}, currentQ: 0 },
-    weakConcepts: [],
-    startTime: 0
+const state = TQE.state;
+
+// ─── Screen management ───
+function showScreen(id){
+  document.querySelectorAll('.tqe-screen').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById(id);
+  if(el) el.classList.add('active');
+  var topBar = document.getElementById('tqeTopBar');
+  if(topBar) topBar.style.display = id === 'tqeScreenEntry' ? 'none' : 'block';
+  window.scrollTo(0, 0);
+
+  var phases = {
+    tqeScreenPhase1:['Phase 1','15'], tqeScreenPhase2:['Phase 2','30'],
+    tqeScreenPhase3:['Phase 3','45'], tqeScreenPhase4:['報告','55'],
+    tqeScreenPhase5:['加強','65'], tqeScreenLayer2:['練習','85'],
+    tqeScreenExam:['模擬考','95'], tqeScreenExamResult:['完成','100']
   };
-
-  // ========== 等級資訊 ==========
-  function renderLevelInfo() {
-    var data = LEARN_DATA[currentLevel];
-    var info = document.getElementById('level-info');
-    if (!info || !data) return;
-    info.innerHTML =
-      '<h2>' + data.nameFull + '</h2>' +
-      '<p class="exam-format">\u{1F4DD} ' + data.examFormat + '</p>' +
-      '<p class="focus">\u{1F3AF} ' + data.focus + '</p>' +
-      (data.examStyle ? '<p class="exam-style">' + data.examStyle + '</p>' : '');
+  if(phases[id]){
+    var topPhase = document.getElementById('tqeTopPhase');
+    var progressFill = document.getElementById('tqeProgressFill');
+    var topTitle = document.getElementById('tqeTopTitle');
+    if(topPhase) topPhase.textContent = phases[id][0];
+    if(progressFill) progressFill.style.width = phases[id][1] + '%';
+    var mod = TQE.getModule(state.moduleId);
+    if(topTitle) topTitle.textContent = mod ? mod.name : '';
   }
 
-  // ========== 模組卡片渲染 ==========
-  function renderModules() {
-    var data = LEARN_DATA[currentLevel];
-    var container = document.getElementById('modules-grid');
-    if (!container || !data) return;
-    var progress = LearnEngine.getProgress();
+  if(TQE.getConfig().onPhaseChange) TQE.getConfig().onPhaseChange(id, state);
+}
 
-    container.innerHTML = data.modules.map(function(mod) {
-      var key = currentLevel + '.' + mod.id;
-      var prog = progress[key] || { correct: 0, total: 0 };
-      var qTotal = (mod.questions ? mod.questions.length : 0) + (mod.reinforcement ? mod.reinforcement.length : 0);
-      var pct = qTotal > 0 ? Math.round((prog.total / qTotal) * 100) : 0;
-      return '<div class="module-card" data-module="' + mod.id + '" onclick="LearnUI.openModule(\'' + mod.id + '\')">' +
-        '<div class="module-id">' + mod.id + '</div>' +
-        '<h3>' + mod.name + '</h3>' +
-        '<p class="module-subject">' + mod.subject + '</p>' +
-        '<p class="module-scope">' + mod.scope + '</p>' +
-        '<div class="module-progress">' +
-          '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
-          '<span class="progress-text">' + prog.total + '/' + qTotal + ' \u984C \u00B7 \u6B63\u78BA ' + prog.correct + '</span>' +
+// ─── Entry screen (multi-step navigation) ───
+var _entryView = 'home';
+
+function renderEntry(){
+  var pack = TQE.getConfig().contentPack;
+  if(!pack) return;
+
+  var moduleListEl = document.getElementById('tqeModuleList');
+  if(!moduleListEl) return;
+
+  var levels = TQE.getLevels();
+  var modules = TQE.getAllModules();
+  var subjects = TQE.getSubjects();
+
+  // Group modules by level
+  var grouped = {};
+  levels.forEach(function(lv){ grouped[lv.id] = []; });
+  modules.forEach(function(m){
+    var lvId = m.level || 'default';
+    if(!grouped[lvId]) grouped[lvId] = [];
+    grouped[lvId].push(m);
+  });
+
+  var html = '';
+
+  // ── Home: level selection ──
+  if(_entryView === 'home'){
+    html += '<h3 style="margin-bottom:1rem;">選擇等級</h3>';
+    levels.forEach(function(lv){
+      var mods = grouped[lv.id] || [];
+      var badge = lv.requiresLogin ? '需 Google 登入' : '免登入';
+      var bgColor = lv.requiresLogin ? 'var(--purple-lt,#F3E8FD)' : 'var(--blue-lt)';
+      var borderColor = lv.requiresLogin ? 'var(--purple,#7C3AED)' : 'var(--blue)';
+      var lock = lv.requiresLogin && !TQE.isLoggedIn() ? ' 🔒' : '';
+      html += '<div class="card" style="cursor:pointer;border-left:4px solid ' + borderColor + ';margin-bottom:1rem;" onclick="TQE_UI.selectLevel(\'' + lv.id + '\')">' +
+        '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;">' +
+        '<h3 style="margin:0;">' + TQE.escHtml(lv.name) + lock + '</h3>' +
+        '<span style="padding:.2rem .6rem;border-radius:8px;font-size:.75rem;font-weight:700;background:' + bgColor + ';color:' + borderColor + ';">' + badge + '</span>' +
         '</div>' +
-      '</div>';
-    }).join('');
-  }
-
-  // ========== Phase 0 → openModule ==========
-  function openModule(moduleId) {
-    var data = LEARN_DATA[currentLevel];
-    var mod = data.modules.find(function(m) { return m.id === moduleId; });
-    if (!mod) return;
-    currentModule = mod;
-
-    state = {
-      moduleId: moduleId,
-      phase: 1,
-      phase1: { ratings: {} },
-      phase2: { choice: null },
-      phase3: { answers: {}, currentQ: 0 },
-      weakConcepts: [],
-      startTime: Date.now()
-    };
-
-    document.getElementById('modules-view').style.display = 'none';
-    document.getElementById('module-view').style.display = 'block';
-
-    // L2 有 concepts + frameworkQ → 完整三問法
-    // L1 沒有 → 直接跳 Phase 3
-    if (mod.concepts && mod.frameworkQ) {
-      renderPhase1();
-    } else {
-      state.phase = 3;
-      currentQuestions = (mod.questions || []).slice();
-      renderPhase3();
-    }
-  }
-
-  // ========== Phase 1: 框架卡片 + 自評星等 ==========
-  function renderPhase1() {
-    state.phase = 1;
-    var mod = currentModule;
-
-    var cardsHtml = mod.concepts.map(function(c, i) {
-      var starsHtml = [1,2,3,4,5].map(function(s) {
-        return '<span class="star" data-fw="' + c.id + '" data-val="' + s + '" onclick="LearnUI._rateFw(\'' + c.id + '\',' + s + ')">\u2605</span>';
-      }).join('');
-      return '<div class="fw-card" id="fw-' + c.id + '">' +
-        '<span class="fw-num">' + (i + 1) + '</span>' +
-        '<span class="fw-title">' + c.name + '</span>' +
-        '<div class="fw-desc">\u6DB5\u84CB\uFF1A' + c.tags.slice(0, 5).join('\u3001') + '</div>' +
-        '<div class="self-rate">' +
-          '<span class="rate-label">\u719F\u6089\u5EA6\uFF1A</span>' +
-          starsHtml +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    document.getElementById('module-view').innerHTML =
-      '<div class="phase-bar">' +
-        '<span class="phase-tag" style="background:var(--blue)">Phase 1</span>' +
-        '<span class="phase-label">\u6846\u67B6\u8A8D\u8B58</span>' +
-        '<div class="phase-progress"><div class="phase-fill" style="width:20%"></div></div>' +
-      '</div>' +
-      '<button class="back-btn" onclick="LearnUI.backToModules()">\u2190 \u8FD4\u56DE\u6A21\u7D44</button>' +
-      '<div class="module-header">' +
-        '<span class="module-id-badge">' + mod.id + '</span>' +
-        '<h2>' + mod.name + '</h2>' +
-      '</div>' +
-      '<div class="phase-intro">' +
-        '<h3>\u{1F9ED} \u6846\u67B6\u554F</h3>' +
-        '<p class="q-block-question">' + mod.frameworkQ.question + '</p>' +
-        '<p class="q-block-hint">' + mod.frameworkQ.hint + '</p>' +
-      '</div>' +
-      '<h3 style="margin:16px 0 8px;">\u6838\u5FC3\u6982\u5FF5\uFF08\u8ACB\u81EA\u8A55\u719F\u6089\u5EA6\uFF09</h3>' +
-      '<div id="conceptCards">' + cardsHtml + '</div>' +
-      '<button class="btn-primary btn-block" id="btnToP2" disabled onclick="LearnUI._goPhase2()">' +
-        '\u5168\u90E8\u8A55\u5B8C\u5F8C\u7E7C\u7E8C \u2192 \u722D\u8B70\u63A2\u7D22' +
-      '</button>';
-  }
-
-  function _rateFw(conceptId, val) {
-    state.phase1.ratings[conceptId] = val;
-    var stars = document.querySelectorAll('.star[data-fw="' + conceptId + '"]');
-    for (var i = 0; i < stars.length; i++) {
-      var s = stars[i];
-      if (parseInt(s.dataset.val, 10) <= val) {
-        s.classList.add('lit');
-      } else {
-        s.classList.remove('lit');
-      }
-    }
-    var needed = currentModule.concepts.length;
-    var rated = Object.keys(state.phase1.ratings).length;
-    var btn = document.getElementById('btnToP2');
-    if (btn) btn.disabled = rated < needed;
-  }
-
-  // ========== Phase 2: 爭議選邊 ==========
-  function _goPhase2() {
-    state.phase = 2;
-    renderPhase2();
-  }
-
-  function renderPhase2() {
-    var mod = currentModule;
-    var cq = mod.controversyQ;
-
-    document.getElementById('module-view').innerHTML =
-      '<div class="phase-bar">' +
-        '<span class="phase-tag" style="background:var(--gold)">Phase 2</span>' +
-        '<span class="phase-label">\u722D\u8B70\u63A2\u7D22</span>' +
-        '<div class="phase-progress"><div class="phase-fill" style="width:40%"></div></div>' +
-      '</div>' +
-      '<button class="back-btn" onclick="LearnUI.backToModules()">\u2190 \u8FD4\u56DE\u6A21\u7D44</button>' +
-      '<div class="phase-intro">' +
-        '<h3>\u26A1 \u722D\u8B70\u554F</h3>' +
-        '<p class="q-block-scenario">' + cq.scenario + '</p>' +
-      '</div>' +
-      '<p style="font-size:13px;color:var(--muted);margin-bottom:12px;">\u9078\u4E00\u908A\uFF0C\u770B\u770B\u96D9\u65B9\u600E\u9EBC\u8AAA\uFF1A</p>' +
-      '<div class="side-btns">' +
-        '<button class="side-btn" id="sideABtn" onclick="LearnUI._chooseSide(\'A\')">\u{1F170}\uFE0F ' + cq.sideA.label + '</button>' +
-        '<button class="side-btn" id="sideBBtn" onclick="LearnUI._chooseSide(\'B\')">\u{1F171}\uFE0F ' + cq.sideB.label + '</button>' +
-      '</div>' +
-      '<div id="debateReveal" style="display:none">' +
-        '<div class="side-argument side-a">' +
-          '<strong>\u{1F170}\uFE0F ' + cq.sideA.label + '</strong>' +
-          '<p>' + cq.sideA.argument + '</p>' +
-        '</div>' +
-        '<div class="side-argument side-b">' +
-          '<strong>\u{1F171}\uFE0F ' + cq.sideB.label + '</strong>' +
-          '<p>' + cq.sideB.argument + '</p>' +
-        '</div>' +
-        '<div class="controversy-insight">' +
-          '<strong>\u{1F50D} \u6574\u5408\u89C0\u9EDE</strong>' +
-          '<p>' + cq.insight + '</p>' +
-        '</div>' +
-        '<button class="btn-primary btn-block" style="margin-top:16px;" onclick="LearnUI._goPhase3()">' +
-          '\u7E7C\u7E8C \u2192 \u9451\u5225\u984C' +
-        '</button>' +
-      '</div>';
-  }
-
-  function _chooseSide(side) {
-    state.phase2.choice = side;
-    var btnA = document.getElementById('sideABtn');
-    var btnB = document.getElementById('sideBBtn');
-    if (btnA) {
-      if (side === 'A') { btnA.classList.add('chosen'); } else { btnA.classList.remove('chosen'); }
-    }
-    if (btnB) {
-      if (side === 'B') { btnB.classList.add('chosen'); } else { btnB.classList.remove('chosen'); }
-    }
-    var reveal = document.getElementById('debateReveal');
-    if (reveal) reveal.style.display = 'block';
-  }
-
-  // ========== Phase 3: 鑑別題 + AI 追問 ==========
-  function _goPhase3() {
-    state.phase = 3;
-    state.phase3 = { answers: {}, currentQ: 0 };
-    currentQuestions = (currentModule.questions || []).slice();
-    renderPhase3();
-  }
-
-  function renderPhase3() {
-    var mod = currentModule;
-    var total = currentQuestions.length;
-    var answeredKeys = Object.keys(state.phase3.answers);
-    var answered = answeredKeys.length;
-
-    if (total === 0) {
-      document.getElementById('module-view').innerHTML =
-        '<button class="back-btn" onclick="LearnUI.backToModules()">\u2190 \u8FD4\u56DE\u6A21\u7D44</button>' +
-        '<div class="empty-state">' +
-          '<p>\u672C\u6A21\u7D44\u984C\u5EAB\u5EFA\u7F6E\u4E2D\uFF0C\u656C\u8ACB\u671F\u5F85 \u{1F6A7}</p>' +
+        '<p style="font-size:.9rem;color:var(--g600);margin:0;">' + TQE.escHtml(lv.description || '') + '</p>' +
+        '<p style="font-size:.85rem;color:var(--g400);margin:.3rem 0 0;">' + mods.length + ' 個模組</p>' +
         '</div>';
+    });
+    moduleListEl.innerHTML = html;
+    return;
+  }
+
+  // ── Level sub-menu: practice or exam ──
+  if(_entryView === 'level-l1' || _entryView === 'level-l2'){
+    var lvId = _entryView.replace('level-', '');
+    var lv = levels.find(function(l){ return l.id === lvId; });
+    var lvName = lv ? lv.name : lvId;
+
+    // Login gate for l2
+    if(lvId === 'l2' && !TQE.isLoggedIn()){
+      html += _backLink('home');
+      html += '<div class="info red" style="text-align:center;margin-top:1rem;">' +
+        '<strong>中級需要 Google 登入</strong><br>請先點擊上方 Google 登入按鈕。</div>';
+      moduleListEl.innerHTML = html;
       return;
     }
 
-    var pct = 20 + (answered / total) * 40;
+    html += _backLink('home');
+    html += '<h3 style="margin-bottom:1rem;">' + TQE.escHtml(lvName) + ' — 選擇模式</h3>';
+    html += '<div class="card" style="cursor:pointer;border-left:4px solid var(--blue);margin-bottom:1rem;" onclick="TQE_UI.setEntryView(\'practice-' + lvId + '\')">' +
+      '<h3 style="margin:0;">📖 練習（選模組）</h3>' +
+      '<p style="font-size:.9rem;color:var(--g600);margin:.3rem 0 0;">依模組逐步學習：框架建立 → 邊界校正 → 鑑別測驗 → 弱項練習</p></div>';
+    html += '<div class="card" style="cursor:pointer;border-left:4px solid var(--gold,#F9AB00);margin-bottom:1rem;" onclick="TQE_UI.setEntryView(\'exam-' + lvId + '\')">' +
+      '<h3 style="margin:0;">📝 模擬考（選考科）</h3>' +
+      '<p style="font-size:.9rem;color:var(--g600);margin:.3rem 0 0;">按考科範圍模擬正式考試，計時作答</p></div>';
+    moduleListEl.innerHTML = html;
+    return;
+  }
 
-    var navHtml = currentQuestions.map(function(q, i) {
-      var done = state.phase3.answers[q.id] !== undefined;
-      var correct = done && state.phase3.answers[q.id].correct;
-      var cls = 'qnav-btn';
-      if (done) cls += correct ? ' done-correct' : ' done-wrong';
-      if (i === state.phase3.currentQ) cls += ' current';
-      return '<button class="' + cls + '" onclick="LearnUI._goToQ(' + i + ')">' + (i + 1) + '</button>';
-    }).join('');
+  // ── Practice: show modules for the level ──
+  if(_entryView === 'practice-l1' || _entryView === 'practice-l2'){
+    var lvId = _entryView.replace('practice-', '');
+    var lv = levels.find(function(l){ return l.id === lvId; });
+    var mods = grouped[lvId] || [];
 
-    var finishBtn = '';
-    if (answered >= total) {
-      finishBtn = '<div style="text-align:center;margin-top:20px;">' +
-        '<button class="btn-primary btn-lg" onclick="LearnUI._goPhase4()">\u{1F4CA} \u67E5\u770B\u5B78\u7FD2\u5831\u544A \u2192</button>' +
-      '</div>';
+    html += _backLink('level-' + lvId);
+    html += '<h3 style="margin-bottom:1rem;">' + TQE.escHtml(lv ? lv.name : '') + ' — 選擇學習模組</h3>';
+    mods.forEach(function(m){
+      var examLabel = m.examSubject ? '<p style="font-size:.8rem;color:var(--g400);margin-top:.2rem;">對應考科：' + TQE.escHtml(m.examSubject.name) + '</p>' : '';
+      html += '<div class="card" style="cursor:pointer;" onclick="TQE_UI.selectModule(\'' + m.id + '\')">' +
+        '<h3>' + TQE.escHtml(m.id + ' — ' + m.name) + '</h3>' +
+        '<p>' + (m.frameworks.length) + ' 個框架 | ' + (m.questions.length) + ' 題</p>' +
+        examLabel + '</div>';
+    });
+    moduleListEl.innerHTML = html;
+    return;
+  }
+
+  // ── Exam: show subjects for the level ──
+  if(_entryView === 'exam-l1' || _entryView === 'exam-l2'){
+    var lvId = _entryView.replace('exam-', '');
+    var lv = levels.find(function(l){ return l.id === lvId; });
+    var lvSubjects = subjects.filter(function(s){ return s.level === lvId; });
+
+    // Login gate for l1 exam
+    if(lvId === 'l1' && !TQE.isLoggedIn()){
+      html += _backLink('level-' + lvId);
+      html += '<div class="info red" style="text-align:center;margin-top:1rem;">' +
+        '<strong>模擬考需要 Google 登入</strong><br>請先點擊上方 Google 登入按鈕。</div>';
+      moduleListEl.innerHTML = html;
+      return;
     }
 
-    document.getElementById('module-view').innerHTML =
-      '<div class="phase-bar">' +
-        '<span class="phase-tag" style="background:var(--green)">Phase 3</span>' +
-        '<span class="phase-label">\u9451\u5225\u984C ' + answered + '/' + total + '</span>' +
-        '<div class="phase-progress"><div class="phase-fill" style="width:' + pct + '%"></div></div>' +
-      '</div>' +
-      '<button class="back-btn" onclick="LearnUI.backToModules()">\u2190 \u8FD4\u56DE\u6A21\u7D44</button>' +
-      '<div class="question-nav">' + navHtml + '</div>' +
-      '<div id="question-container"></div>' +
-      finishBtn;
-
-    _renderCurrentQ();
-  }
-
-  function _goToQ(idx) {
-    state.phase3.currentQ = idx;
-    renderPhase3();
-  }
-
-  function _renderCurrentQ() {
-    var idx = state.phase3.currentQ;
-    if (idx >= currentQuestions.length) return;
-    var q = currentQuestions[idx];
-    var container = document.getElementById('question-container');
-    if (!container) return;
-
-    var answered = state.phase3.answers[q.id];
-
-    var optionsHtml = (q.options || []).map(function(opt, i) {
-      var cls = 'q-option';
-      if (answered) {
-        cls += ' locked';
-        if (i === q.correct) cls += ' correct';
-        if (i === answered.chosen && !answered.correct) cls += ' wrong';
-      }
-      var handler = answered ? 'disabled' : 'onclick="LearnUI._answerQ(\'' + q.id + '\',' + i + ')"';
-      return '<button class="' + cls + '" data-idx="' + i + '" ' + handler + '>' +
-        '<span class="opt-letter">' + String.fromCharCode(65 + i) + '</span>' +
-        '<span class="opt-text">' + opt + '</span>' +
-      '</button>';
-    }).join('');
-
-    var feedbackHtml = answered ? _buildFeedback(q, answered) : '';
-
-    container.innerHTML =
-      '<div class="question-card">' +
-        '<div class="q-head">' +
-          '<span class="q-number">Q' + (idx + 1) + '</span>' +
-          '<span class="q-type">' + (q.type || '\u55AE\u9078') + '</span>' +
-          (q.epRef ? '<a class="q-epref" href="/sustainability-100/episodes/EP' + String(q.epRef).padStart(3, '0') + '/" target="_blank">\u{1F4DA} S100 EP' + q.epRef + '</a>' : '') +
-        '</div>' +
-        '<p class="q-text">' + q.q + '</p>' +
-        '<div class="q-options" id="qOptions">' + optionsHtml + '</div>' +
-        '<div id="qFeedback">' + feedbackHtml + '</div>' +
-      '</div>';
-  }
-
-  function _buildFeedback(q, answered) {
-    if (answered.correct) {
-      return '<div class="q-feedback correct">' +
-        '<div class="feedback-head">\u2705 \u6B63\u78BA\uFF01</div>' +
-        (q.explain ? '<div class="feedback-explain">' + q.explain + '</div>' : '') +
-        (q.epRef ? '<div class="feedback-ref">\u{1F4A1} \u5EF6\u4F38\u8907\u7FD2\uFF1A<a href="/sustainability-100/episodes/EP' + String(q.epRef).padStart(3, '0') + '/" target="_blank">S100 EP' + q.epRef + '</a></div>' : '') +
-        '<button class="btn-primary" onclick="LearnUI._nextQ()" style="margin-top:8px;">\u4E0B\u4E00\u984C \u2192</button>' +
-      '</div>';
-    }
-
-    var chosenLetter = String.fromCharCode(65 + answered.chosen);
-    var correctLetter = String.fromCharCode(65 + q.correct);
-    return '<div class="q-feedback wrong">' +
-      '<div class="feedback-head">\u274C \u4E0D\u5C0D</div>' +
-      (q.explain ? '<div class="feedback-explain">' + q.explain + '</div>' : '') +
-      (q.epRef ? '<div class="feedback-ref">\u{1F4A1} \u5EF6\u4F38\u8907\u7FD2\uFF1A<a href="/sustainability-100/episodes/EP' + String(q.epRef).padStart(3, '0') + '/" target="_blank">S100 EP' + q.epRef + '</a></div>' : '') +
-      '<div class="ai-chat" id="aiChat">' +
-        '<div class="ai-chat-header">\u{1F916} AI \u8FFD\u554F\u5F15\u64CE</div>' +
-        '<div class="ai-chat-body" id="aiChatBody">' +
-          '<div class="ai-msg from-ai">\u4F60\u9078\u4E86 ' + chosenLetter + '\uFF0C\u4F46\u6B63\u78BA\u7B54\u6848\u662F ' + correctLetter + '\u3002\u60F3\u60F3\u770B\u5169\u8005\u7684\u5DEE\u7570\u5728\u54EA\uFF1F\u6709\u4EC0\u9EBC\u7591\u554F\u53EF\u4EE5\u554F\u6211\u3002</div>' +
-        '</div>' +
-        '<div class="ai-input-row">' +
-          '<input type="text" id="aiChatInput" placeholder="\u8F38\u5165\u4F60\u7684\u60F3\u6CD5..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();LearnUI._sendChat();}">' +
-          '<button onclick="LearnUI._sendChat()">\u9001\u51FA</button>' +
-        '</div>' +
-      '</div>' +
-      '<button class="btn-secondary" onclick="LearnUI._nextQ()" style="margin-top:8px;">\u7E7C\u7E8C\u4E0B\u4E00\u984C \u2192</button>' +
-    '</div>';
-  }
-
-  function _answerQ(qId, chosenIdx) {
-    var q = currentQuestions.find(function(x) { return x.id === qId; });
-    if (!q) return;
-    if (state.phase3.answers[qId]) return; // already answered
-    var correct = chosenIdx === q.correct;
-    state.phase3.answers[qId] = { correct: correct, chosen: chosenIdx, ts: Date.now() };
-
-    LearnEngine.recordAnswer(currentLevel, state.moduleId, qId, correct, chosenIdx);
-
-    renderPhase3();
-  }
-
-  function _nextQ() {
-    var next = state.phase3.currentQ + 1;
-    // Find next unanswered
-    while (next < currentQuestions.length && state.phase3.answers[currentQuestions[next].id]) {
-      next++;
-    }
-    if (next >= currentQuestions.length) {
-      // All answered or no more unanswered — go to last
-      next = currentQuestions.length - 1;
-    }
-    state.phase3.currentQ = next;
-    renderPhase3();
-  }
-
-  // ========== AI 追問（Gemini via Cloudflare Worker） ==========
-  var _chatCooldown = false;
-
-  function _sendChat() {
-    if (_chatCooldown) return;
-    var input = document.getElementById('aiChatInput');
-    if (!input) return;
-    var msg = input.value.trim();
-    if (!msg) return;
-    input.value = '';
-
-    var body = document.getElementById('aiChatBody');
-    if (!body) return;
-    body.innerHTML += '<div class="ai-msg from-user">' + _escapeHtml(msg) + '</div>';
-    body.innerHTML += '<div class="ai-msg from-ai" id="aiLoading" style="opacity:.5">\u601D\u8003\u4E2D...</div>';
-    body.scrollTop = body.scrollHeight;
-
-    _chatCooldown = true;
-    setTimeout(function() { _chatCooldown = false; }, 6000);
-
-    var q = currentQuestions[state.phase3.currentQ];
-    var chosen = state.phase3.answers[q.id] ? state.phase3.answers[q.id].chosen : 0;
-
-    // Collect chat history
-    var msgs = body.querySelectorAll('.ai-msg');
-    var historyParts = [];
-    for (var i = 0; i < msgs.length; i++) {
-      var el = msgs[i];
-      var text = el.textContent.trim();
-      if (text.indexOf('\u601D\u8003\u4E2D') !== -1) continue;
-      var role = el.classList.contains('from-user') ? '\u5B78\u751F' : '\u52A9\u6559';
-      historyParts.push(role + '\uFF1A' + text);
-    }
-    var history = historyParts.slice(-6).join('\n');
-
-    var optionsText = (q.options || []).map(function(o, idx) {
-      return String.fromCharCode(65 + idx) + '. ' + o;
-    }).join('\n');
-
-    var prompt = '\u4F60\u662F iPAS \u6DE8\u96F6\u78B3\u898F\u5283\u7BA1\u7406\u5E2B\u8003\u8A66\u7684\u5B78\u7FD2\u52A9\u6559\u3002\u7528\u767D\u8A71\u3001\u6BD4\u55BB\u3001\u751F\u6D3B\u5316\u4F8B\u5B50\u4F86\u89E3\u91CB\u3002\n\n' +
-      '\u6A21\u7D44\uFF1A' + currentModule.name + '\n' +
-      '\u984C\u76EE\uFF1A' + q.q + '\n' +
-      '\u9078\u9805\uFF1A\n' + optionsText + '\n' +
-      '\u5B78\u751F\u9078\u4E86\uFF1A' + String.fromCharCode(65 + chosen) + '\n' +
-      '\u6B63\u78BA\u7B54\u6848\uFF1A' + String.fromCharCode(65 + q.correct) + '\n' +
-      (q.explain ? '\u89E3\u6790\uFF1A' + q.explain + '\n' : '') +
-      '\n\u5C0D\u8A71\u7D00\u9304\uFF1A\n' + history + '\n' +
-      '\n\u5B78\u751F\u6700\u65B0\u56DE\u8986\uFF1A\u300C' + msg + '\u300D\n' +
-      '\n\u7528\u84C7\u683C\u62C9\u5E95\u5F0F\u63D0\u554F\u5F15\u5C0E\uFF1A\n' +
-      '1. \u80AF\u5B9A\u56DE\u8986\u4E2D\u6B63\u78BA\u7684\u90E8\u5206\n' +
-      '2. \u7528\u5177\u9AD4\u4F8B\u5B50\u5E6B\u4ED6\u770B\u5230\u907A\u6F0F\n' +
-      '3. \u4E0D\u76F4\u63A5\u7D66\u7B54\u6848\uFF0C\u7528\u5F15\u5C0E\u554F\u984C\u6536\u5C3E\n' +
-      '3-4 \u53E5\u8A71\uFF0C\u7E41\u9AD4\u4E2D\u6587\uFF0C\u4E0D\u7528 markdown\u3002';
-
-    _callGemini(prompt).then(function(reply) {
-      var loading = document.getElementById('aiLoading');
-      if (loading) loading.remove();
-      var b = document.getElementById('aiChatBody');
-      if (b) {
-        b.innerHTML += '<div class="ai-msg from-ai">' + (reply || '\u62B1\u6B49\uFF0CAI \u66AB\u6642\u7121\u6CD5\u56DE\u61C9\u3002') + '</div>';
-        b.scrollTop = b.scrollHeight;
-      }
-    }).catch(function() {
-      var loading = document.getElementById('aiLoading');
-      if (loading) loading.remove();
-      var b = document.getElementById('aiChatBody');
-      if (b) {
-        b.innerHTML += '<div class="ai-msg from-ai">\u9023\u7DDA\u932F\u8AA4\uFF0C\u8ACB\u7A0D\u5F8C\u518D\u8A66\u3002</div>';
-        b.scrollTop = b.scrollHeight;
-      }
-    });
-  }
-
-  function _callGemini(prompt) {
-    var API = 'https://api.cooperation.tw';
-    return fetch(API + '/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 4096, temperature: 0.7 }
-      })
-    }).then(function(res) {
-      if (!res.ok) return '';
-      return res.json().then(function(data) {
-        return (data.candidates && data.candidates[0] && data.candidates[0].content &&
-                data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
-                data.candidates[0].content.parts[0].text) || '';
-      });
-    }).catch(function() { return ''; });
-  }
-
-  function _escapeHtml(str) {
-    var div = document.createElement('div');
-    div.appendChild(document.createTextNode(str));
-    return div.innerHTML;
-  }
-
-  // ========== Phase 4: 報告（雷達圖 + 自評對比） ==========
-  function _goPhase4() {
-    state.phase = 4;
-    showReport(state.moduleId);
-  }
-
-  function loadChartJs() {
-    return new Promise(function(resolve) {
-      if (window.Chart) return resolve();
-      var s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4';
-      s.onload = resolve;
-      document.head.appendChild(s);
-    });
-  }
-
-  function showReport(moduleId) {
-    var data = LEARN_DATA[currentLevel];
-    var mod = data.modules.find(function(m) { return m.id === moduleId; });
-    if (!mod || !mod.concepts) return;
-
-    var result = LearnEngine.getWeakConcepts(currentLevel, moduleId);
-    var weakIds = result.concepts;
-    var scores = result.scores;
-
-    var labels = mod.concepts.map(function(c) { return c.name; });
-    var values = mod.concepts.map(function(c) {
-      var s = scores[c.id];
-      return s && s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-    });
-
-    // Self-assessment data from Phase 1 (if available)
-    var hasSelfRatings = Object.keys(state.phase1.ratings).length > 0;
-    var selfValues = mod.concepts.map(function(c) {
-      return (state.phase1.ratings[c.id] || 0) * 20; // 1-5 → 20-100
-    });
-
-    document.getElementById('module-view').innerHTML =
-      '<div class="phase-bar">' +
-        '<span class="phase-tag" style="background:var(--blue)">Phase 4</span>' +
-        '<span class="phase-label">\u5B78\u7FD2\u5831\u544A</span>' +
-        '<div class="phase-progress"><div class="phase-fill" style="width:80%"></div></div>' +
-      '</div>' +
-      '<button class="back-btn" onclick="LearnUI.backToModules()">\u2190 \u8FD4\u56DE\u6A21\u7D44</button>' +
-      '<div class="report-header"><h2>\u{1F4CA} ' + mod.name + ' \u2014 \u5B78\u7FD2\u5831\u544A</h2></div>' +
-      '<div class="report-chart"><canvas id="conceptRadar"></canvas></div>' +
-      '<div class="report-scores" id="reportScores"></div>' +
-      '<div class="report-weak" id="reportWeak"></div>' +
-      '<div class="report-actions" id="reportActions"></div>';
-
-    loadChartJs().then(function() {
-      var datasets = [{
-        label: '\u6E2C\u9A57\u8868\u73FE',
-        data: values,
-        backgroundColor: 'rgba(45,106,79,.2)',
-        borderColor: '#2d6a4f',
-        pointBackgroundColor: '#2d6a4f',
-        borderWidth: 2
-      }];
-
-      if (hasSelfRatings) {
-        datasets.push({
-          label: '\u81EA\u8A55\u719F\u6089\u5EA6',
-          data: selfValues,
-          backgroundColor: 'rgba(249,171,0,.15)',
-          borderColor: '#f77f00',
-          pointBackgroundColor: '#f77f00',
-          borderWidth: 2,
-          borderDash: [5, 5]
-        });
-      }
-
-      new Chart(document.getElementById('conceptRadar'), {
-        type: 'radar',
-        data: {
-          labels: labels,
-          datasets: datasets
-        },
-        options: {
-          responsive: true,
-          scales: { r: { min: 0, max: 100, ticks: { stepSize: 25 } } },
-          plugins: { legend: { display: hasSelfRatings } }
-        }
-      });
-    });
-
-    var scoresHtml = mod.concepts.map(function(c) {
-      var s = scores[c.id];
-      var pct = s && s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
-      var lv = pct >= 70 ? 'good' : pct >= 40 ? 'mid' : 'weak';
-      var lvText = { good: '\u638C\u63E1\u826F\u597D', mid: '\u9700\u8907\u7FD2', weak: '\u9700\u52A0\u5F37' }[lv];
-      return '<div class="score-row ' + lv + '">' +
-        '<span class="score-name">' + c.name + '</span>' +
-        '<span class="score-bar"><span class="score-fill" style="width:' + pct + '%"></span></span>' +
-        '<span class="score-pct">' + pct + '%</span>' +
-        '<span class="score-badge ' + lv + '">' + lvText + '</span>' +
-      '</div>';
-    }).join('');
-    document.getElementById('reportScores').innerHTML = scoresHtml;
-
-    if (weakIds.length === 0) {
-      document.getElementById('reportWeak').innerHTML = '<div class="report-msg good">\u2705 \u8868\u73FE\u512A\u79C0\uFF01\u6240\u6709\u6982\u5FF5\u7DAD\u5EA6\u90FD\u638C\u63E1\u5F97\u4E0D\u932F\u3002</div>';
-      document.getElementById('reportActions').innerHTML = '<button class="btn-primary" onclick="LearnUI.backToModules()">\u8FD4\u56DE\u6A21\u7D44\u5217\u8868</button>';
-    } else {
-      var weakNames = weakIds.map(function(id) {
-        var found = mod.concepts.find(function(c) { return c.id === id; });
-        return found ? found.name : '';
-      }).filter(Boolean);
-      document.getElementById('reportWeak').innerHTML =
-        '<div class="report-msg weak">\u26A0\uFE0F \u767C\u73FE ' + weakIds.length + ' \u500B\u9700\u8981\u52A0\u5F37\u7684\u6982\u5FF5\u7DAD\u5EA6\uFF1A<strong>' + weakNames.join('\u3001') + '</strong></div>';
-      document.getElementById('reportActions').innerHTML =
-        '<button class="btn-primary btn-lg" onclick="LearnUI.startPhase5(\'' + moduleId + '\')">\u{1F3AF} \u958B\u59CB\u5F31\u9805\u52A0\u5F37\u7DF4\u7FD2 \u2192</button>' +
-        '<button class="btn-secondary" onclick="LearnUI.backToModules()" style="margin-top:8px;display:block;width:100%;text-align:center;">\u8DF3\u904E\uFF0C\u8FD4\u56DE\u6A21\u7D44</button>';
-    }
-  }
-
-  // ========== Phase 5: 弱項加強 ==========
-  var p5State = null;
-
-  function startPhase5(moduleId) {
-    var data = LEARN_DATA[currentLevel];
-    var mod = data.modules.find(function(m) { return m.id === moduleId; });
-    if (!mod) return;
-
-    var result = LearnEngine.getWeakConcepts(currentLevel, moduleId);
-    var weakIds = result.concepts;
-    if (weakIds.length === 0) return;
-
-    var reinforceQs = (mod.reinforcement || []).filter(function(q) {
-      var cids = LearnEngine.getQuestionConcepts(q, mod.concepts);
-      return cids.some(function(c) { return weakIds.indexOf(c) !== -1; });
-    });
-
-    var allQs = reinforceQs.slice();
-
-    // If not enough, try AI generation
-    if (allQs.length < 5 && typeof LearnLayer2 !== 'undefined' && LearnLayer2.generateReinforcement) {
-      document.getElementById('module-view').innerHTML =
-        '<div class="phase5-loading">' +
-          '<h2>\u{1F3AF} \u6E96\u5099\u5F31\u9805\u52A0\u5F37\u984C...</h2>' +
-          '<p>AI \u6B63\u5728\u6839\u64DA\u4F60\u7684\u5F31\u9805\u751F\u6210\u91DD\u5C0D\u6027\u984C\u76EE</p>' +
-          '<div class="loading-spinner"></div>' +
+    html += _backLink('level-' + lvId);
+    html += '<h3 style="margin-bottom:1rem;">' + TQE.escHtml(lv ? lv.name : '') + ' — 選擇考科</h3>';
+    lvSubjects.forEach(function(subj){
+      html += '<div class="card" style="cursor:pointer;border-left:4px solid var(--gold,#F9AB00);" onclick="TQE_UI.startSubjectExam(\'' + subj.id + '\')">' +
+        '<h3>' + TQE.escHtml(subj.name) + '</h3>' +
+        '<p style="font-size:.9rem;color:var(--g600);">' + subj.total + ' 題 | ' + subj.duration + ' 分鐘</p>' +
+        '<p style="font-size:.8rem;color:var(--g400);margin-top:.2rem;">涵蓋模組：' + TQE.escHtml(subj.modules.join('、')) + '</p>' +
         '</div>';
-      LearnLayer2.generateReinforcement(currentLevel, moduleId, weakIds).then(function(aiQs) {
-        allQs = allQs.concat(aiQs || []);
-        _startP5(allQs, mod, moduleId, weakIds);
-      }).catch(function() {
-        _startP5(allQs, mod, moduleId, weakIds);
-      });
-    } else {
-      _startP5(allQs, mod, moduleId, weakIds);
+    });
+    if(lvSubjects.length === 0){
+      html += '<div class="info gold" style="text-align:center;">此等級尚無考科設定</div>';
     }
+    moduleListEl.innerHTML = html;
+    return;
   }
 
-  function _startP5(allQs, mod, moduleId, weakIds) {
-    if (allQs.length === 0) {
-      document.getElementById('module-view').innerHTML =
-        '<button class="back-btn" onclick="LearnUI.backToModules()">\u2190 \u8FD4\u56DE</button>' +
-        '<div class="report-msg">\u76EE\u524D\u6C92\u6709\u52A0\u5F37\u984C\u53EF\u7528\uFF0C\u8ACB\u7A0D\u5F8C\u518D\u8A66\u3002</div>';
-      return;
-    }
-    p5State = { allQs: allQs, idx: 0, answers: {}, mod: mod, moduleId: moduleId, weakIds: weakIds };
-    renderP5Question();
+  moduleListEl.innerHTML = '';
+}
+
+function _backLink(target){
+  return '<a href="#" onclick="event.preventDefault();TQE_UI.setEntryView(\'' + target + '\')" style="display:inline-block;margin-bottom:.8rem;font-size:.9rem;color:var(--blue);text-decoration:none;font-weight:700;">← 返回</a>';
+}
+
+function setEntryView(view){
+  _entryView = view;
+  // Reset start button when navigating
+  var btn = document.getElementById('tqeBtnStart');
+  if(btn){ btn.disabled = true; btn.textContent = '選擇模組開始學習'; }
+  renderEntry();
+}
+
+function selectLevel(lvId){
+  var levels = TQE.getLevels();
+  var lv = levels.find(function(l){ return l.id === lvId; });
+  if(lv && lv.requiresLogin && !TQE.isLoggedIn()){
+    var authStatus = document.getElementById('tqeAuthStatus');
+    if(authStatus) authStatus.innerHTML = '<span style="color:var(--gold);font-weight:700;">此等級需要 Google 登入</span>';
+    _entryView = 'level-' + lvId;
+    renderEntry();
+    return;
+  }
+  _entryView = 'level-' + lvId;
+  renderEntry();
+}
+
+function startSubjectExam(subjectId){
+  var subjects = TQE.getSubjects();
+  var subj = subjects.find(function(s){ return s.id === subjectId; });
+  if(!subj) return;
+
+  // Store subject info in state for goExam to use
+  state.examSubjectId = subjectId;
+
+  // Set moduleId to first module in subject (for compatibility)
+  if(subj.modules.length > 0){
+    state.moduleId = subj.modules[0];
   }
 
-  function renderP5Question() {
-    if (!p5State) return;
-    if (p5State.idx >= p5State.allQs.length) {
-      renderP5Summary();
-      return;
-    }
-    var q = p5State.allQs[p5State.idx];
-    var cids = LearnEngine.getQuestionConcepts(q, p5State.mod.concepts);
-    var conceptName = '';
-    if (cids.length > 0) {
-      var found = p5State.mod.concepts.find(function(c) { return c.id === cids[0]; });
-      conceptName = found ? found.name : '';
-    }
-
-    document.getElementById('module-view').innerHTML =
-      '<div class="phase-bar">' +
-        '<span class="phase-tag" style="background:var(--red)">Phase 5</span>' +
-        '<span class="phase-label">\u5F31\u9805\u52A0\u5F37 ' + (p5State.idx + 1) + '/' + p5State.allQs.length + '</span>' +
-        '<div class="phase-progress"><div class="phase-fill" style="width:' + (80 + (p5State.idx / p5State.allQs.length) * 20) + '%"></div></div>' +
-      '</div>' +
-      (conceptName ? '<div class="phase5-concept">\u805A\u7126\uFF1A' + conceptName + '</div>' : '') +
-      '<div class="question-card">' +
-        '<p class="q-text">' + q.q + '</p>' +
-        '<div class="q-options" id="p5options">' +
-          (q.options || []).map(function(opt, i) {
-            return '<button class="q-option" data-idx="' + i + '" onclick="LearnUI._p5answer(' + i + ')">' +
-              '<span class="opt-letter">' + String.fromCharCode(65 + i) + '</span>' +
-              '<span class="opt-text">' + opt + '</span>' +
-            '</button>';
-          }).join('') +
-        '</div>' +
-        '<div id="p5feedback" class="q-feedback" style="display:none"></div>' +
-      '</div>';
-  }
-
-  function _p5answer(idx) {
-    if (!p5State) return;
-    var q = p5State.allQs[p5State.idx];
-    var correct = idx === q.correct;
-    p5State.answers[q.id || p5State.idx] = { correct: correct, chosen: idx };
-
-    var buttons = document.querySelectorAll('#p5options .q-option');
-    for (var i = 0; i < buttons.length; i++) {
-      buttons[i].disabled = true;
-      if (i === q.correct) buttons[i].classList.add('correct');
-      if (i === idx && !correct) buttons[i].classList.add('wrong');
-    }
-
-    var fb = document.getElementById('p5feedback');
-    fb.style.display = 'block';
-    fb.className = 'q-feedback ' + (correct ? 'correct' : 'wrong');
-    fb.innerHTML =
-      '<div class="feedback-head">' + (correct ? '\u2705 \u7B54\u5C0D\u4E86\uFF01' : '\u274C \u518D\u60F3\u60F3') + '</div>' +
-      (q.explain ? '<div class="feedback-explain">' + q.explain + '</div>' : '') +
-      '<button class="btn-primary" onclick="LearnUI._p5next()" style="margin-top:12px;">' +
-        (p5State.idx < p5State.allQs.length - 1 ? '\u4E0B\u4E00\u984C \u2192' : '\u67E5\u770B\u52A0\u5F37\u7D50\u679C') +
-      '</button>';
-
-    LearnEngine.recordAnswer(currentLevel, p5State.moduleId, q.id || ('p5_' + p5State.idx), correct, idx);
-  }
-
-  function _p5next() {
-    if (!p5State) return;
-    p5State.idx++;
-    renderP5Question();
-  }
-
-  function renderP5Summary() {
-    if (!p5State) return;
-    var keys = Object.keys(p5State.answers);
-    var total = keys.length;
-    var correct = 0;
-    for (var i = 0; i < keys.length; i++) {
-      if (p5State.answers[keys[i]].correct) correct++;
-    }
-    var pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-    var msg = pct >= 70
-      ? '\u2705 \u52A0\u5F37\u6548\u679C\u826F\u597D\uFF01\u5F31\u9805\u5DF2\u6709\u660E\u986F\u6539\u5584\u3002'
-      : pct >= 40
-        ? '\u26A0\uFE0F \u9084\u6709\u9032\u6B65\u7A7A\u9593\uFF0C\u5EFA\u8B70\u56DE\u53BB\u8907\u7FD2 S100 \u76F8\u95DC\u7AE0\u7BC0\u3002'
-        : '\u274C \u9019\u4E9B\u6982\u5FF5\u4ECD\u9700\u8981\u52A0\u5F37\uFF0C\u5EFA\u8B70\u91CD\u65B0\u5B78\u7FD2\u76F8\u95DC\u5167\u5BB9\u3002';
-    var mid = p5State.moduleId;
-
-    document.getElementById('module-view').innerHTML =
-      '<div class="phase5-summary">' +
-        '<h2>\u{1F3AF} \u5F31\u9805\u52A0\u5F37\u5B8C\u6210</h2>' +
-        '<div class="summary-score">' +
-          '<div class="score-big">' + correct + '/' + total + '</div>' +
-          '<div class="score-label">\u7B54\u5C0D</div>' +
-        '</div>' +
-        '<div class="summary-msg">' + msg + '</div>' +
-        '<div class="summary-actions">' +
-          '<button class="btn-primary" onclick="LearnUI.showReport(\'' + mid + '\')">\u{1F4CA} \u91CD\u770B\u5B78\u7FD2\u5831\u544A</button>' +
-          '<button class="btn-secondary" onclick="LearnUI.backToModules()">\u8FD4\u56DE\u6A21\u7D44\u5217\u8868</button>' +
-        '</div>' +
-      '</div>';
-
-    p5State = null;
-  }
-
-  // ========== 返回 / 初始化 ==========
-  function backToModules() {
-    document.getElementById('module-view').style.display = 'none';
-    document.getElementById('modules-view').style.display = 'block';
-    currentModule = null;
-    state.phase = 0;
-    renderModules();
-  }
-
-  function init() {
-    LearnEngine.getOrCreateOdID();
-    renderLevelInfo();
-    renderModules();
-  }
-
-  // ========== 匯出 ==========
-  global.LearnUI = {
-    init: init,
-    openModule: openModule,
-    backToModules: backToModules,
-    showReport: showReport,
-    startPhase5: startPhase5,
-    _rateFw: _rateFw,
-    _goPhase2: _goPhase2,
-    _chooseSide: _chooseSide,
-    _goPhase3: _goPhase3,
-    _goToQ: _goToQ,
-    _answerQ: _answerQ,
-    _nextQ: _nextQ,
-    _sendChat: _sendChat,
-    _goPhase4: _goPhase4,
-    _p5answer: _p5answer,
-    _p5next: _p5next
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+  if(typeof global.TQE_Layer2 !== 'undefined' && global.TQE_Layer2.goExam){
+    global.TQE_Layer2.goExam();
   } else {
-    init();
+    alert('模擬考模組未載入');
+  }
+}
+
+function showExamSelection(){
+  // Determine the current module's level
+  var mod = TQE.getModule(state.moduleId);
+  var lvId = mod ? (mod.level || 'l1') : 'l1';
+  _entryView = 'exam-' + lvId;
+  renderEntry();
+  showScreen('tqeScreenEntry');
+}
+
+function selectModule(id){
+  var module = TQE.getModule(id);
+  if(!module) return;
+
+  // Check login requirement
+  var levels = TQE.getLevels();
+  var lv = levels.find(function(l){ return l.id === module.level; });
+  if(lv && lv.requiresLogin && !TQE.isLoggedIn()){
+    var authStatus = document.getElementById('tqeAuthStatus');
+    if(authStatus) authStatus.innerHTML = '<span style="color:var(--gold);font-weight:700;">此模組需要 Google 登入</span>';
+    return;
   }
 
-})(window);
+  state.moduleId = id;
+  document.querySelectorAll('#tqeModuleList .card').forEach(function(c){ c.style.borderColor = ''; });
+  if(event && event.currentTarget) event.currentTarget.style.borderColor = 'var(--blue)';
+  var btn = document.getElementById('tqeBtnStart');
+  if(btn){
+    btn.textContent = '開始學習：' + module.name + ' →';
+    btn.disabled = false;
+  }
+}
+
+function startLearning(){
+  var nameInput = document.getElementById('tqeInputName');
+  state.name = nameInput ? (nameInput.value.trim() || '學員') : '學員';
+  state.startTime = Date.now();
+  renderPhase1();
+  showScreen('tqeScreenPhase1');
+}
+
+// ─── Phase 1: Framework Rating ───
+function renderPhase1(){
+  var mod = TQE.getModule(state.moduleId);
+  if(!mod) return;
+  var area = document.getElementById('tqePhase1Area');
+  if(!area) return;
+
+  var html = '<div class="phase-header fade-in">' +
+    '<div class="phase-tag" style="background:var(--blue);">Phase 1</div>' +
+    '<h2>框架建立</h2>' +
+    '<p>評估你對每個核心概念的熟悉程度</p></div>';
+
+  mod.frameworks.forEach(function(fw, idx){
+    html += '<div class="fw-card" id="fw-' + fw.id + '">' +
+      '<span class="fw-num">' + (idx+1) + '</span>' +
+      '<span class="fw-title">' + TQE.escHtml(fw.name) + '</span>' +
+      '<div class="fw-desc">' + TQE.escHtml(fw.desc) + '</div>' +
+      (fw.analogy ? '<div class="fw-analogy">' + TQE.escHtml(fw.analogy) + '</div>' : '') +
+      '<div class="self-rate">';
+    for(var s=1; s<=5; s++){
+      html += '<span class="star" data-fw="' + fw.id + '" data-val="' + s + '" onclick="TQE_UI.rateFramework(\'' + fw.id + '\',' + s + ')">★</span>';
+    }
+    html += '</div></div>';
+  });
+
+  html += '<button class="btn btn-primary btn-block" id="tqeBtnP1Next" onclick="TQE_UI.goPhase2()" disabled>所有框架都評分後才能繼續 →</button>';
+  area.innerHTML = html;
+}
+
+function rateFramework(fwId, val){
+  state.phase1.ratings[fwId] = val;
+  // Update stars UI
+  document.querySelectorAll('.star[data-fw="' + fwId + '"]').forEach(function(s){
+    s.classList.toggle('lit', parseInt(s.dataset.val) <= val);
+  });
+  // Check if all rated
+  var mod = TQE.getModule(state.moduleId);
+  var allRated = mod.frameworks.every(function(fw){ return state.phase1.ratings[fw.id]; });
+  var btn = document.getElementById('tqeBtnP1Next');
+  if(btn) btn.disabled = !allRated;
+}
+
+// ─── Phase 2: Debate / Boundary Check ───
+function goPhase2(){
+  TQE.saveProgress('phase1_complete');
+  TQE.saveSession();
+  renderPhase2();
+  showScreen('tqeScreenPhase2');
+}
+
+function renderPhase2(){
+  var mod = TQE.getModule(state.moduleId);
+  if(!mod) return;
+  var area = document.getElementById('tqePhase2Area');
+  if(!area) return;
+
+  var html = '<div class="phase-header fade-in">' +
+    '<div class="phase-tag" style="background:var(--gold);">Phase 2</div>' +
+    '<h2>邊界校正</h2>' +
+    '<p>專家也會爭論的情境，你選哪邊？</p></div>';
+
+  mod.debates.forEach(function(d){
+    html += '<div class="debate-scenario" id="debate-' + d.id + '">' +
+      '<h3>' + TQE.escHtml(d.title) + '</h3>' +
+      '<p>' + TQE.escHtml(d.scenario) + '</p>' +
+      '<div class="side-btns">' +
+      '<button class="side-btn" onclick="TQE_UI.chooseDebateSide(\'' + d.id + '\',\'A\')">' + TQE.escHtml(d.sideA.label) + '</button>' +
+      '<button class="side-btn" onclick="TQE_UI.chooseDebateSide(\'' + d.id + '\',\'B\')">' + TQE.escHtml(d.sideB.label) + '</button>' +
+      '</div>' +
+      '<div class="debate-reveal" id="reveal-' + d.id + '">' +
+      '<div class="info blue"><strong>正方：</strong>' + (d.sideA.args || []).map(TQE.escHtml).join('；') + '</div>' +
+      '<div class="info gold"><strong>反方：</strong>' + (d.sideB.args || []).map(TQE.escHtml).join('；') + '</div>' +
+      '<div class="info green"><strong>洞察：</strong>' + TQE.escHtml(d.insight) + '</div>' +
+      '</div></div>';
+  });
+
+  html += '<button class="btn btn-primary btn-block" id="tqeBtnP2Next" onclick="TQE_UI.goPhase3()" disabled>全部選完後才能繼續 →</button>';
+  area.innerHTML = html;
+}
+
+function chooseDebateSide(debateId, side){
+  state.phase2.choices[debateId] = side;
+  var btns = document.querySelectorAll('#debate-' + debateId + ' .side-btn');
+  btns.forEach(function(b){ b.className = 'side-btn'; });
+  btns[side === 'A' ? 0 : 1].classList.add('chosen-' + side.toLowerCase());
+  var reveal = document.getElementById('reveal-' + debateId);
+  if(reveal) reveal.classList.add('show');
+
+  // Check all debates answered
+  var mod = TQE.getModule(state.moduleId);
+  var allChosen = mod.debates.every(function(d){ return state.phase2.choices[d.id]; });
+  var btn = document.getElementById('tqeBtnP2Next');
+  if(btn) btn.disabled = !allChosen;
+}
+
+// ─── Phase 3: Quiz ───
+function goPhase3(){
+  TQE.saveProgress('phase2_complete');
+  TQE.saveSession();
+  state.currentQ = 0;
+  renderPhase3();
+  showScreen('tqeScreenPhase3');
+}
+
+function renderPhase3(){
+  var mod = TQE.getModule(state.moduleId);
+  if(!mod) return;
+  var area = document.getElementById('tqePhase3Area');
+  if(!area) return;
+
+  var html = '<div class="phase-header fade-in">' +
+    '<div class="phase-tag" style="background:var(--red);">Phase 3</div>' +
+    '<h2>鑑別測驗</h2>' +
+    '<p>找出你真正的知識缺口</p></div>';
+
+  mod.questions.forEach(function(q, idx){
+    var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
+    html += '<div class="fade-in" id="qWrap-' + q.id + '" style="' + (idx > 0 ? 'display:none;' : '') + '">' +
+      '<div class="quiz-stem"><span class="q-num">Q' + (idx+1) + '</span> ' + TQE.escHtml(q.stem) + '</div>' +
+      '<div id="opts-' + q.id + '">';
+    q.options.forEach(function(o){
+      html += '<button class="option-btn" id="opt-' + q.id + '-' + o.key + '" onclick="TQE_UI.answerQ(\'' + q.id + '\',\'' + o.key + '\')">' +
+        '<span class="opt-label">' + o.key + '</span>' + TQE.escHtml(o.text) + '</button>';
+    });
+    html += '</div><div id="feedback-' + q.id + '" style="margin-top:1rem;"></div></div>';
+  });
+
+  area.innerHTML = html;
+}
+
+function answerQ(qid, chosen){
+  var mod = TQE.getModule(state.moduleId);
+  var q = mod.questions.find(function(x){ return x.id === qid; });
+  var isCorrect = chosen === q.correct;
+
+  // Lock options
+  document.querySelectorAll('#opts-' + qid + ' .option-btn').forEach(function(b){ b.classList.add('locked'); });
+  document.getElementById('opt-' + qid + '-' + q.correct).classList.add('correct');
+  if(!isCorrect) document.getElementById('opt-' + qid + '-' + chosen).classList.add('wrong');
+
+  // Record
+  state.phase3.answers[qid] = chosen;
+  var chosenOpt = q.options.find(function(o){ return o.key === chosen; });
+  state.phase3.scores[qid] = chosenOpt ? (chosenOpt.depth || 1) : 1;
+
+  // Save blind spot
+  TQE.saveBlindSpot(q, chosen, isCorrect);
+
+  var fb = document.getElementById('feedback-' + qid);
+  if(isCorrect){
+    var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
+    fb.innerHTML = '<div class="info green"><strong>正確！</strong> 對應' + TQE.term('framework') + '「' + (fw ? fw.name : '') + '」。</div>' +
+      '<button class="btn btn-primary btn-block" onclick="TQE_UI.nextQ()" style="margin-top:.8rem;">下一題 →</button>';
+  } else {
+    var diag = q.diagnosis ? q.diagnosis[chosen] : null;
+    var hasDiag = diag && diag.gap && diag.gap !== '';
+    var lectureLinks = TQE.getLectureLinks(state.moduleId, q.framework);
+    var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
+    var correctText = q.options.find(function(o){ return o.key === q.correct; })?.text || '';
+    var chosenText = q.options.find(function(o){ return o.key === chosen; })?.text || '';
+
+    // First-round followup: ALWAYS use pre-generated text (no API call)
+    var initialFollowup;
+    if(hasDiag && diag.followup){
+      initialFollowup = diag.followup;
+    } else {
+      // Smart fallback using question content (still no API)
+      initialFollowup = '你選的「' + chosenText.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。' +
+        '這兩者的關鍵差異在哪？打字告訴我你的想法，AI 會根據你的回應分析。';
+    }
+
+    var headerInfo = hasDiag
+      ? '<div class="info red"><strong>你的思路：</strong>' + TQE.escHtml(diag.gap) + '</div>'
+      : '<div class="info red"><strong>答案是 ' + q.correct + '</strong>。' + TQE.escHtml(q.explanation || '') + '</div>';
+
+    fb.innerHTML = headerInfo +
+      (lectureLinks ? '<div class="info blue" style="margin-top:.5rem;"><strong>📖 去這裡補強：</strong>' + lectureLinks + '</div>' : '') +
+      '<div class="tqe-chat" id="chat-' + qid + '">' +
+      '<div class="tqe-chat-header">AI 追問引擎</div>' +
+      '<div class="tqe-chat-body" id="chatBody-' + qid + '">' +
+      '<div class="tqe-chat-msg from-ai">' + TQE.escHtml(initialFollowup) + '</div>' +
+      '</div>' +
+      '<div class="tqe-chat-input">' +
+      '<input type="text" id="chatInput-' + qid + '" placeholder="輸入你的想法..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();TQE_UI.sendChat(\'' + qid + '\');}">' +
+      '<button onclick="TQE_UI.sendChat(\'' + qid + '\')">送出</button>' +
+      '</div></div>' +
+      '<button class="btn btn-secondary btn-block" onclick="TQE_UI.nextQ()" style="margin-top:.8rem;">繼續下一題 →</button>';
+  }
+}
+
+function nextQ(){
+  var mod = TQE.getModule(state.moduleId);
+  state.currentQ++;
+  if(state.currentQ >= mod.questions.length){
+    goReport();
+    return;
+  }
+  // Hide current, show next
+  var wraps = document.querySelectorAll('#tqePhase3Area [id^="qWrap-"]');
+  wraps.forEach(function(w, i){ w.style.display = i === state.currentQ ? '' : 'none'; });
+  window.scrollTo(0, document.getElementById('tqePhase3Area').offsetTop);
+}
+
+// ─── Phase 4: Report ───
+function goReport(){
+  TQE.saveProgress('phase3_complete');
+  TQE.saveSession();
+  renderReport();
+  showScreen('tqeScreenPhase4');
+}
+
+function renderReport(){
+  var mod = TQE.getModule(state.moduleId);
+  if(!mod) return;
+  var area = document.getElementById('tqePhase4Area');
+  if(!area) return;
+
+  // Calculate per-framework scores
+  var fwScores = {};
+  mod.frameworks.forEach(function(f){ fwScores[f.id] = { total: 0, count: 0, name: f.name }; });
+  mod.questions.forEach(function(q){
+    var score = state.phase3.scores[q.id] || 0;
+    if(fwScores[q.framework]){ fwScores[q.framework].total += score; fwScores[q.framework].count++; }
+  });
+
+  var weakFws = [];
+  var html = '<div class="phase-header fade-in"><div class="phase-tag" style="background:var(--green);">報告</div><h2>弱點分析</h2></div>';
+
+  // Overall stats
+  var correct = mod.questions.filter(function(q){ return state.phase3.answers[q.id] === q.correct; }).length;
+  var total = Object.keys(state.phase3.answers).length;
+  var pct = total > 0 ? Math.round(correct / total * 100) : 0;
+  html += '<div style="text-align:center;margin:1rem 0;">' +
+    '<div style="font-size:3rem;font-weight:900;color:' + (pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--gold)' : 'var(--red)') + ';">' + pct + '%</div>' +
+    '<div>答對 ' + correct + '/' + total + ' 題</div></div>';
+
+  // Per-framework breakdown
+  html += '<div style="margin:1.5rem 0;">';
+  Object.entries(fwScores).forEach(function(entry){
+    var fid = entry[0], fs = entry[1];
+    var avg = fs.count > 0 ? fs.total / fs.count : 0;
+    var isWeak = avg < 3;
+    if(isWeak) weakFws.push(fid);
+    var barPct = Math.round(avg / 4 * 100);
+    var color = isWeak ? 'var(--red)' : 'var(--green)';
+    html += '<div style="margin-bottom:.8rem;">' +
+      '<div style="display:flex;justify-content:space-between;font-size:.9rem;">' +
+      '<span>' + TQE.escHtml(fid + ' ' + fs.name) + '</span>' +
+      '<span style="font-weight:700;color:' + color + ';">' + avg.toFixed(1) + '/4</span></div>' +
+      '<div style="background:var(--g100);border-radius:4px;height:6px;margin-top:.2rem;">' +
+      '<div style="height:100%;border-radius:4px;width:' + barPct + '%;background:' + color + ';"></div></div></div>';
+  });
+  html += '</div>';
+
+  // Radar chart
+  var radarLabels = [];
+  var radarData = [];
+  var radarSelfData = [];
+  Object.keys(fwScores).forEach(function(fid){
+    var fs = fwScores[fid];
+    radarLabels.push(fs.name);
+    radarData.push(fs.count > 0 ? Math.round(fs.total / fs.count * 25) : 0); // normalize to 0-100
+    radarSelfData.push((state.phase1.ratings[fid] || 0) * 20); // 1-5 → 0-100
+  });
+
+  html += '<div style="max-width:400px;margin:1.5rem auto;"><canvas id="tqeRadarChart" width="400" height="400"></canvas></div>';
+
+  state.weakFws = weakFws;
+
+  // Actions
+  html += '<div style="text-align:center;margin-top:2rem;">';
+  if(weakFws.length > 0){
+    html += '<p style="color:var(--red);margin-bottom:1rem;">需加強：' + weakFws.map(function(fid){ return fwScores[fid].name; }).join('、') + '</p>';
+    html += '<button class="btn btn-primary" onclick="TQE_UI.goLayer2()">弱項練習 →</button> ';
+  }
+  html += '<button class="btn btn-gold" onclick="TQE_UI.showExamSelection()">模擬考（選考科） →</button>';
+  html += '</div>';
+
+  area.innerHTML = html;
+  TQE.saveSession();
+
+  // Render radar chart (Chart.js)
+  renderRadarChart(radarLabels, radarData, radarSelfData);
+}
+
+function renderRadarChart(labels, testData, selfData){
+  var canvas = document.getElementById('tqeRadarChart');
+  if(!canvas) return;
+
+  // Load Chart.js if not already loaded
+  if(typeof Chart === 'undefined'){
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+    script.onload = function(){ _drawRadar(canvas, labels, testData, selfData); };
+    document.head.appendChild(script);
+  } else {
+    _drawRadar(canvas, labels, testData, selfData);
+  }
+}
+
+function _drawRadar(canvas, labels, testData, selfData){
+  if(typeof Chart === 'undefined') return;
+  var style = getComputedStyle(document.documentElement);
+  var blue = style.getPropertyValue('--blue').trim() || '#1A73E8';
+  var gold = style.getPropertyValue('--gold').trim() || '#F9AB00';
+
+  new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: '測驗表現',
+          data: testData,
+          borderColor: blue,
+          backgroundColor: blue + '20',
+          borderWidth: 2,
+          pointBackgroundColor: blue
+        },
+        {
+          label: '自評信心',
+          data: selfData,
+          borderColor: gold,
+          backgroundColor: gold + '20',
+          borderWidth: 2,
+          borderDash: [5, 5],
+          pointBackgroundColor: gold
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { stepSize: 25, font: { size: 11 }, backdropColor: 'transparent' },
+          pointLabels: { font: { size: 13, family: 'Noto Sans TC, sans-serif' } },
+          grid: { color: '#E8EAED' },
+          angleLines: { color: '#E8EAED' }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 12, family: 'Noto Sans TC, sans-serif' }, padding: 16 }
+        }
+      }
+    }
+  });
+}
+
+// ─── AI Chat (Phase 3) ───
+var _chatCooldown = false;
+
+function sendChat(qid){
+  if(_chatCooldown) return;
+  var input = document.getElementById('chatInput-' + qid);
+  if(!input) return;
+  var msg = input.value.trim();
+  if(!msg) return;
+
+  // Lock UI: clear input + visually disable button + input
+  input.value = '';
+  input.blur();
+  input.disabled = true;
+  var btn = input.parentNode.querySelector('button');
+  if(btn){ btn.disabled = true; btn.style.opacity = '.5'; btn.textContent = '送出中'; }
+
+  var body = document.getElementById('chatBody-' + qid);
+  body.innerHTML += '<div class="tqe-chat-msg from-user">' + TQE.escHtml(msg) + '</div>';
+  body.scrollTop = body.scrollHeight;
+
+  _chatCooldown = true;
+  // Unlock after 3s + reply received
+  function unlock(){
+    _chatCooldown = false;
+    if(input){ input.disabled = false; }
+    if(btn){ btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '送出'; }
+  }
+  var unlockTimer = setTimeout(unlock, 3000);
+
+  body.innerHTML += '<div class="tqe-chat-msg from-ai" id="aiLoading-' + qid + '" style="opacity:.5;">思考中...</div>';
+  body.scrollTop = body.scrollHeight;
+
+  var mod = TQE.getModule(state.moduleId);
+  var q = mod.questions.find(function(x){ return x.id === qid; });
+  var chosen = state.phase3.answers[qid];
+  var diag = (q.diagnosis && q.diagnosis[chosen]) ? q.diagnosis[chosen] : {};
+  var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
+
+  var chatMsgs = Array.from(body.querySelectorAll('.tqe-chat-msg')).map(function(el){
+    var role = el.classList.contains('from-user') ? '學生' : '助教';
+    return role + '：' + el.textContent.trim();
+  }).filter(function(t){ return t.indexOf('思考中') === -1; }).slice(-6).join('\n');
+
+  var pack = TQE.getConfig().contentPack;
+  var prompt = '你是' + (pack ? pack.name : '學習系統') + '的學習助教，風格像一個很會教的學長姐 — 用白話、比喻、生活化例子。\n\n' +
+    '學生在學習「' + mod.name + '」模組。\n\n' +
+    '【原始題目】\n' + q.stem + '\n\n' +
+    '【選項】\n' + q.options.map(function(o){ return o.key + '. ' + o.text; }).join('\n') + '\n\n' +
+    '學生選了：' + chosen + '（' + (q.options.find(function(o){ return o.key === chosen; }) || {}).text + '）\n' +
+    '正確答案：' + q.correct + '（' + (q.options.find(function(o){ return o.key === q.correct; }) || {}).text + '）\n' +
+    '學生的認知缺口：' + (diag.gap || '') + '\n' +
+    (fw ? '相關概念：' + fw.name + ' — ' + fw.desc + '\n' : '') +
+    '\n【對話紀錄】\n' + chatMsgs + '\n\n學生最新回覆：「' + msg + '」\n\n' +
+    '用蘇格拉底式提問引導：肯定正確部分，用反例/比喻幫他看到漏掉的維度，用引導問題收尾。3-4 句話，繁體中文，不要 markdown。';
+
+  TQE.callGemini(prompt).then(function(reply){
+    var el = document.getElementById('aiLoading-' + qid);
+    if(el) el.remove();
+    body.innerHTML += '<div class="tqe-chat-msg from-ai">' + TQE.escHtml(reply === '[RATE_LIMIT]' ? 'AI 額度暫時用完，請等 30 秒再試。' : (reply || '抱歉，AI 暫時無法回應。')) + '</div>';
+    body.scrollTop = body.scrollHeight;
+    clearTimeout(unlockTimer);
+    unlock();
+  }).catch(function(){
+    var el = document.getElementById('aiLoading-' + qid);
+    if(el) el.remove();
+    body.innerHTML += '<div class="tqe-chat-msg from-ai">抱歉，AI 暫時無法回應。</div>';
+    body.scrollTop = body.scrollHeight;
+    clearTimeout(unlockTimer);
+    unlock();
+  });
+}
+
+// ─── Phase 5 / Layer 2 / Exam: delegate to learn-layer2.js ───
+// These are provided by the layer2 module
+
+function goLayer2(){
+  if(typeof global.TQE_Layer2 !== 'undefined' && global.TQE_Layer2.goLayer2){
+    global.TQE_Layer2.goLayer2();
+  } else {
+    alert('Layer 2 模組未載入');
+  }
+}
+
+function goExam(){
+  if(typeof global.TQE_Layer2 !== 'undefined' && global.TQE_Layer2.goExam){
+    global.TQE_Layer2.goExam();
+  } else {
+    alert('模擬考模組未載入');
+  }
+}
+
+// ─── Public API ───
+global.TQE_UI = {
+  showScreen: showScreen,
+  renderEntry: renderEntry,
+  setEntryView: setEntryView,
+  selectLevel: selectLevel,
+  selectModule: selectModule,
+  startSubjectExam: startSubjectExam,
+  showExamSelection: showExamSelection,
+  startLearning: startLearning,
+  rateFramework: rateFramework,
+  goPhase2: goPhase2,
+  chooseDebateSide: chooseDebateSide,
+  goPhase3: goPhase3,
+  answerQ: answerQ,
+  nextQ: nextQ,
+  goReport: goReport,
+  sendChat: sendChat,
+  goLayer2: goLayer2,
+  goExam: goExam
+};
+
+})(typeof window !== 'undefined' ? window : global);
