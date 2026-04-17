@@ -557,17 +557,6 @@ function generateExamQuestions(){
   }
   if(examModules.length === 0) return;
 
-  // Determine exam size
-  var targetTotal = subject ? subject.total : 50;
-  var poolSize = 0;
-  examModules.forEach(function(m){ poolSize += m.questions.length; });
-  targetTotal = Math.min(Math.max(targetTotal, 20), 50);
-
-  // Show scope info
-  var scopeEl = document.getElementById('tqeExamLoadProgress');
-  var scopeLabel = subject ? subject.name : (examModules[0].examSubject ? examModules[0].examSubject.name : examModules[0].name);
-  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong>（' + targetTotal + ' 題）<br>題庫載入中...';
-
   // Collect questions from all modules in subject
   var pool = [];
   examModules.forEach(function(m){
@@ -581,66 +570,16 @@ function generateExamQuestions(){
     var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
   }
 
-  // Use all pool questions upfront (AI supplements if needed)
-  var fromPool = pool.map(function(q){
+  // Use all pool questions — no AI dependency
+  exam.questions = pool.map(function(q){
     return Object.assign({}, q, { id: 'EX-' + q.id, source: 'pool' });
   });
-  exam.questions = fromPool.slice(0, targetTotal);
 
-  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong>（' + targetTotal + ' 題）<br>題庫已載入 ' + fromPool.length + ' 題，AI 生成中...';
+  var scopeEl = document.getElementById('tqeExamLoadProgress');
+  var scopeLabel = subject ? subject.name : (examModules[0].examSubject ? examModules[0].examSubject.name : examModules[0].name);
+  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong>（' + exam.questions.length + ' 題）';
 
-  // Collect all frameworks across subject modules
-  var allFrameworks = [];
-  var fwIdsSeen = {};
-  examModules.forEach(function(m){
-    m.frameworks.forEach(function(f){
-      if(!fwIdsSeen[f.id]){ fwIdsSeen[f.id] = true; allFrameworks.push(f); }
-    });
-  });
-
-  var needed = targetTotal - fromPool.length;
-  var batchSize = 10;
-  var batches = Math.ceil(needed / batchSize);
-  // Use first module for prompt context (buildQuestionPrompt needs a module)
-  var promptMod = examModules[0];
-
-  var chain = Promise.resolve();
-  for(var b = 0; b < batches; b++){
-    (function(batchIdx){
-      chain = chain.then(function(){
-        var count = Math.min(batchSize, needed - batchIdx * batchSize);
-        var prompt = TQE.buildQuestionPrompt(promptMod, allFrameworks.map(function(f){ return f.id; }), 3, count);
-
-        return TQE.callGroq(prompt, 8192).then(function(text){
-          var aiQs = TQE.parseAIQuestions(text);
-          var mapped = aiQs.map(function(q, idx){
-            return Object.assign({}, q, {
-              id: 'EX-AI-' + (batchIdx * batchSize + idx + 1),
-              framework: allFrameworks[Math.floor(Math.random() * allFrameworks.length)]?.id || 'F1',
-              source: 'groq', diagnosis: {}
-            });
-          });
-          TQE.postProcessQuestions(mapped);
-          exam.questions = exam.questions.concat(mapped);
-          cacheQuestions(promptMod.id, 3, mapped);
-          if(scopeEl) scopeEl.textContent = '已生成 ' + exam.questions.length + ' / ' + targetTotal + ' 題...';
-        }).catch(function(e){
-          console.warn('Exam batch failed:', e.message);
-        }).then(function(){
-          if(batchIdx < batches - 1) return new Promise(function(r){ setTimeout(r, 2000); });
-        });
-      });
-    })(b);
-  }
-
-  chain.then(function(){
-    // Try cached from first module if still short
-    if(exam.questions.length < targetTotal){
-      return loadCachedQuestions(promptMod.id, 3, targetTotal - exam.questions.length).then(function(cached){
-        exam.questions = exam.questions.concat(cached);
-      });
-    }
-  }).then(function(){
+  Promise.resolve().then(function(){
     if(scopeEl) scopeEl.textContent = '組卷完成！共 ' + exam.questions.length + ' 題';
 
     // Shuffle
