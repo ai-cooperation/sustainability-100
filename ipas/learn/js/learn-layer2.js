@@ -646,21 +646,14 @@ function generateExamQuestions(){
     });
   });
 
+  // ─── Start exam immediately with pool, AI supplements in background ───
   if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong><br>' +
     '程度：' + abilityLabel + ' · 弱項 ' + weakFws.length + ' 個框架<br>' +
-    '題庫 ' + poolCount + ' 題 + AI 針對弱項生成 ' + needed + ' 題中...';
+    '題庫 ' + poolCount + ' 題，AI 弱項題背景生成中...';
 
-  var aiDone = false;
-  var timeoutId = setTimeout(function(){
-    if(!aiDone){
-      aiDone = true;
-      if(scopeEl) scopeEl.textContent = 'AI 超時，以現有 ' + exam.questions.length + ' 題開考';
-      _startExamNow(scopeEl);
-    }
-  }, 45000);
+  _startExamNow(scopeEl);
 
-  // Split into batches of 3 (proven reliable — LLM truncates at 5+)
-  // 70% weak, 30% strong
+  // 70% weak, 30% strong, 3 questions per batch
   var weakTotal = Math.round(needed * 0.7);
   var strongTotal = needed - weakTotal;
   var weakBatches = [];
@@ -670,7 +663,6 @@ function generateExamQuestions(){
   rem = strongTotal;
   while(rem > 0){ strongBatches.push(Math.min(3, rem)); rem -= 3; }
 
-  // Pick representative modules for prompt context (need one with matching frameworks)
   function _findModuleForFws(fwIds){
     for(var i = 0; i < examModules.length; i++){
       var hasFw = fwIds.some(function(fid){
@@ -681,70 +673,63 @@ function generateExamQuestions(){
     return examModules[0];
   }
 
+  // Background AI generation — questions are appended while student is answering pool
   var chain = Promise.resolve();
-  var totalBatches = weakBatches.length + strongBatches.length;
-  var batchDone = 0;
 
-  // Weak framework batches — with blind spots injected
   weakBatches.forEach(function(count, idx){
     chain = chain.then(function(){
-      batchDone++;
-      if(scopeEl) scopeEl.textContent = 'AI 弱項出題 (' + batchDone + '/' + totalBatches + ')... 已有 ' + exam.questions.length + ' 題';
       var weakMod = _findModuleForFws(weakFws);
       var prompt = TQE.buildQuestionPrompt(weakMod, weakFws, aiLevel, count);
       if(blindSpotText){
         prompt = prompt.replace('【硬性規則', '【學生具體盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n【硬性規則');
       }
-      return _callAndAppendAI(prompt, weakMod, weakFws, 'weak' + idx, scopeEl, targetTotal);
+      return _callAndAppendAI(prompt, weakMod, weakFws, 'weak' + idx);
     });
   });
 
-  // Strong framework batches — difficulty +1
   strongBatches.forEach(function(count, idx){
     chain = chain.then(function(){
-      batchDone++;
-      if(scopeEl) scopeEl.textContent = 'AI 驗證出題 (' + batchDone + '/' + totalBatches + ')... 已有 ' + exam.questions.length + ' 題';
       var strongMod = _findModuleForFws(strongFws);
       var prompt = TQE.buildQuestionPrompt(strongMod, strongFws, Math.min(aiLevel + 1, 4), count);
-      return _callAndAppendAI(prompt, strongMod, strongFws, 'strong' + idx, scopeEl, targetTotal);
+      return _callAndAppendAI(prompt, strongMod, strongFws, 'strong' + idx);
     });
-  });
-
-  chain.then(function(){
-    if(!aiDone){
-      aiDone = true;
-      clearTimeout(timeoutId);
-      _startExamNow(scopeEl);
-    }
   });
 }
 
-function _callAndAppendAI(prompt, mod, fwIds, tag, scopeEl, targetTotal){
-  return TQE.callGroq(prompt, 8192).then(function(text){
-    var aiQs = TQE.parseAIQuestions(text);
-    if(scopeEl) scopeEl.textContent = 'AI 已生成 ' + (exam.questions.length + aiQs.length) + ' / ' + targetTotal + ' 題...';
-    var mapped = aiQs.map(function(q, idx){
-      var diag = q.diagnosis || {};
-      (q.options || []).filter(function(o){ return o.key !== q.correct; }).forEach(function(o){
-        if(!diag[o.key] || !diag[o.key].followup){
-          var correctText = (q.options.find(function(x){ return x.key === q.correct; }) || {}).text || '';
-          diag[o.key] = {
-            gap: diag[o.key]?.gap || q.explanation || '',
-            followup: '你選的「' + o.text.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。差異在哪？'
-          };
-        }
+function _callAndAppendAI(prompt, mod, fwIds, tag){
+  function _attempt(){
+    return TQE.callGroq(prompt, 8192).then(function(text){
+      var aiQs = TQE.parseAIQuestions(text);
+      // Quality gate: discard questions that are clearly broken
+      aiQs = aiQs.filter(function(q){
+        if(!q.stem || q.stem.length < 20) return false;
+        if(!q.options || q.options.length < 4) return false;
+        if(!q.correct) return false;
+        var lens = q.options.map(function(o){ return (o.text || '').length; });
+        if(Math.min.apply(null, lens) < 10) return false; // option too short
+        return true;
       });
-      return Object.assign({}, q, {
-        id: 'EX-AI-' + tag + '-' + (idx + 1),
-        framework: fwIds[idx % fwIds.length] || 'F1',
-        source: 'groq', _sourceModule: mod.id, diagnosis: diag
+      if(aiQs.length === 0) throw new Error('no valid questions after quality gate');
+
+      var mapped = aiQs.map(function(q, idx){
+        return Object.assign({}, q, {
+          id: 'EX-AI-' + tag + '-' + (idx + 1),
+          framework: fwIds[idx % fwIds.length] || 'F1',
+          source: 'groq', _sourceModule: mod.id
+        });
       });
+      TQE.postProcessQuestions(mapped);
+      exam.questions = exam.questions.concat(mapped);
+      cacheQuestions(mod.id, 3, mapped);
     });
-    TQE.postProcessQuestions(mapped);
-    exam.questions = exam.questions.concat(mapped);
-    cacheQuestions(mod.id, 3, mapped);
-  }).catch(function(e){
-    console.warn('Exam AI (' + tag + ') failed:', e.message);
+  }
+
+  // Retry once on failure
+  return _attempt().catch(function(e){
+    console.warn('Exam AI (' + tag + ') retry after:', e.message);
+    return _attempt().catch(function(e2){
+      console.warn('Exam AI (' + tag + ') failed:', e2.message);
+    });
   });
 }
 
