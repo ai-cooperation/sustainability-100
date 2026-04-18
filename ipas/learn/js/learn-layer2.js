@@ -153,30 +153,8 @@ function generateL2Questions(silent){
     });
     l2.questions = l2.questions.concat(cached);
 
-    // Fallback: fill from content pack pool (target framework questions not yet used)
-    var poolQs = [];
-    l2.targetFws.forEach(function(fid){
-      mod.questions.forEach(function(q){
-        if(q.framework === fid && !existingIds[q.id] && !existingIds[q.stem]){
-          poolQs.push(q);
-        }
-      });
-    });
-    // Shuffle pool
-    for(var si = poolQs.length - 1; si > 0; si--){
-      var sj = Math.floor(Math.random() * (si + 1));
-      var stmp = poolQs[si]; poolQs[si] = poolQs[sj]; poolQs[sj] = stmp;
-    }
-    // Take from pool
-    var poolTaken = poolQs.slice(0, Math.max(0, 10 - (l2.questions.length - l2.currentQ)));
-    poolTaken.forEach(function(q){
-      var clone = JSON.parse(JSON.stringify(q));
-      clone.id = 'POOL-' + q.id;
-      clone.source = 'pool';
-      l2.questions.push(clone);
-      existingIds[q.id] = true;
-      existingIds[q.stem] = true;
-    });
+    // No pool fallback — Layer 2 uses only AI-generated new questions
+    // This ensures learners don't repeat the same questions from the diagnostic test
 
     var unanswered = l2.questions.length - l2.currentQ;
     var needed = Math.max(0, 10 - unanswered);
@@ -234,12 +212,8 @@ function generateL2Questions(silent){
       }).catch(function(e){
         retries--;
         if(retries > 0) return tryGenerate();
-        // Fallback: if pool questions were loaded, use those instead of showing error
-        if(l2.questions.length > l2.currentQ){
-          if(!silent) renderL2Question();
-          return;
-        }
-        if(!silent && area) area.innerHTML = '<div class="info red">出題失敗（' + e.message + '）<br>' +
+        if(!silent && area) area.innerHTML = '<div class="info red">AI 出題失敗（' + e.message + '）<br>' +
+          '<p style="font-size:13px;color:var(--text-soft);margin:var(--space-2) 0;">弱項練習使用 AI 動態出新題，需要網路連線。</p>' +
           '<div style="display:flex;gap:.5rem;margin-top:.8rem;justify-content:center;flex-wrap:wrap;">' +
           '<button class="btn btn-primary" onclick="TQE_Layer2.generateL2Questions()">重試</button>' +
           '<button class="btn btn-secondary" onclick="TQE_Layer2.backToReport()">← 返回報告</button>' +

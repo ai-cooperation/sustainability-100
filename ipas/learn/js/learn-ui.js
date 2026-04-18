@@ -562,66 +562,49 @@ function _renderLearnTabContent(mod){
   }
 
   if(_learnTab === 'discrimination'){
-    mod.questions.forEach(function(q, idx){
-      var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
-      html += '<div class="dq" id="learnDQ-' + q.id + '">';
-      html += '<div class="dq-head"><div>';
-      html += '<div class="dq-tag">鑑別題 · ' + (fw ? TQE.escHtml(fw.name) : '') + '</div>';
-      html += '<p class="dq-prompt">' + TQE.escHtml(q.stem) + '</p>';
-      html += '</div></div>';
-      html += '<div class="dq-choices" id="learnOpts-' + q.id + '">';
-      q.options.forEach(function(o){
-        html += '<button class="dq-choice" onclick="TQE_UI._learnAnswer(\'' + q.id + '\',\'' + o.key + '\')">' +
-          '<div class="dq-letter">' + o.key + '</div>' +
-          '<div class="dq-choice-text">' + TQE.escHtml(o.text) + '</div>' +
-          '<div class="dq-rate"></div></button>';
+    // Show overview + start button — actual quiz runs in Phase 3 screen (with full AI chat)
+    var answered = 0;
+    mod.questions.forEach(function(q){ if(state.phase3.answers[q.id]) answered++; });
+    var totalQ = mod.questions.length;
+
+    html += '<div class="lede">';
+    html += '<p>接下來進入 <strong>' + totalQ + ' 題鑑別測驗</strong>，每答錯一題，AI 會即時追問幫你釐清盲區。</p>';
+
+    if(answered > 0 && answered >= totalQ){
+      html += '<div class="info green" style="margin:var(--space-4) 0;"><strong>已完成！</strong>你已完成本模組全部 ' + totalQ + ' 題鑑別測驗。</div>';
+      html += '<button class="btn btn-primary" style="width:100%;" onclick="TQE_UI.goReport()">查看弱點分析報告 →</button>';
+    } else if(answered > 0){
+      html += '<div class="info blue" style="margin:var(--space-4) 0;">已答 ' + answered + ' / ' + totalQ + ' 題，可繼續作答。</div>';
+      html += '<button class="btn btn-primary" style="width:100%;" onclick="TQE_UI._startPhase3FromLearn()">繼續鑑別測驗（' + (totalQ - answered) + ' 題） →</button>';
+    } else {
+      html += '<div style="margin:var(--space-4) 0;padding:var(--space-4);background:var(--bg-soft);border-radius:var(--radius);border:1px solid var(--border);">';
+      html += '<div style="display:flex;gap:var(--space-3);flex-wrap:wrap;">';
+      mod.frameworks.forEach(function(fw){
+        var fwQCount = mod.questions.filter(function(q){ return q.framework === fw.id; }).length;
+        html += '<span class="tag">' + TQE.escHtml(fw.name) + ' · ' + fwQCount + ' 題</span>';
       });
-      html += '</div>';
-      html += '<div id="learnFb-' + q.id + '"></div>';
-      html += '</div>';
-    });
+      html += '</div></div>';
+      html += '<button class="btn btn-primary" style="width:100%;margin-top:var(--space-4);" onclick="TQE_UI._startPhase3FromLearn()">開始鑑別測驗（' + totalQ + ' 題 + AI 追問） →</button>';
+    }
+    html += '</div>';
   }
 
   el.innerHTML = html;
 }
 
-function _learnAnswer(qid, chosen){
+function _startPhase3FromLearn(){
+  // Transition from Learn screen to full Phase 3 with AI chat
+  state.startTime = state.startTime || Date.now();
+  // Find first unanswered question
   var mod = TQE.getModule(state.moduleId);
   if(!mod) return;
-  var q = mod.questions.find(function(x){ return x.id === qid; });
-  if(!q) return;
-  var isCorrect = chosen === q.correct;
-
-  // Lock choices
-  var opts = document.querySelectorAll('#learnOpts-' + qid + ' .dq-choice');
-  opts.forEach(function(b){ b.style.pointerEvents = 'none'; });
-
-  // Highlight correct/wrong
-  opts.forEach(function(b){
-    var letter = b.querySelector('.dq-letter');
-    if(letter){
-      if(letter.textContent.trim() === q.correct) b.classList.add('correct');
-      else if(letter.textContent.trim() === chosen) b.classList.add('wrong');
-    }
-  });
-
-  // Record answer
-  state.phase3.answers[qid] = chosen;
-  var chosenOpt = q.options.find(function(o){ return o.key === chosen; });
-  state.phase3.scores[qid] = chosenOpt ? (chosenOpt.depth || 1) : 1;
-  TQE.saveBlindSpot(q, chosen, isCorrect);
-
-  // Feedback
-  var fb = document.getElementById('learnFb-' + qid);
-  if(fb){
-    if(isCorrect){
-      fb.innerHTML = '<div class="dq-reveal" style="border-left-color:var(--forest-600);"><b>正確</b>' + TQE.escHtml(q.explanation || '答對了！') + '</div>';
-    } else {
-      var diag = q.diagnosis ? q.diagnosis[chosen] : null;
-      fb.innerHTML = '<div class="dq-reveal" style="border-left-color:var(--clay);"><b>解析</b>' +
-        TQE.escHtml(diag && diag.gap ? diag.gap : (q.explanation || '正確答案是 ' + q.correct)) + '</div>';
-    }
+  var firstUnanswered = 0;
+  for(var i = 0; i < mod.questions.length; i++){
+    if(!state.phase3.answers[mod.questions[i].id]){ firstUnanswered = i; break; }
   }
+  state.currentQ = firstUnanswered;
+  renderPhase3();
+  showScreen('tqeScreenPhase3');
 }
 
 function _renderLearnFooter(mod){
@@ -630,9 +613,9 @@ function _renderLearnFooter(mod){
   var tabs = ['framework', 'controversy', 'discrimination'];
   var idx = tabs.indexOf(_learnTab);
   var prevDisabled = idx <= 0 ? ' disabled style="opacity:.3;cursor:default;"' : '';
-  var nextLabel = idx >= tabs.length - 1 ? '開始正式學習' : '下一步';
+  var nextLabel = idx >= tabs.length - 1 ? '開始鑑別測驗' : '下一步';
   var nextAction = idx >= tabs.length - 1
-    ? 'TQE_UI.startLearning()'
+    ? 'TQE_UI._startPhase3FromLearn()'
     : 'TQE_UI._switchLearnTab(\'' + tabs[idx + 1] + '\')';
   var prevAction = idx > 0 ? 'TQE_UI._switchLearnTab(\'' + tabs[idx - 1] + '\')' : '';
 
@@ -1078,7 +1061,7 @@ global.TQE_UI = {
   startLearning: startLearning,
   renderLearnScreen: renderLearnScreen,
   _switchLearnTab: _switchLearnTab,
-  _learnAnswer: _learnAnswer,
+  _startPhase3FromLearn: _startPhase3FromLearn,
   rateFramework: rateFramework,
   goPhase2: goPhase2,
   chooseDebateSide: chooseDebateSide,
