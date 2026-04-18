@@ -174,7 +174,7 @@ function generateL2Questions(silent){
     }).filter(Boolean).join('\n');
 
     // Use the engine's standard prompt builder (includes JSON example)
-    var prompt = TQE.buildQuestionPrompt(mod, l2.targetFws, l2.level, Math.min(needed, 10));
+    var prompt = TQE.buildQuestionPrompt(mod, l2.targetFws, l2.level, Math.min(needed, 3));
     // Inject blind spot info before the rules section
     if(blindSpots){
       prompt = prompt.replace('【硬性規則】', '【學生盲區】\n' + blindSpots + '\n\n【硬性規則】');
@@ -657,12 +657,18 @@ function generateExamQuestions(){
       if(scopeEl) scopeEl.textContent = 'AI 超時，以現有 ' + exam.questions.length + ' 題開考';
       _startExamNow(scopeEl);
     }
-  }, 30000);
+  }, 45000);
 
-  // Two calls: weak (10) + strong (10), using full buildQuestionPrompt (with example JSON + strict rules)
-  var weakBatch = Math.min(needed, 10);
-  var strongBatch = Math.min(needed - weakBatch, 10);
-  if(needed <= 10){ weakBatch = needed; strongBatch = 0; }
+  // Split into batches of 3 (proven reliable — LLM truncates at 5+)
+  // 70% weak, 30% strong
+  var weakTotal = Math.round(needed * 0.7);
+  var strongTotal = needed - weakTotal;
+  var weakBatches = [];
+  var rem = weakTotal;
+  while(rem > 0){ weakBatches.push(Math.min(3, rem)); rem -= 3; }
+  var strongBatches = [];
+  rem = strongTotal;
+  while(rem > 0){ strongBatches.push(Math.min(3, rem)); rem -= 3; }
 
   // Pick representative modules for prompt context (need one with matching frameworks)
   function _findModuleForFws(fwIds){
@@ -676,30 +682,33 @@ function generateExamQuestions(){
   }
 
   var chain = Promise.resolve();
+  var totalBatches = weakBatches.length + strongBatches.length;
+  var batchDone = 0;
 
-  // Call 1: Weak frameworks — full prompt + blind spots injected
-  if(weakBatch > 0){
+  // Weak framework batches — with blind spots injected
+  weakBatches.forEach(function(count, idx){
     chain = chain.then(function(){
-      if(scopeEl) scopeEl.textContent = 'AI 生成弱項題 (1/2)...';
+      batchDone++;
+      if(scopeEl) scopeEl.textContent = 'AI 弱項出題 (' + batchDone + '/' + totalBatches + ')... 已有 ' + exam.questions.length + ' 題';
       var weakMod = _findModuleForFws(weakFws);
-      var prompt = TQE.buildQuestionPrompt(weakMod, weakFws, aiLevel, weakBatch);
-      // Inject blind spots
+      var prompt = TQE.buildQuestionPrompt(weakMod, weakFws, aiLevel, count);
       if(blindSpotText){
-        prompt = prompt.replace('【硬性規則】', '【學生具體盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n【硬性規則】');
+        prompt = prompt.replace('【硬性規則', '【學生具體盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n【硬性規則');
       }
-      return _callAndAppendAI(prompt, weakMod, weakFws, 'weak', scopeEl, targetTotal);
+      return _callAndAppendAI(prompt, weakMod, weakFws, 'weak' + idx, scopeEl, targetTotal);
     });
-  }
+  });
 
-  // Call 2: Strong frameworks — full prompt, difficulty +1
-  if(strongBatch > 0){
+  // Strong framework batches — difficulty +1
+  strongBatches.forEach(function(count, idx){
     chain = chain.then(function(){
-      if(scopeEl) scopeEl.textContent = 'AI 生成驗證題 (2/2)...';
+      batchDone++;
+      if(scopeEl) scopeEl.textContent = 'AI 驗證出題 (' + batchDone + '/' + totalBatches + ')... 已有 ' + exam.questions.length + ' 題';
       var strongMod = _findModuleForFws(strongFws);
-      var prompt = TQE.buildQuestionPrompt(strongMod, strongFws, Math.min(aiLevel + 1, 4), strongBatch);
-      return _callAndAppendAI(prompt, strongMod, strongFws, 'strong', scopeEl, targetTotal);
+      var prompt = TQE.buildQuestionPrompt(strongMod, strongFws, Math.min(aiLevel + 1, 4), count);
+      return _callAndAppendAI(prompt, strongMod, strongFws, 'strong' + idx, scopeEl, targetTotal);
     });
-  }
+  });
 
   chain.then(function(){
     if(!aiDone){

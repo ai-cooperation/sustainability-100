@@ -302,19 +302,21 @@ function buildQuestionPrompt(module, targetFws, level, count) {
 
   const trends = (examInfo.trends || []).map(function(t) { return '- ' + t; }).join('\n');
 
-  return '你是' + (examInfo.name || '認證考試') + '的專業出題委員。嚴格遵守以下規則。\n\n' +
-    '【學生弱項】\n' + fwInfo + '\n\n' +
+  return '你是' + (examInfo.name || '認證考試') + '的專業出題委員。嚴格遵守以下每一條規則，違反任何一條都不合格。\n\n' +
+    '【出題範圍】\n' + fwInfo + '\n\n' +
     '【難度】Level ' + level + ' — ' + levelDesc + '\n\n' +
     (trends ? '【考試趨勢】\n' + trends + '\n\n' : '') +
-    '【硬性規則】\n' +
-    '1. 題幹：必須以「某企業/某公司/某團隊」開頭的實務情境，題幹至少 60 字。禁止「下列何者正確」無情境題。\n' +
-    '2. 選項：每個 35-50 字，格式「做法，因為/因此＋理由」。四選項字數差距 ≤ 5 字。\n' +
-    '3. 錯誤選項的理由要有說服力，不能一看就錯。正確選項不可是最長的。\n' +
-    '4. 答案分布：' + count + ' 題正確答案依序為 ' + answerSeq.join(',') + '。\n\n' +
-    '5. 每個錯誤選項必須附 diagnosis：gap（30-50字，該選項反映的認知缺口）和 followup（40-80字，針對該選項的引導追問，要提到題目中的具體概念）。\n\n' +
-    '生成 ' + count + ' 題繁體中文選擇題。\n\n' +
-    '【範例】\n[{"stem":"某零售企業導入 AI 推薦系統後發現，系統對高消費客群的推薦準確率達 92%，但對新客戶的推薦幾乎隨機。資料團隊發現訓練資料中新客戶行為紀錄不足 5%。下列哪種做法最能有效改善此問題？","options":[{"key":"A","text":"蒐集更多新客戶的瀏覽與購買行為資料再重新訓練，因為資料不平衡是推薦失準的根本原因"},{"key":"B","text":"對新客戶使用基於規則的冷啟動策略搭配協同過濾，因為在資料不足時混合方法比純 ML 穩健"},{"key":"C","text":"將高消費客群的模型直接套用到新客戶，因為消費行為的底層模式具有跨客群的通用遷移性"},{"key":"D","text":"增加推薦系統的模型複雜度與隱藏層數量，因為更深的網路能從有限資料中擠出更多特徵資訊"}],"correct":"B","explanation":"冷啟動問題需要混合策略","diagnosis":{"A":{"gap":"混淆了資料量和資料分布問題","followup":"蒐集更多資料確實重要，但新客戶行為模式本身就少——在資料累積期間，推薦系統該怎麼運作？"},"C":{"gap":"忽略了不同客群行為模式的差異性","followup":"高消費客群的偏好（如高價品牌）直接套用到新客戶，結果會是什麼？"},"D":{"gap":"誤認為模型複雜度能彌補資料不足","followup":"資料只有 5% 卻加深網路層數，過擬合的風險是增加還是減少？"}}}]\n\n' +
-    '回傳純 JSON（直接以 [ 開頭），key 必須用英文：stem, options（陣列 [{key,text}]）, correct, explanation, diagnosis。嚴禁使用中文 key。';
+    '【硬性規則 — 必須全部遵守】\n' +
+    '1. 題幹：以「某企業/某公司/某工廠」開頭，描述具體實務情境，至少 60 字。\n' +
+    '2. 四個選項：每個 38-45 字（嚴格），格式「具體做法或判斷，因為＋專業理由」。\n' +
+    '3. 四選項的字數差距 ≤ 5 字（最長減最短 ≤ 5）。違反此條最嚴重。\n' +
+    '4. 正確答案絕對不可以是四個選項中最長的那個。\n' +
+    '5. 答案分布：' + count + ' 題正確答案嚴格依序為 ' + answerSeq.join(',') + '，不可更改。\n' +
+    '6. diagnosis：每題必須有恰好 3 個 diagnosis（對應 3 個錯誤選項），每個包含 gap（30-50字）和 followup（40-80字，提到題目具體概念）。\n' +
+    '7. 錯誤選項必須是常見誤解，看起來有道理但有一個關鍵錯誤。\n\n' +
+    '生成 ' + count + ' 題繁體中文。\n\n' +
+    '【範例（注意選項字數均為 40±3 字）】\n[{"stem":"某鋼鐵廠在進行年度碳盤查時，發現廠區內燃煤鍋爐的排放量佔總排放的 60%。盤查團隊需判斷該排放源的分類。下列關於 ISO 14064-1 排放類別的敘述，何者正確？","options":[{"key":"A","text":"該燃煤鍋爐屬於類別二間接排放，因為煤炭是外購能源所以應歸類為輸入能源間接排放"},{"key":"B","text":"該燃煤鍋爐屬於類別一直接排放，因為燃燒過程發生在組織邊界內且由組織直接控制操作"},{"key":"C","text":"該排放應歸入類別三運輸排放，因為煤炭需要透過外部運輸才能送達工廠進行使用燃燒"},{"key":"D","text":"該排放不需納入盤查範圍計算，因為燃煤屬於傳統能源使用而非溫室氣體的主要排放來源"}],"correct":"B","explanation":"自廠燃燒化石燃料屬於類別一直接排放。","diagnosis":{"A":{"gap":"混淆直接燃燒與外購能源的分類邏輯","followup":"煤炭雖然是外購的，但燃燒發生在廠區內——判斷排放類別時，看的是燃燒地點還是燃料來源？"},"C":{"gap":"將燃料運輸與燃料使用的排放混為一談","followup":"煤炭的運輸排放確實存在，但那是運輸公司的排放——鋼鐵廠自己燒煤產生的 CO₂ 該怎麼歸類？"},"D":{"gap":"誤以為傳統能源不屬於溫室氣體盤查範圍","followup":"燃煤產生的 CO₂ 是全球最大的人為排放源之一——為什麼會認為它不需要納入盤查？"}}}]\n\n' +
+    '回傳純 JSON（直接以 [ 開頭），英文 key：stem, options([{key,text}]), correct, explanation, diagnosis({key:{gap,followup}})。嚴禁中文 key。';
 }
 
 function parseAIQuestions(text) {
@@ -322,43 +324,104 @@ function parseAIQuestions(text) {
   const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
   const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
   if (!jsonMatch) return [];
+
+  var jsonStr = jsonMatch[0];
+
+  // Try parse directly first
+  var qs = _tryParseArray(jsonStr);
+
+  // If failed, try fixing truncated JSON: find last complete object and close the array
+  if (!qs) {
+    var lastBrace = jsonStr.lastIndexOf('}');
+    if (lastBrace > 0) {
+      var truncated = jsonStr.substring(0, lastBrace + 1);
+      // Remove trailing comma if any
+      truncated = truncated.replace(/,\s*$/, '');
+      // Find matching depth
+      if (!truncated.endsWith(']')) truncated += ']';
+      qs = _tryParseArray(truncated);
+    }
+  }
+
+  if (!qs) return [];
+
+  // Normalize: support both English and Chinese keys
+  return qs.map(function(q) {
+    var stem = q.stem || q['題目'] || q['題幹'] || '';
+    var correct = q.correct || q['答案'] || q['正確答案'] || '';
+    var explanation = q.explanation || q['解析'] || q['說明'] || '';
+    var options = q.options;
+    if (!Array.isArray(options)) {
+      var rawOpts = options || q['選項'] || {};
+      options = [];
+      ['A','B','C','D'].forEach(function(k) {
+        if (rawOpts[k]) options.push({ key: k, text: rawOpts[k], depth: k === correct ? 4 : 2 });
+      });
+    }
+    if (!stem || options.length === 0 || !correct) return null;
+    return { stem: stem, options: options, correct: correct, explanation: explanation, diagnosis: q.diagnosis || {} };
+  }).filter(Boolean);
+}
+
+function _tryParseArray(str) {
   try {
-    const qs = JSON.parse(jsonMatch[0]);
-    if (!Array.isArray(qs)) return [];
-    // Normalize: support both English keys (stem/options/correct) and Chinese keys (題目/選項/答案)
-    return qs.map(function(q) {
-      var stem = q.stem || q['題目'] || q['題幹'] || '';
-      var correct = q.correct || q['答案'] || q['正確答案'] || '';
-      var explanation = q.explanation || q['解析'] || q['說明'] || '';
-      var options = q.options;
-      // Convert Chinese options format: {"A":"text","B":"text"} → [{key:"A",text:"text"},...]
-      if (!Array.isArray(options)) {
-        var rawOpts = options || q['選項'] || {};
-        options = [];
-        ['A','B','C','D'].forEach(function(k) {
-          if (rawOpts[k]) options.push({ key: k, text: rawOpts[k], depth: k === correct ? 4 : 2 });
-        });
-      }
-      if (!stem || options.length === 0 || !correct) return null;
-      return { stem: stem, options: options, correct: correct, explanation: explanation, diagnosis: q.diagnosis || {} };
-    }).filter(Boolean);
-  } catch (e) { return []; }
+    var arr = JSON.parse(str);
+    return Array.isArray(arr) ? arr : null;
+  } catch (e) { return null; }
 }
 
 function postProcessQuestions(questions) {
-  // Fix correct=longest bias by swapping option text
   questions.forEach(function(q) {
+    if (!q.options || q.options.length < 4) return;
+
+    // 1. Fix correct=longest: swap text so correct is NOT the single longest
     var lens = q.options.map(function(o) { return { key: o.key, len: o.text.length }; });
     var longest = lens.reduce(function(a, b) { return a.len > b.len ? a : b; });
-    if (longest.key === q.correct && lens.length === 4) {
+    if (longest.key === q.correct) {
       var wrongs = q.options.filter(function(o) { return o.key !== q.correct; });
       var swap = wrongs[Math.floor(Math.random() * wrongs.length)];
       var correctOpt = q.options.find(function(o) { return o.key === q.correct; });
+      // Swap text, depth, and update diagnosis keys
       var tmpText = correctOpt.text;
+      var tmpDepth = correctOpt.depth;
       correctOpt.text = swap.text;
+      correctOpt.depth = swap.depth;
       swap.text = tmpText;
+      swap.depth = tmpDepth;
+      // Move diagnosis: old correct key becomes wrong (needs diagnosis), old swap key becomes correct (remove diagnosis)
+      var newDiag = {};
+      var oldDiag = q.diagnosis || {};
+      ['A','B','C','D'].forEach(function(k) {
+        if (k === swap.key) return; // new correct, skip
+        if (k === q.correct && oldDiag[swap.key]) { newDiag[k] = oldDiag[swap.key]; }
+        else if (oldDiag[k]) { newDiag[k] = oldDiag[k]; }
+        else { newDiag[k] = { gap: q.explanation || '概念混淆', followup: '請重新思考這個選項與正確答案的差異。' }; }
+      });
+      q.diagnosis = newDiag;
       q.correct = swap.key;
     }
+
+    // 2. Ensure diagnosis has exactly 3 entries (one per wrong option)
+    if (!q.diagnosis || typeof q.diagnosis !== 'object') q.diagnosis = {};
+    ['A','B','C','D'].forEach(function(k) {
+      if (k === q.correct) {
+        delete q.diagnosis[k]; // correct answer should not have diagnosis
+        return;
+      }
+      if (!q.diagnosis[k] || !q.diagnosis[k].gap) {
+        var wrongOpt = q.options.find(function(o) { return o.key === k; });
+        var correctOpt = q.options.find(function(o) { return o.key === q.correct; });
+        q.diagnosis[k] = {
+          gap: '混淆了「' + (wrongOpt ? wrongOpt.text.substring(0, 20) : k) + '」與正確概念的差異',
+          followup: '你選的「' + (wrongOpt ? wrongOpt.text.substring(0, 25) : '') + '」，但正確答案是「' + (correctOpt ? correctOpt.text.substring(0, 25) : '') + '」。關鍵差異在哪？'
+        };
+      }
+    });
+
+    // 3. Set depth: correct=4, plausible wrongs=2, obvious wrong=1
+    q.options.forEach(function(o) {
+      if (!o.depth) o.depth = (o.key === q.correct) ? 4 : 2;
+    });
   });
   return questions;
 }
