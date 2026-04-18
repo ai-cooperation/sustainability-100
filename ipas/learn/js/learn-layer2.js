@@ -659,50 +659,45 @@ function generateExamQuestions(){
     }
   }, 30000);
 
-  // Two calls: weak (10 questions) + strong (10 questions), each ≤10 proven reliable
+  // Two calls: weak (10) + strong (10), using full buildQuestionPrompt (with example JSON + strict rules)
   var weakBatch = Math.min(needed, 10);
   var strongBatch = Math.min(needed - weakBatch, 10);
-  // If needed ≤ 10, all go to weak
   if(needed <= 10){ weakBatch = needed; strongBatch = 0; }
 
-  var pack = TQE.getConfig().contentPack;
-  var examName = pack?.examInfo?.name || '認證考試';
-
-  function _buildExamPrompt(targetFwIds, includeBlindSpot, level, count){
-    var fwDesc = targetFwIds.map(function(fid){
-      var info = allFwInfo.find(function(f){ return f.id === fid; });
-      return info ? (TQE.term('framework') + '「' + info.name + '」：' + info.desc) : '';
-    }).filter(Boolean).join('\n');
-
-    return '你是' + examName + '的專業出題委員。\n\n' +
-      '【出題範圍】\n' + fwDesc + '\n\n' +
-      (includeBlindSpot && blindSpotText ? '【學生盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n' : '') +
-      '【難度】Level ' + level + '\n\n' +
-      '【規則】\n' +
-      '1. 題幹以「某企業」開頭，至少 60 字實務情境\n' +
-      '2. 選項每個 35-50 字，格式「做法，因為＋理由」，字數差距 ≤ 5 字\n' +
-      '3. 正確選項不可是最長的\n' +
-      '4. 每個錯誤選項附 diagnosis：{gap: "30-50字", followup: "40-80字"}\n\n' +
-      '生成 ' + count + ' 題。回傳純 JSON 以 [ 開頭，key 用英文：stem, options([{key,text}]), correct, explanation, diagnosis。';
+  // Pick representative modules for prompt context (need one with matching frameworks)
+  function _findModuleForFws(fwIds){
+    for(var i = 0; i < examModules.length; i++){
+      var hasFw = fwIds.some(function(fid){
+        return examModules[i].frameworks.some(function(f){ return f.id === fid; });
+      });
+      if(hasFw) return examModules[i];
+    }
+    return examModules[0];
   }
 
   var chain = Promise.resolve();
 
-  // Call 1: Weak frameworks — 針對弱項盲區出題
+  // Call 1: Weak frameworks — full prompt + blind spots injected
   if(weakBatch > 0){
     chain = chain.then(function(){
       if(scopeEl) scopeEl.textContent = 'AI 生成弱項題 (1/2)...';
-      var prompt = _buildExamPrompt(weakFws, true, aiLevel, weakBatch);
-      return _callAndAppendAI(prompt, examModules[0], weakFws, 'weak', scopeEl, targetTotal);
+      var weakMod = _findModuleForFws(weakFws);
+      var prompt = TQE.buildQuestionPrompt(weakMod, weakFws, aiLevel, weakBatch);
+      // Inject blind spots
+      if(blindSpotText){
+        prompt = prompt.replace('【硬性規則】', '【學生具體盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n【硬性規則】');
+      }
+      return _callAndAppendAI(prompt, weakMod, weakFws, 'weak', scopeEl, targetTotal);
     });
   }
 
-  // Call 2: Strong frameworks — 驗證強項，難度再高一級
+  // Call 2: Strong frameworks — full prompt, difficulty +1
   if(strongBatch > 0){
     chain = chain.then(function(){
       if(scopeEl) scopeEl.textContent = 'AI 生成驗證題 (2/2)...';
-      var prompt = _buildExamPrompt(strongFws, false, Math.min(aiLevel + 1, 4), strongBatch);
-      return _callAndAppendAI(prompt, examModules[0], strongFws, 'strong', scopeEl, targetTotal);
+      var strongMod = _findModuleForFws(strongFws);
+      var prompt = TQE.buildQuestionPrompt(strongMod, strongFws, Math.min(aiLevel + 1, 4), strongBatch);
+      return _callAndAppendAI(prompt, strongMod, strongFws, 'strong', scopeEl, targetTotal);
     });
   }
 
