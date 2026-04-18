@@ -576,31 +576,47 @@ function generateExamQuestions(){
   var abilityLabel = avgAbility >= 3 ? '進階' : avgAbility >= 1.5 ? '中等' : '基礎';
   var aiLevel = avgAbility >= 3 ? 4 : avgAbility >= 1.5 ? 3 : 2;
 
-  // ─── Step 2: Pool questions — all content pack questions (ensure coverage) ───
-  var pool = [];
+  // ─── Step 2: Pool questions — weak-framework prioritized ───
+  var weakPool = [];
+  var strongPool = [];
   examModules.forEach(function(m){
     m.questions.forEach(function(q){
-      pool.push(Object.assign({}, q, { _sourceModule: m.id }));
+      var tagged = Object.assign({}, q, { _sourceModule: m.id });
+      if(weakFws.indexOf(q.framework) >= 0){
+        weakPool.push(tagged);
+      } else {
+        strongPool.push(tagged);
+      }
     });
   });
-  // Shuffle pool
-  for(var pi = pool.length - 1; pi > 0; pi--){
-    var pj = Math.floor(Math.random() * (pi + 1));
-    var ptmp = pool[pi]; pool[pi] = pool[pj]; pool[pj] = ptmp;
+  // Shuffle each pool
+  function _shuffle(arr){
+    for(var i = arr.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
   }
-  exam.questions = pool.map(function(q){
-    return Object.assign({}, q, { id: 'EX-' + q.id, source: 'pool' });
-  });
+  _shuffle(weakPool);
+  _shuffle(strongPool);
 
-  var poolCount = exam.questions.length;
-  var needed = targetTotal - poolCount;
+  // Prioritize weak: take all weak, then fill with strong
+  var poolSelected = weakPool.concat(strongPool);
+  var poolCount = poolSelected.length;
 
-  if(needed <= 0){
-    // Pool alone is enough (S3/S4 have 45-47 questions)
-    exam.questions = exam.questions.slice(0, targetTotal);
+  // If pool alone covers target (S3/S4), cap and prioritize weak
+  if(poolCount >= targetTotal){
+    exam.questions = poolSelected.slice(0, targetTotal).map(function(q){
+      return Object.assign({}, q, { id: 'EX-' + q.id, source: 'pool' });
+    });
     _startExamNow(scopeEl);
     return;
   }
+
+  // Pool < target — use all pool, AI fills the rest
+  exam.questions = poolSelected.map(function(q){
+    return Object.assign({}, q, { id: 'EX-' + q.id, source: 'pool' });
+  });
+  var needed = targetTotal - poolCount;
 
   // ─── Step 3: AI generates remaining — one call per 10 questions (reliable) ───
   // Build blind spot context from Phase 3 wrong answers
