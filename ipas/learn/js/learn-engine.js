@@ -325,7 +325,23 @@ function parseAIQuestions(text) {
   try {
     const qs = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(qs)) return [];
-    return qs.filter(function(q) { return q.stem && q.options && q.correct; });
+    // Normalize: support both English keys (stem/options/correct) and Chinese keys (題目/選項/答案)
+    return qs.map(function(q) {
+      var stem = q.stem || q['題目'] || q['題幹'] || '';
+      var correct = q.correct || q['答案'] || q['正確答案'] || '';
+      var explanation = q.explanation || q['解析'] || q['說明'] || '';
+      var options = q.options;
+      // Convert Chinese options format: {"A":"text","B":"text"} → [{key:"A",text:"text"},...]
+      if (!Array.isArray(options)) {
+        var rawOpts = options || q['選項'] || {};
+        options = [];
+        ['A','B','C','D'].forEach(function(k) {
+          if (rawOpts[k]) options.push({ key: k, text: rawOpts[k], depth: k === correct ? 4 : 2 });
+        });
+      }
+      if (!stem || options.length === 0 || !correct) return null;
+      return { stem: stem, options: options, correct: correct, explanation: explanation, diagnosis: q.diagnosis || {} };
+    }).filter(Boolean);
   } catch (e) { return []; }
 }
 
