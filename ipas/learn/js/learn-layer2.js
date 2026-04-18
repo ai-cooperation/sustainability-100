@@ -631,52 +631,73 @@ function generateExamQuestions(){
   var aiLevel = avgAbility >= 3 ? 4 : avgAbility >= 1.5 ? 3 : 2;
   var promptMod = examModules[0];
 
-  // Start exam immediately with pool, AI adds in background
-  _startExamNow(scopeEl);
+  // AI generates remaining questions, then start exam
+  // Timeout: if AI takes > 20s, start with what we have
+  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong><br>' +
+    '程度：' + abilityLabel + '（難題比例 ' + Math.round(diffRatioHard * 100) + '%）<br>' +
+    'AI 正在生成補充題（' + needed + ' 題）...';
 
-  // Background AI generation (adds questions while exam is in progress)
-  var batchSize = 10;
-  var batches = Math.ceil(needed / batchSize);
+  var aiDone = false;
+  var timeoutId = setTimeout(function(){
+    if(!aiDone){
+      aiDone = true;
+      if(scopeEl) scopeEl.textContent = 'AI 超時，以現有 ' + exam.questions.length + ' 題開考';
+      _startExamNow(scopeEl);
+    }
+  }, 20000);
+
+  // Generate AI questions per module, evenly distributed
+  var perModuleNeeded = {};
+  var neededPerMod = Math.floor(needed / examModules.length);
+  var neededRemainder = needed - neededPerMod * examModules.length;
+  examModules.forEach(function(m, idx){
+    perModuleNeeded[m.id] = neededPerMod + (idx < neededRemainder ? 1 : 0);
+  });
+
   var chain = Promise.resolve();
-  for(var b = 0; b < batches; b++){
-    (function(batchIdx){
-      chain = chain.then(function(){
-        var count = Math.min(batchSize, needed - batchIdx * batchSize);
-        // Distribute across modules evenly
-        var targetModIdx = batchIdx % examModules.length;
-        var targetMod = examModules[targetModIdx];
-        var prompt = TQE.buildQuestionPrompt(targetMod, allFrameworks.map(function(f){ return f.id; }), aiLevel, count);
+  examModules.forEach(function(targetMod){
+    var count = perModuleNeeded[targetMod.id];
+    if(count <= 0) return;
+    chain = chain.then(function(){
+      var modFws = targetMod.frameworks.map(function(f){ return f.id; });
+      var prompt = TQE.buildQuestionPrompt(targetMod, modFws, aiLevel, count);
 
-        return TQE.callGroq(prompt, 8192).then(function(text){
-          var aiQs = TQE.parseAIQuestions(text);
-          var mapped = aiQs.map(function(q, idx){
-            var diag = q.diagnosis || {};
-            (q.options || []).filter(function(o){ return o.key !== q.correct; }).forEach(function(o){
-              if(!diag[o.key] || !diag[o.key].followup){
-                var correctText = (q.options.find(function(x){ return x.key === q.correct; }) || {}).text || '';
-                diag[o.key] = {
-                  gap: diag[o.key]?.gap || q.explanation || '',
-                  followup: '你選的「' + o.text.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。差異在哪？'
-                };
-              }
-            });
-            return Object.assign({}, q, {
-              id: 'EX-AI-' + (batchIdx * batchSize + idx + 1),
-              framework: allFrameworks[Math.floor(Math.random() * allFrameworks.length)]?.id || 'F1',
-              source: 'groq', _sourceModule: targetMod.id, diagnosis: diag
-            });
+      return TQE.callGroq(prompt, 8192).then(function(text){
+        var aiQs = TQE.parseAIQuestions(text);
+        if(scopeEl) scopeEl.textContent = 'AI 已生成 ' + (exam.questions.length + aiQs.length) + ' / ' + targetTotal + ' 題...';
+        var mapped = aiQs.map(function(q, idx){
+          var diag = q.diagnosis || {};
+          (q.options || []).filter(function(o){ return o.key !== q.correct; }).forEach(function(o){
+            if(!diag[o.key] || !diag[o.key].followup){
+              var correctText = (q.options.find(function(x){ return x.key === q.correct; }) || {}).text || '';
+              diag[o.key] = {
+                gap: diag[o.key]?.gap || q.explanation || '',
+                followup: '你選的「' + o.text.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。差異在哪？'
+              };
+            }
           });
-          TQE.postProcessQuestions(mapped);
-          exam.questions = exam.questions.concat(mapped);
-          cacheQuestions(targetMod.id, aiLevel, mapped);
-        }).catch(function(e){
-          console.warn('Exam AI batch failed:', e.message);
-        }).then(function(){
-          if(batchIdx < batches - 1) return new Promise(function(r){ setTimeout(r, 1500); });
+          return Object.assign({}, q, {
+            id: 'EX-AI-' + targetMod.id + '-' + (idx + 1),
+            framework: modFws[idx % modFws.length] || 'F1',
+            source: 'groq', _sourceModule: targetMod.id, diagnosis: diag
+          });
         });
+        TQE.postProcessQuestions(mapped);
+        exam.questions = exam.questions.concat(mapped);
+        cacheQuestions(targetMod.id, aiLevel, mapped);
+      }).catch(function(e){
+        console.warn('Exam AI failed for ' + targetMod.id + ':', e.message);
       });
-    })(b);
-  }
+    });
+  });
+
+  chain.then(function(){
+    if(!aiDone){
+      aiDone = true;
+      clearTimeout(timeoutId);
+      _startExamNow(scopeEl);
+    }
+  });
 }
 
 // Classify question difficulty by stem length, option complexity, framework depth
