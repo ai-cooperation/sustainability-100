@@ -1,48 +1,93 @@
 // ═══════════════════════════════════════════════════════
-//  Three-Question Engine — UI Renderer v1.0
-//  Renders Phase 0-5 + Exam using content pack data
+//  Three-Question Engine — UI Renderer v2.0
+//  Renders Home Dashboard, Learn Screen, Phase 1-4, Exam
 //  Depends on: learn-engine.js (ThreeQuestionEngine)
 // ═══════════════════════════════════════════════════════
 
 (function(global){
 'use strict';
 
-const TQE = global.ThreeQuestionEngine;
+var TQE = global.ThreeQuestionEngine;
 if(!TQE) throw new Error('learn-engine.js must be loaded before learn-ui.js');
 
-const state = TQE.state;
+var state = TQE.state;
+
+// ─── Stats persistence ───
+var STATS_KEY = 'tqe_s100_stats';
+
+function _loadStats(){
+  try {
+    var raw = localStorage.getItem(STATS_KEY);
+    if(!raw) return { answered: 0, correct: 0, streak: 0, lastDate: '', moduleMastery: {}, weakTopics: [] };
+    return JSON.parse(raw);
+  } catch(e){ return { answered: 0, correct: 0, streak: 0, lastDate: '', moduleMastery: {}, weakTopics: [] }; }
+}
+
+function _saveStats(stats){
+  try { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); } catch(e){ /* silent */ }
+}
+
+function _updateStatsAfterPhase3(){
+  var stats = _loadStats();
+  var mod = TQE.getModule(state.moduleId);
+  if(!mod) return;
+  var correct = 0;
+  var total = 0;
+  mod.questions.forEach(function(q){
+    if(state.phase3.answers[q.id]){
+      total++;
+      if(state.phase3.answers[q.id] === q.correct) correct++;
+    }
+  });
+  stats.answered = (stats.answered || 0) + total;
+  stats.correct = (stats.correct || 0) + correct;
+  // Streak
+  var today = new Date().toISOString().slice(0, 10);
+  if(stats.lastDate !== today){
+    var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    stats.streak = stats.lastDate === yesterday ? (stats.streak || 0) + 1 : 1;
+    stats.lastDate = today;
+  }
+  // Module mastery
+  if(!stats.moduleMastery) stats.moduleMastery = {};
+  var mastery = total > 0 ? Math.round(correct / total * 100) : 0;
+  stats.moduleMastery[state.moduleId] = mastery;
+  _saveStats(stats);
+}
 
 // ─── Screen management ───
 function showScreen(id){
   document.querySelectorAll('.tqe-screen').forEach(function(s){ s.classList.remove('active'); });
   var el = document.getElementById(id);
   if(el) el.classList.add('active');
-  var topBar = document.getElementById('tqeTopBar');
-  if(topBar) topBar.style.display = id === 'tqeScreenEntry' ? 'none' : 'block';
   window.scrollTo(0, 0);
-
-  var phases = {
-    tqeScreenPhase1:['Phase 1','15'], tqeScreenPhase2:['Phase 2','30'],
-    tqeScreenPhase3:['Phase 3','45'], tqeScreenPhase4:['報告','55'],
-    tqeScreenPhase5:['加強','65'], tqeScreenLayer2:['練習','85'],
-    tqeScreenExam:['模擬考','95'], tqeScreenExamResult:['完成','100']
-  };
-  if(phases[id]){
-    var topPhase = document.getElementById('tqeTopPhase');
-    var progressFill = document.getElementById('tqeProgressFill');
-    var topTitle = document.getElementById('tqeTopTitle');
-    if(topPhase) topPhase.textContent = phases[id][0];
-    if(progressFill) progressFill.style.width = phases[id][1] + '%';
-    var mod = TQE.getModule(state.moduleId);
-    if(topTitle) topTitle.textContent = mod ? mod.name : '';
-  }
+  updateTopNav(id);
 
   if(TQE.getConfig().onPhaseChange) TQE.getConfig().onPhaseChange(id, state);
 }
 
-// ─── Entry screen (multi-step navigation) ───
+// ─── Top Navigation ───
+function updateTopNav(screenId){
+  var nav = document.getElementById('tqeNavLinks');
+  if(!nav) return;
+  var links = [
+    { id: 'tqeScreenEntry', label: '首頁' },
+    { id: 'tqeScreenLearn', label: '模組' },
+    { id: 'tqeScreenLayer2', label: '弱項練習' },
+    { id: 'tqeScreenExamResult', label: '成績' }
+  ];
+  var html = '';
+  links.forEach(function(l){
+    var active = screenId === l.id ? ' active' : '';
+    html += '<button class="nav-link' + active + '" onclick="TQE_UI.showScreen(\'' + l.id + '\')">' + l.label + '</button>';
+  });
+  nav.innerHTML = html;
+}
+
+// ─── Entry view state ───
 var _entryView = 'home';
 
+// ─── Entry screen (Home Dashboard) ───
 function renderEntry(){
   var pack = TQE.getConfig().contentPack;
   if(!pack) return;
@@ -51,12 +96,12 @@ function renderEntry(){
   var teacherLink = document.getElementById('tqeTeacherLink');
   if(teacherLink) teacherLink.style.display = TQE.isTeacher() ? 'inline-block' : 'none';
 
-  var moduleListEl = document.getElementById('tqeModuleList');
-  if(!moduleListEl) return;
+  var area = document.getElementById('tqeEntryArea');
+  if(!area) return;
 
   var levels = TQE.getLevels();
   var modules = TQE.getAllModules();
-  var subjects = TQE.getSubjects();
+  var stats = _loadStats();
 
   // Group modules by level
   var grouped = {};
@@ -67,119 +112,235 @@ function renderEntry(){
     grouped[lvId].push(m);
   });
 
+  // Sub-views: home, level-X, practice-X, exam-X
+  if(_entryView !== 'home' && _entryView.indexOf('level-') === 0){
+    area.innerHTML = _renderLevelMenu(levels, grouped);
+    return;
+  }
+  if(_entryView.indexOf('practice-') === 0){
+    area.innerHTML = _renderPracticeList(levels, grouped);
+    return;
+  }
+  if(_entryView.indexOf('exam-') === 0){
+    area.innerHTML = _renderExamList(levels);
+    return;
+  }
+
+  // ── Main Home Dashboard ──
+  var totalAnswered = stats.answered || 0;
+  var accuracy = totalAnswered > 0 ? Math.round((stats.correct || 0) / totalAnswered * 100) : 0;
+  var streak = stats.streak || 0;
+  var passPct = Math.min(accuracy, 95);
+
+  // Find weak topics from module mastery
+  var weakTopics = [];
+  modules.forEach(function(m){
+    var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
+    if(mastery < 60 && mastery > 0){
+      m.frameworks.forEach(function(fw){
+        weakTopics.push({ title: fw.name, module: m.id, acc: mastery, attempts: 0 });
+      });
+    }
+  });
+  weakTopics.sort(function(a, b){ return a.acc - b.acc; });
+  weakTopics = weakTopics.slice(0, 5);
+
   var html = '';
 
-  // ── Home: level selection ──
-  if(_entryView === 'home'){
-    html += '<h3 style="margin-bottom:1rem;">選擇等級</h3>';
-    levels.forEach(function(lv){
-      var mods = grouped[lv.id] || [];
-      var badge = lv.requiresLogin ? '需 Google 登入' : '免登入';
-      var bgColor = lv.requiresLogin ? 'var(--purple-lt,#F3E8FD)' : 'var(--blue-lt)';
-      var borderColor = lv.requiresLogin ? 'var(--purple,#7C3AED)' : 'var(--blue)';
-      var lock = lv.requiresLogin && !TQE.isLoggedIn() ? ' 🔒' : '';
-      html += '<div class="card" style="cursor:pointer;border-left:4px solid ' + borderColor + ';margin-bottom:1rem;" onclick="TQE_UI.selectLevel(\'' + lv.id + '\')">' +
-        '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;">' +
-        '<h3 style="margin:0;">' + TQE.escHtml(lv.name) + lock + '</h3>' +
-        '<span style="padding:.2rem .6rem;border-radius:8px;font-size:.75rem;font-weight:700;background:' + bgColor + ';color:' + borderColor + ';">' + badge + '</span>' +
-        '</div>' +
-        '<p style="font-size:.9rem;color:var(--g600);margin:0;">' + TQE.escHtml(lv.description || '') + '</p>' +
-        '<p style="font-size:.85rem;color:var(--g400);margin:.3rem 0 0;">' + mods.length + ' 個模組</p>' +
-        '</div>';
-    });
-    moduleListEl.innerHTML = html;
-    return;
+  // ── Hero ──
+  html += '<section class="home-hero">';
+  html += '<div>';
+  html += '<h1 class="hero-title">用<em>三個問題</em>，把淨零<br>從名詞變成你的直覺。</h1>';
+  html += '<p class="hero-lede">' + TQE.escHtml(TQE.term('framework')) + '（What / Why / How）→ 爭議（產業正反辯證）→ 鑑別（高鑑別考古題）。我們不給你 200 頁 PDF，我們給你能上考場、上會議室的理解。</p>';
+  html += '<div class="hero-actions">';
+  if(modules.length > 0){
+    html += '<button class="btn btn-primary btn-lg" onclick="TQE_UI.setEntryView(\'practice-l1\')">開始學習</button>';
   }
+  html += '</div>';
+  html += '</div>';
 
-  // ── Level sub-menu: practice or exam ──
-  if(_entryView === 'level-l1' || _entryView === 'level-l2'){
-    var lvId = _entryView.replace('level-', '');
-    var lv = levels.find(function(l){ return l.id === lvId; });
-    var lvName = lv ? lv.name : lvId;
+  // Hero stats card
+  html += '<aside class="hero-stats">';
+  html += '<div class="hero-stats-head"><div class="hero-stats-title">我的學習儀表板</div></div>';
+  html += '<div class="readiness">';
+  html += '<div class="readiness-ring" style="--pct:' + passPct + '"><span>' + passPct + '<sup>%</sup></span></div>';
+  html += '<div class="readiness-copy"><strong>模擬通過機率</strong><span>基於歷史作答</span></div>';
+  html += '</div>';
+  html += '<div class="hero-stats-grid">';
+  html += '<div><b>' + totalAnswered + '</b><span>已作答題數</span></div>';
+  html += '<div><b>' + accuracy + '<span style="font-size:14px;color:var(--text-mute)">%</span></b><span>平均正確率</span></div>';
+  html += '<div><b>' + streak + '</b><span>連續學習天</span></div>';
+  html += '</div>';
+  html += '</aside>';
+  html += '</section>';
 
-    // Login gate for l2
-    if(lvId === 'l2' && !TQE.isLoggedIn()){
-      html += _backLink('home');
-      html += '<div class="info red" style="text-align:center;margin-top:1rem;">' +
-        '<strong>中級需要 Google 登入</strong><br>請先點擊上方 Google 登入按鈕。</div>';
-      moduleListEl.innerHTML = html;
-      return;
+  // ── Module Grid ──
+  html += '<section class="section">';
+  html += '<div class="section-head"><div><h2>學習模組</h2><p>依 iPAS 考綱整理，每個模組都以三問法拆解' + TQE.escHtml(TQE.term('framework')) + '。</p></div></div>';
+
+  levels.forEach(function(lv){
+    var mods = grouped[lv.id] || [];
+    if(mods.length === 0) return;
+    var lock = lv.requiresLogin && !TQE.isLoggedIn();
+
+    html += '<div style="margin-bottom:var(--space-4);">';
+    html += '<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3);">';
+    html += '<h3 style="margin:0;font-size:18px;font-weight:600;">' + TQE.escHtml(lv.name) + '</h3>';
+    if(lv.requiresLogin){
+      html += '<span class="tag tag-accent">' + (lock ? '需登入' : '已登入') + '</span>';
     }
+    html += '</div>';
 
-    html += _backLink('home');
-    html += '<h3 style="margin-bottom:1rem;">' + TQE.escHtml(lvName) + ' — 選擇模式</h3>';
-    html += '<div class="card" style="cursor:pointer;border-left:4px solid var(--blue);margin-bottom:1rem;" onclick="TQE_UI.setEntryView(\'practice-' + lvId + '\')">' +
-      '<h3 style="margin:0;">📖 練習（選模組）</h3>' +
-      '<p style="font-size:.9rem;color:var(--g600);margin:.3rem 0 0;">依模組逐步學習：框架建立 → 邊界校正 → 鑑別測驗 → 弱項練習</p></div>';
-    html += '<div class="card" style="cursor:pointer;border-left:4px solid var(--gold,#F9AB00);margin-bottom:1rem;" onclick="TQE_UI.setEntryView(\'exam-' + lvId + '\')">' +
-      '<h3 style="margin:0;">📝 模擬考（選考科）</h3>' +
-      '<p style="font-size:.9rem;color:var(--g600);margin:.3rem 0 0;">按考科範圍模擬正式考試，計時作答</p></div>';
-    moduleListEl.innerHTML = html;
-    return;
-  }
-
-  // ── Practice: show modules for the level ──
-  if(_entryView === 'practice-l1' || _entryView === 'practice-l2'){
-    var lvId = _entryView.replace('practice-', '');
-    var lv = levels.find(function(l){ return l.id === lvId; });
-    var mods = grouped[lvId] || [];
-
-    html += _backLink('level-' + lvId);
-    html += '<h3 style="margin-bottom:1rem;">' + TQE.escHtml(lv ? lv.name : '') + ' — 選擇學習模組</h3>';
+    html += '<div class="modules">';
     mods.forEach(function(m){
-      var examLabel = m.examSubject ? '<p style="font-size:.8rem;color:var(--g400);margin-top:.2rem;">對應考科：' + TQE.escHtml(m.examSubject.name) + '</p>' : '';
-      html += '<div class="card" style="cursor:pointer;" onclick="TQE_UI.selectModule(\'' + m.id + '\')">' +
-        '<h3>' + TQE.escHtml(m.id + ' — ' + m.name) + '</h3>' +
-        '<p>' + (m.frameworks.length) + ' 個框架 | ' + (m.questions.length) + ' 題</p>' +
-        examLabel + '</div>';
+      var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
+      var isWeak = mastery > 0 && mastery < 50;
+
+      html += '<article class="module" onclick="TQE_UI.selectModule(\'' + m.id + '\')">';
+      if(isWeak) html += '<span class="module-flag">弱項</span>';
+      if(lock) html += '<span class="module-flag">🔒</span>';
+      html += '<div class="module-head"><div>';
+      html += '<div class="module-num">' + TQE.escHtml(m.id) + '</div>';
+      html += '<h3 class="module-title">' + TQE.escHtml(m.name) + '</h3>';
+      html += '</div></div>';
+      html += '<p class="module-desc">' + m.frameworks.length + ' 個' + TQE.escHtml(TQE.term('framework')) + ' · ' + m.questions.length + ' 題</p>';
+      html += '<div>';
+      html += '<div class="module-mastery">熟練度 ' + mastery + '%</div>';
+      html += '<div class="module-bar"><span style="width:' + mastery + '%"></span></div>';
+      html += '</div>';
+      html += '<div class="module-meta"><div class="module-stats">';
+      if(m.examSubject) html += '<div><span>考科</span><b>' + TQE.escHtml(m.examSubject.name) + '</b></div>';
+      html += '</div></div>';
+      html += '</article>';
     });
-    moduleListEl.innerHTML = html;
-    return;
+    html += '</div></div>';
+  });
+  html += '</section>';
+
+  // ── Weak Topics ──
+  if(weakTopics.length > 0){
+    html += '<section class="section" style="padding-top:0;">';
+    html += '<div class="section-head"><div><h2>AI 找出你的弱點</h2><p>根據你的作答，系統為你挑出最值得補強的主題。</p></div></div>';
+    html += '<div class="weak-row">';
+    html += '<div class="weak-list">';
+    weakTopics.forEach(function(w, i){
+      html += '<div class="weak-item">';
+      html += '<div class="weak-rank">' + (i + 1) + '</div>';
+      html += '<div class="weak-topic"><strong>' + TQE.escHtml(w.title) + '</strong><span>' + TQE.escHtml(w.module) + '</span></div>';
+      html += '<div class="weak-acc">' + w.acc + '%</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    // Today's recommendation card
+    html += '<div class="card card-pad" style="display:flex;flex-direction:column;gap:var(--space-4);">';
+    html += '<div class="label-eyebrow">今日推薦</div>';
+    html += '<h3 style="margin:0;font-size:20px;letter-spacing:-0.01em;">弱項衝刺</h3>';
+    html += '<p style="margin:0;color:var(--text-soft);font-size:14px;line-height:1.6;">由系統依你的錯題分布排程：鑑別題 + 爭議案例 + 複習題。</p>';
+    html += '<hr class="h-rule" style="margin:0">';
+    html += '<div style="display:flex;justify-content:flex-end;"><button class="btn btn-primary btn-sm" onclick="TQE_UI.setEntryView(\'practice-l1\')">開始</button></div>';
+    html += '</div>';
+    html += '</div>';
+    html += '</section>';
   }
 
-  // ── Exam: show subjects for the level ──
-  if(_entryView === 'exam-l1' || _entryView === 'exam-l2'){
-    var lvId = _entryView.replace('exam-', '');
-    var lv = levels.find(function(l){ return l.id === lvId; });
-    var lvSubjects = subjects.filter(function(s){ return s.level === lvId; });
+  // ── Exam shortcut ──
+  html += '<section class="section" style="padding-top:0;">';
+  html += '<div class="section-head"><div><h2>模擬考</h2><p>按考科範圍模擬正式考試，計時作答。</p></div></div>';
+  html += '<div style="display:flex;gap:var(--space-3);flex-wrap:wrap;">';
+  levels.forEach(function(lv){
+    html += '<button class="btn btn-outline" onclick="TQE_UI.setEntryView(\'exam-' + lv.id + '\')">' + TQE.escHtml(lv.name) + ' 模擬考</button>';
+  });
+  html += '</div>';
+  html += '</section>';
 
-    // Login gate for l1 exam
-    if(lvId === 'l1' && !TQE.isLoggedIn()){
-      html += _backLink('level-' + lvId);
-      html += '<div class="info red" style="text-align:center;margin-top:1rem;">' +
-        '<strong>模擬考需要 Google 登入</strong><br>請先點擊上方 Google 登入按鈕。</div>';
-      moduleListEl.innerHTML = html;
-      return;
-    }
-
-    html += _backLink('level-' + lvId);
-    html += '<h3 style="margin-bottom:1rem;">' + TQE.escHtml(lv ? lv.name : '') + ' — 選擇考科</h3>';
-    lvSubjects.forEach(function(subj){
-      html += '<div class="card" style="cursor:pointer;border-left:4px solid var(--gold,#F9AB00);" onclick="TQE_UI.startSubjectExam(\'' + subj.id + '\')">' +
-        '<h3>' + TQE.escHtml(subj.name) + '</h3>' +
-        '<p style="font-size:.9rem;color:var(--g600);">' + subj.total + ' 題 | ' + subj.duration + ' 分鐘</p>' +
-        '<p style="font-size:.8rem;color:var(--g400);margin-top:.2rem;">涵蓋模組：' + TQE.escHtml(subj.modules.join('、')) + '</p>' +
-        '</div>';
-    });
-    if(lvSubjects.length === 0){
-      html += '<div class="info gold" style="text-align:center;">此等級尚無考科設定</div>';
-    }
-    moduleListEl.innerHTML = html;
-    return;
-  }
-
-  moduleListEl.innerHTML = '';
+  area.innerHTML = html;
+  updateTopNav('tqeScreenEntry');
 }
 
-function _backLink(target){
-  return '<a href="#" onclick="event.preventDefault();TQE_UI.setEntryView(\'' + target + '\')" style="display:inline-block;margin-bottom:.8rem;font-size:.9rem;color:var(--blue);text-decoration:none;font-weight:700;">← 返回</a>';
+function _renderLevelMenu(levels, grouped){
+  var lvId = _entryView.replace('level-', '');
+  var lv = levels.find(function(l){ return l.id === lvId; });
+  var lvName = lv ? lv.name : lvId;
+
+  // Login gate for l2
+  if(lvId === 'l2' && !TQE.isLoggedIn()){
+    return '<div class="section" style="max-width:600px;margin:var(--space-7) auto;">' +
+      _backBtn('home') +
+      '<div class="info" style="text-align:center;background:var(--accent-soft);border-left:4px solid var(--accent);">' +
+      '<strong>中級需要 Google 登入</strong><br>請先點擊上方登入按鈕。</div></div>';
+  }
+
+  return '<div class="section" style="max-width:600px;margin:var(--space-7) auto;">' +
+    _backBtn('home') +
+    '<h2 style="margin-bottom:var(--space-4);">' + TQE.escHtml(lvName) + ' — 選擇模式</h2>' +
+    '<div class="card card-pad" style="cursor:pointer;border-left:3px solid var(--forest-600);margin-bottom:var(--space-3);" onclick="TQE_UI.setEntryView(\'practice-' + lvId + '\')">' +
+    '<h3 style="margin:0;">練習（選模組）</h3>' +
+    '<p style="font-size:14px;color:var(--text-soft);margin:var(--space-2) 0 0;">依模組逐步學習：框架建立 → 邊界校正 → 鑑別測驗 → 弱項練習</p></div>' +
+    '<div class="card card-pad" style="cursor:pointer;border-left:3px solid var(--amber);margin-bottom:var(--space-3);" onclick="TQE_UI.setEntryView(\'exam-' + lvId + '\')">' +
+    '<h3 style="margin:0;">模擬考（選考科）</h3>' +
+    '<p style="font-size:14px;color:var(--text-soft);margin:var(--space-2) 0 0;">按考科範圍模擬正式考試，計時作答</p></div>' +
+    '</div>';
+}
+
+function _renderPracticeList(levels, grouped){
+  var lvId = _entryView.replace('practice-', '');
+  var lv = levels.find(function(l){ return l.id === lvId; });
+  var mods = grouped[lvId] || [];
+  var stats = _loadStats();
+
+  var html = '<div class="section" style="max-width:600px;margin:var(--space-7) auto;">';
+  html += _backBtn('level-' + lvId);
+  html += '<h2 style="margin-bottom:var(--space-4);">' + TQE.escHtml(lv ? lv.name : '') + ' — 選擇學習模組</h2>';
+
+  mods.forEach(function(m){
+    var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
+    var examLabel = m.examSubject ? '<p style="font-size:12px;color:var(--text-mute);margin-top:var(--space-1);">對應考科：' + TQE.escHtml(m.examSubject.name) + '</p>' : '';
+    html += '<div class="card card-pad" style="cursor:pointer;margin-bottom:var(--space-3);" onclick="TQE_UI.selectModule(\'' + m.id + '\')">' +
+      '<h3 style="margin:0 0 var(--space-1);">' + TQE.escHtml(m.id + ' — ' + m.name) + '</h3>' +
+      '<p style="font-size:14px;color:var(--text-soft);margin:0;">' + m.frameworks.length + ' 個' + TQE.escHtml(TQE.term('framework')) + ' | ' + m.questions.length + ' 題 | 熟練度 ' + mastery + '%</p>' +
+      examLabel + '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function _renderExamList(levels){
+  var lvId = _entryView.replace('exam-', '');
+  var lv = levels.find(function(l){ return l.id === lvId; });
+  var subjects = TQE.getSubjects();
+  var lvSubjects = subjects.filter(function(s){ return s.level === lvId; });
+
+  // Login gate for l1 exam
+  if(lvId === 'l1' && !TQE.isLoggedIn()){
+    return '<div class="section" style="max-width:600px;margin:var(--space-7) auto;">' +
+      _backBtn('level-' + lvId) +
+      '<div class="info" style="text-align:center;background:var(--accent-soft);border-left:4px solid var(--accent);">' +
+      '<strong>模擬考需要 Google 登入</strong><br>請先點擊上方登入按鈕。</div></div>';
+  }
+
+  var html = '<div class="section" style="max-width:600px;margin:var(--space-7) auto;">';
+  html += _backBtn('level-' + lvId);
+  html += '<h2 style="margin-bottom:var(--space-4);">' + TQE.escHtml(lv ? lv.name : '') + ' — 選擇考科</h2>';
+
+  lvSubjects.forEach(function(subj){
+    html += '<div class="card card-pad" style="cursor:pointer;border-left:3px solid var(--amber);margin-bottom:var(--space-3);" onclick="TQE_UI.startSubjectExam(\'' + subj.id + '\')">' +
+      '<h3 style="margin:0 0 var(--space-1);">' + TQE.escHtml(subj.name) + '</h3>' +
+      '<p style="font-size:14px;color:var(--text-soft);margin:0;">' + subj.total + ' 題 | ' + subj.duration + ' 分鐘</p>' +
+      '<p style="font-size:12px;color:var(--text-mute);margin:var(--space-1) 0 0;">涵蓋模組：' + TQE.escHtml(subj.modules.join('、')) + '</p></div>';
+  });
+  if(lvSubjects.length === 0){
+    html += '<div class="info" style="text-align:center;background:var(--accent-soft);">此等級尚無考科設定</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function _backBtn(target){
+  return '<button class="btn btn-ghost" onclick="TQE_UI.setEntryView(\'' + target + '\')" style="margin-bottom:var(--space-4);">← 返回</button>';
 }
 
 function setEntryView(view){
   _entryView = view;
-  // Reset start button when navigating
-  var btn = document.getElementById('tqeBtnStart');
-  if(btn){ btn.disabled = true; btn.textContent = '選擇模組開始學習'; }
   renderEntry();
 }
 
@@ -188,7 +349,7 @@ function selectLevel(lvId){
   var lv = levels.find(function(l){ return l.id === lvId; });
   if(lv && lv.requiresLogin && !TQE.isLoggedIn()){
     var authStatus = document.getElementById('tqeAuthStatus');
-    if(authStatus) authStatus.innerHTML = '<span style="color:var(--gold);font-weight:700;">此等級需要 Google 登入</span>';
+    if(authStatus) authStatus.textContent = '此等級需要 Google 登入';
     _entryView = 'level-' + lvId;
     renderEntry();
     return;
@@ -201,15 +362,8 @@ function startSubjectExam(subjectId){
   var subjects = TQE.getSubjects();
   var subj = subjects.find(function(s){ return s.id === subjectId; });
   if(!subj) return;
-
-  // Store subject info in state for goExam to use
   state.examSubjectId = subjectId;
-
-  // Set moduleId to first module in subject (for compatibility)
-  if(subj.modules.length > 0){
-    state.moduleId = subj.modules[0];
-  }
-
+  if(subj.modules.length > 0) state.moduleId = subj.modules[0];
   if(typeof global.TQE_Layer2 !== 'undefined' && global.TQE_Layer2.goExam){
     global.TQE_Layer2.goExam();
   } else {
@@ -218,7 +372,6 @@ function startSubjectExam(subjectId){
 }
 
 function showExamSelection(){
-  // Determine the current module's level
   var mod = TQE.getModule(state.moduleId);
   var lvId = mod ? (mod.level || 'l1') : 'l1';
   _entryView = 'exam-' + lvId;
@@ -235,23 +388,261 @@ function selectModule(id){
   var lv = levels.find(function(l){ return l.id === module.level; });
   if(lv && lv.requiresLogin && !TQE.isLoggedIn()){
     var authStatus = document.getElementById('tqeAuthStatus');
-    if(authStatus) authStatus.innerHTML = '<span style="color:var(--gold);font-weight:700;">此模組需要 Google 登入</span>';
+    if(authStatus) authStatus.textContent = '此模組需要 Google 登入';
     return;
   }
 
   state.moduleId = id;
-  document.querySelectorAll('#tqeModuleList .card').forEach(function(c){ c.style.borderColor = ''; });
-  if(event && event.currentTarget) event.currentTarget.style.borderColor = 'var(--blue)';
-  var btn = document.getElementById('tqeBtnStart');
-  if(btn){
-    btn.textContent = '開始學習：' + module.name + ' →';
-    btn.disabled = false;
+  // Go to Learn screen (3-tab view)
+  renderLearnScreen(id);
+  showScreen('tqeScreenLearn');
+}
+
+// ─── Learn Screen (3-tab view) ───
+var _learnTab = 'framework';
+
+function renderLearnScreen(moduleId){
+  var mid = moduleId || state.moduleId;
+  var mod = TQE.getModule(mid);
+  if(!mod) return;
+
+  state.moduleId = mid;
+  _learnTab = 'framework';
+  _renderLearnAll(mod);
+}
+
+function _renderLearnAll(mod){
+  // Breadcrumbs + head
+  var headEl = document.getElementById('tqeLearnHead');
+  if(headEl){
+    headEl.innerHTML = '<div class="learn-crumbs">' +
+      '<a onclick="TQE_UI.showScreen(\'tqeScreenEntry\');TQE_UI.setEntryView(\'home\');" style="cursor:pointer;">首頁</a>' +
+      ' <span style="color:var(--text-mute);">›</span> ' +
+      '<a onclick="TQE_UI.showScreen(\'tqeScreenEntry\');TQE_UI.setEntryView(\'home\');" style="cursor:pointer;">模組</a>' +
+      ' <span style="color:var(--text-mute);">›</span> ' +
+      '<span style="color:var(--text);">' + TQE.escHtml(mod.id + ' ' + mod.name) + '</span></div>' +
+      '<h1 class="learn-title">' + TQE.escHtml(mod.name) + '</h1>' +
+      '<div class="learn-meta">' +
+      '<span>' + mod.frameworks.length + ' 個' + TQE.escHtml(TQE.term('framework')) + '</span>' +
+      '<span>' + mod.questions.length + ' 題</span>' +
+      '<span>熟練度 ' + (_loadStats().moduleMastery ? (_loadStats().moduleMastery[mod.id] || 0) : 0) + '%</span>' +
+      '</div>';
+  }
+
+  // Three-Q tabs
+  var tabsEl = document.getElementById('tqeThreeQTabs');
+  if(tabsEl){
+    var tabs = [
+      { id: 'framework', label: '1 · FRAMEWORK', name: '框架' },
+      { id: 'controversy', label: '2 · CONTROVERSY', name: '爭議' },
+      { id: 'discrimination', label: '3 · DISCRIMINATION', name: '鑑別' }
+    ];
+    var tabHtml = '';
+    tabs.forEach(function(t){
+      var active = _learnTab === t.id ? ' active' : '';
+      tabHtml += '<button class="' + active + '" onclick="TQE_UI._switchLearnTab(\'' + t.id + '\')">' +
+        '<span class="three-q-label">' + t.label + '</span>' +
+        '<span class="three-q-name">' + t.name + '</span></button>';
+    });
+    tabsEl.innerHTML = tabHtml;
+  }
+
+  // Left sidebar: TOC
+  var tocEl = document.getElementById('tqeLearnTOC');
+  if(tocEl){
+    var tocItems = [
+      { id: 'framework', label: '框架：What / Why / How', step: '1' },
+      { id: 'controversy', label: '爭議：兩造辯證', step: '2' },
+      { id: 'discrimination', label: '鑑別題：情境應用', step: '3' },
+      { id: 'wrap', label: '本節總結', step: '4' }
+    ];
+    var tocHtml = '<div class="side-title">本模組章節</div><div class="toc">';
+    tocItems.forEach(function(t){
+      var active = _learnTab === t.id ? ' active' : '';
+      var clickable = t.id !== 'wrap' ? ' onclick="TQE_UI._switchLearnTab(\'' + t.id + '\')"' : '';
+      tocHtml += '<div class="toc-item' + active + '"' + clickable + '>' +
+        '<div class="toc-step"><span>' + t.step + '</span></div>' +
+        '<span>' + t.label + '</span></div>';
+    });
+    tocHtml += '</div>';
+    tocEl.innerHTML = tocHtml;
+  }
+
+  // Left sidebar: progress
+  var progEl = document.getElementById('tqeLearnProgress');
+  if(progEl){
+    var mastery = _loadStats().moduleMastery ? (_loadStats().moduleMastery[mod.id] || 0) : 0;
+    progEl.innerHTML = '<div class="side-title">模組進度</div>' +
+      '<div style="font-size:13px;color:var(--text-mute);margin-bottom:8px;">熟練度 ' + mastery + '%</div>' +
+      '<div class="module-bar"><span style="width:' + mastery + '%"></span></div>';
+  }
+
+  // Right sidebar: concept map
+  var conceptEl = document.getElementById('tqeConceptMap');
+  if(conceptEl){
+    var stats = _loadStats();
+    var cmHtml = '<div class="concept-map"><h4>關鍵概念地圖</h4><div>';
+    mod.frameworks.forEach(function(fw){
+      var mastery = stats.moduleMastery ? (stats.moduleMastery[mod.id] || 0) : 0;
+      var cls = mastery > 0 && mastery < 50 ? 'concept-pill weak' : (mastery >= 70 ? 'concept-pill strong' : 'concept-pill');
+      cmHtml += '<span class="' + cls + '">' + TQE.escHtml(fw.name) + '</span>';
+    });
+    cmHtml += '</div><hr class="h-rule">';
+    cmHtml += '<div style="font-size:12px;color:var(--text-mute);line-height:1.6;">綠色：熟練概念 · 紅色：系統偵測的弱點。</div></div>';
+    conceptEl.innerHTML = cmHtml;
+  }
+
+  // Content area
+  _renderLearnTabContent(mod);
+
+  // Footer
+  _renderLearnFooter(mod);
+}
+
+function _switchLearnTab(tabId){
+  _learnTab = tabId;
+  var mod = TQE.getModule(state.moduleId);
+  if(!mod) return;
+  _renderLearnAll(mod);
+}
+
+function _renderLearnTabContent(mod){
+  var el = document.getElementById('tqeLearnContent');
+  if(!el) return;
+
+  var html = '';
+
+  if(_learnTab === 'framework'){
+    html += '<div class="lede">';
+    html += '<div class="framework">';
+    html += '<div class="framework-title">三問法 · ' + TQE.escHtml(TQE.term('framework')) + '節點</div>';
+    html += '<div class="framework-grid">';
+    mod.frameworks.forEach(function(fw){
+      html += '<div class="framework-node">';
+      html += '<b>' + TQE.escHtml(fw.id) + ' — ' + TQE.escHtml(fw.name) + '</b>';
+      html += '<span>' + TQE.escHtml(fw.desc) + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+
+    // Star rating section
+    html += '<h3>評估你對每個' + TQE.escHtml(TQE.term('framework')) + '的熟悉程度</h3>';
+    mod.frameworks.forEach(function(fw, idx){
+      html += '<div class="fw-card" id="fw-' + fw.id + '">' +
+        '<span class="fw-num">' + (idx+1) + '</span>' +
+        '<span class="fw-title">' + TQE.escHtml(fw.name) + '</span>' +
+        '<div class="fw-desc">' + TQE.escHtml(fw.desc) + '</div>' +
+        (fw.analogy ? '<div class="fw-analogy">' + TQE.escHtml(fw.analogy) + '</div>' : '') +
+        '<div class="self-rate">';
+      for(var s=1; s<=5; s++){
+        var lit = (state.phase1.ratings[fw.id] || 0) >= s ? ' lit' : '';
+        html += '<span class="star' + lit + '" data-fw="' + fw.id + '" data-val="' + s + '" onclick="TQE_UI.rateFramework(\'' + fw.id + '\',' + s + ')">★</span>';
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  if(_learnTab === 'controversy'){
+    html += '<div class="lede">';
+    html += '<p>每一條路徑，都會在產業內引起一次爭論。我們不跳過爭論——<strong>爭論本身就是考點</strong>。</p>';
+    mod.debates.forEach(function(d){
+      html += '<div class="controversy">';
+      html += '<div class="controversy-eyebrow">爭議案例</div>';
+      html += '<h4>' + TQE.escHtml(d.title) + '</h4>';
+      html += '<p style="margin:0;font-size:14px;color:var(--text-soft);">' + TQE.escHtml(d.scenario) + '</p>';
+      html += '<div class="controversy-sides">';
+      html += '<div class="controversy-side"><b>✓ ' + TQE.escHtml(d.sideA.label) + '</b>' + (d.sideA.args || []).map(TQE.escHtml).join('；') + '</div>';
+      html += '<div class="controversy-side"><b>✗ ' + TQE.escHtml(d.sideB.label) + '</b>' + (d.sideB.args || []).map(TQE.escHtml).join('；') + '</div>';
+      html += '</div>';
+      if(d.insight) html += '<div style="margin-top:var(--space-3);font-size:14px;color:var(--text-soft);border-left:3px solid var(--forest-500);padding-left:var(--space-3);"><strong>洞察：</strong>' + TQE.escHtml(d.insight) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  if(_learnTab === 'discrimination'){
+    mod.questions.forEach(function(q, idx){
+      var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
+      html += '<div class="dq" id="learnDQ-' + q.id + '">';
+      html += '<div class="dq-head"><div>';
+      html += '<div class="dq-tag">鑑別題 · ' + (fw ? TQE.escHtml(fw.name) : '') + '</div>';
+      html += '<p class="dq-prompt">' + TQE.escHtml(q.stem) + '</p>';
+      html += '</div></div>';
+      html += '<div class="dq-choices" id="learnOpts-' + q.id + '">';
+      q.options.forEach(function(o){
+        html += '<button class="dq-choice" onclick="TQE_UI._learnAnswer(\'' + q.id + '\',\'' + o.key + '\')">' +
+          '<div class="dq-letter">' + o.key + '</div>' +
+          '<div class="dq-choice-text">' + TQE.escHtml(o.text) + '</div>' +
+          '<div class="dq-rate"></div></button>';
+      });
+      html += '</div>';
+      html += '<div id="learnFb-' + q.id + '"></div>';
+      html += '</div>';
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function _learnAnswer(qid, chosen){
+  var mod = TQE.getModule(state.moduleId);
+  if(!mod) return;
+  var q = mod.questions.find(function(x){ return x.id === qid; });
+  if(!q) return;
+  var isCorrect = chosen === q.correct;
+
+  // Lock choices
+  var opts = document.querySelectorAll('#learnOpts-' + qid + ' .dq-choice');
+  opts.forEach(function(b){ b.style.pointerEvents = 'none'; });
+
+  // Highlight correct/wrong
+  opts.forEach(function(b){
+    var letter = b.querySelector('.dq-letter');
+    if(letter){
+      if(letter.textContent.trim() === q.correct) b.classList.add('correct');
+      else if(letter.textContent.trim() === chosen) b.classList.add('wrong');
+    }
+  });
+
+  // Record answer
+  state.phase3.answers[qid] = chosen;
+  var chosenOpt = q.options.find(function(o){ return o.key === chosen; });
+  state.phase3.scores[qid] = chosenOpt ? (chosenOpt.depth || 1) : 1;
+  TQE.saveBlindSpot(q, chosen, isCorrect);
+
+  // Feedback
+  var fb = document.getElementById('learnFb-' + qid);
+  if(fb){
+    if(isCorrect){
+      fb.innerHTML = '<div class="dq-reveal" style="border-left-color:var(--forest-600);"><b>正確</b>' + TQE.escHtml(q.explanation || '答對了！') + '</div>';
+    } else {
+      var diag = q.diagnosis ? q.diagnosis[chosen] : null;
+      fb.innerHTML = '<div class="dq-reveal" style="border-left-color:var(--clay);"><b>解析</b>' +
+        TQE.escHtml(diag && diag.gap ? diag.gap : (q.explanation || '正確答案是 ' + q.correct)) + '</div>';
+    }
   }
 }
 
+function _renderLearnFooter(mod){
+  var footerEl = document.getElementById('tqeLearnFooter');
+  if(!footerEl) return;
+  var tabs = ['framework', 'controversy', 'discrimination'];
+  var idx = tabs.indexOf(_learnTab);
+  var prevDisabled = idx <= 0 ? ' disabled style="opacity:.3;cursor:default;"' : '';
+  var nextLabel = idx >= tabs.length - 1 ? '開始正式學習' : '下一步';
+  var nextAction = idx >= tabs.length - 1
+    ? 'TQE_UI.startLearning()'
+    : 'TQE_UI._switchLearnTab(\'' + tabs[idx + 1] + '\')';
+  var prevAction = idx > 0 ? 'TQE_UI._switchLearnTab(\'' + tabs[idx - 1] + '\')' : '';
+
+  footerEl.innerHTML =
+    '<button class="btn btn-ghost"' + prevDisabled + ' onclick="' + prevAction + '">← 上一步</button>' +
+    '<button class="btn btn-primary" onclick="' + nextAction + '">' + nextLabel + ' →</button>';
+}
+
+// ─── Start Learning (Phase 1 flow) ───
 function startLearning(){
-  var nameInput = document.getElementById('tqeInputName');
-  state.name = nameInput ? (nameInput.value.trim() || '學員') : '學員';
   state.startTime = Date.now();
   renderPhase1();
   showScreen('tqeScreenPhase1');
@@ -265,9 +656,9 @@ function renderPhase1(){
   if(!area) return;
 
   var html = '<div class="phase-header fade-in">' +
-    '<div class="phase-tag" style="background:var(--blue);">Phase 1</div>' +
+    '<div class="phase-tag" style="background:var(--forest-600);">Phase 1</div>' +
     '<h2>框架建立</h2>' +
-    '<p>評估你對每個核心概念的熟悉程度</p></div>';
+    '<p>評估你對每個' + TQE.escHtml(TQE.term('framework')) + '的熟悉程度</p></div>';
 
   mod.frameworks.forEach(function(fw, idx){
     html += '<div class="fw-card" id="fw-' + fw.id + '">' +
@@ -282,17 +673,15 @@ function renderPhase1(){
     html += '</div></div>';
   });
 
-  html += '<button class="btn btn-primary btn-block" id="tqeBtnP1Next" onclick="TQE_UI.goPhase2()" disabled>所有框架都評分後才能繼續 →</button>';
+  html += '<button class="btn btn-primary" style="display:block;width:100%;margin-top:var(--space-5);" id="tqeBtnP1Next" onclick="TQE_UI.goPhase2()" disabled>所有' + TQE.escHtml(TQE.term('framework')) + '都評分後才能繼續 →</button>';
   area.innerHTML = html;
 }
 
 function rateFramework(fwId, val){
   state.phase1.ratings[fwId] = val;
-  // Update stars UI
   document.querySelectorAll('.star[data-fw="' + fwId + '"]').forEach(function(s){
     s.classList.toggle('lit', parseInt(s.dataset.val) <= val);
   });
-  // Check if all rated
   var mod = TQE.getModule(state.moduleId);
   var allRated = mod.frameworks.every(function(fw){ return state.phase1.ratings[fw.id]; });
   var btn = document.getElementById('tqeBtnP1Next');
@@ -314,7 +703,7 @@ function renderPhase2(){
   if(!area) return;
 
   var html = '<div class="phase-header fade-in">' +
-    '<div class="phase-tag" style="background:var(--gold);">Phase 2</div>' +
+    '<div class="phase-tag" style="background:var(--amber);">Phase 2</div>' +
     '<h2>邊界校正</h2>' +
     '<p>專家也會爭論的情境，你選哪邊？</p></div>';
 
@@ -333,7 +722,7 @@ function renderPhase2(){
       '</div></div>';
   });
 
-  html += '<button class="btn btn-primary btn-block" id="tqeBtnP2Next" onclick="TQE_UI.goPhase3()" disabled>全部選完後才能繼續 →</button>';
+  html += '<button class="btn btn-primary" style="display:block;width:100%;margin-top:var(--space-5);" id="tqeBtnP2Next" onclick="TQE_UI.goPhase3()" disabled>全部選完後才能繼續 →</button>';
   area.innerHTML = html;
 }
 
@@ -345,7 +734,6 @@ function chooseDebateSide(debateId, side){
   var reveal = document.getElementById('reveal-' + debateId);
   if(reveal) reveal.classList.add('show');
 
-  // Check all debates answered
   var mod = TQE.getModule(state.moduleId);
   var allChosen = mod.debates.every(function(d){ return state.phase2.choices[d.id]; });
   var btn = document.getElementById('tqeBtnP2Next');
@@ -368,12 +756,11 @@ function renderPhase3(){
   if(!area) return;
 
   var html = '<div class="phase-header fade-in">' +
-    '<div class="phase-tag" style="background:var(--red);">Phase 3</div>' +
+    '<div class="phase-tag" style="background:var(--clay);">Phase 3</div>' +
     '<h2>鑑別測驗</h2>' +
     '<p>找出你真正的知識缺口</p></div>';
 
   mod.questions.forEach(function(q, idx){
-    var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
     html += '<div class="fade-in" id="qWrap-' + q.id + '" style="' + (idx > 0 ? 'display:none;' : '') + '">' +
       '<div class="quiz-stem"><span class="q-num">Q' + (idx+1) + '</span> ' + TQE.escHtml(q.stem) + '</div>' +
       '<div id="opts-' + q.id + '">';
@@ -392,24 +779,20 @@ function answerQ(qid, chosen){
   var q = mod.questions.find(function(x){ return x.id === qid; });
   var isCorrect = chosen === q.correct;
 
-  // Lock options
   document.querySelectorAll('#opts-' + qid + ' .option-btn').forEach(function(b){ b.classList.add('locked'); });
   document.getElementById('opt-' + qid + '-' + q.correct).classList.add('correct');
   if(!isCorrect) document.getElementById('opt-' + qid + '-' + chosen).classList.add('wrong');
 
-  // Record
   state.phase3.answers[qid] = chosen;
   var chosenOpt = q.options.find(function(o){ return o.key === chosen; });
   state.phase3.scores[qid] = chosenOpt ? (chosenOpt.depth || 1) : 1;
-
-  // Save blind spot
   TQE.saveBlindSpot(q, chosen, isCorrect);
 
   var fb = document.getElementById('feedback-' + qid);
   if(isCorrect){
     var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
     fb.innerHTML = '<div class="info green"><strong>正確！</strong> 對應' + TQE.term('framework') + '「' + (fw ? fw.name : '') + '」。</div>' +
-      '<button class="btn btn-primary btn-block" onclick="TQE_UI.nextQ()" style="margin-top:.8rem;">下一題 →</button>';
+      '<button class="btn btn-primary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">下一題 →</button>';
   } else {
     var diag = q.diagnosis ? q.diagnosis[chosen] : null;
     var hasDiag = diag && diag.gap && diag.gap !== '';
@@ -418,14 +801,11 @@ function answerQ(qid, chosen){
     var correctText = q.options.find(function(o){ return o.key === q.correct; })?.text || '';
     var chosenText = q.options.find(function(o){ return o.key === chosen; })?.text || '';
 
-    // First-round followup: ALWAYS use pre-generated text (no API call)
     var initialFollowup;
     if(hasDiag && diag.followup){
       initialFollowup = diag.followup;
     } else {
-      // Smart fallback using question content (still no API)
-      initialFollowup = '你選的「' + chosenText.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。' +
-        '這兩者的關鍵差異在哪？打字告訴我你的想法，AI 會根據你的回應分析。';
+      initialFollowup = '你選的「' + chosenText.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。這兩者的關鍵差異在哪？打字告訴我你的想法，AI 會根據你的回應分析。';
     }
 
     var headerInfo = hasDiag
@@ -433,7 +813,7 @@ function answerQ(qid, chosen){
       : '<div class="info red"><strong>答案是 ' + q.correct + '</strong>。' + TQE.escHtml(q.explanation || '') + '</div>';
 
     fb.innerHTML = headerInfo +
-      (lectureLinks ? '<div class="info blue" style="margin-top:.5rem;"><strong>📖 去這裡補強：</strong>' + lectureLinks + '</div>' : '') +
+      (lectureLinks ? '<div class="info blue" style="margin-top:.5rem;"><strong>去這裡補強：</strong>' + lectureLinks + '</div>' : '') +
       '<div class="tqe-chat" id="chat-' + qid + '">' +
       '<div class="tqe-chat-header">AI 追問引擎</div>' +
       '<div class="tqe-chat-body" id="chatBody-' + qid + '">' +
@@ -443,7 +823,7 @@ function answerQ(qid, chosen){
       '<input type="text" id="chatInput-' + qid + '" placeholder="輸入你的想法..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();TQE_UI.sendChat(\'' + qid + '\');}">' +
       '<button onclick="TQE_UI.sendChat(\'' + qid + '\')">送出</button>' +
       '</div></div>' +
-      '<button class="btn btn-secondary btn-block" onclick="TQE_UI.nextQ()" style="margin-top:.8rem;">繼續下一題 →</button>';
+      '<button class="btn btn-secondary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">繼續下一題 →</button>';
   }
 }
 
@@ -454,7 +834,6 @@ function nextQ(){
     goReport();
     return;
   }
-  // Hide current, show next
   var wraps = document.querySelectorAll('#tqePhase3Area [id^="qWrap-"]');
   wraps.forEach(function(w, i){ w.style.display = i === state.currentQ ? '' : 'none'; });
   window.scrollTo(0, document.getElementById('tqePhase3Area').offsetTop);
@@ -464,6 +843,7 @@ function nextQ(){
 function goReport(){
   TQE.saveProgress('phase3_complete');
   TQE.saveSession();
+  _updateStatsAfterPhase3();
   renderReport();
   showScreen('tqeScreenPhase4');
 }
@@ -483,31 +863,43 @@ function renderReport(){
   });
 
   var weakFws = [];
-  var html = '<div class="phase-header fade-in"><div class="phase-tag" style="background:var(--green);">報告</div><h2>弱點分析</h2></div>';
-
-  // Overall stats
   var correct = mod.questions.filter(function(q){ return state.phase3.answers[q.id] === q.correct; }).length;
   var total = Object.keys(state.phase3.answers).length;
   var pct = total > 0 ? Math.round(correct / total * 100) : 0;
-  html += '<div style="text-align:center;margin:1rem 0;">' +
-    '<div style="font-size:3rem;font-weight:900;color:' + (pct >= 70 ? 'var(--green)' : pct >= 40 ? 'var(--gold)' : 'var(--red)') + ';">' + pct + '%</div>' +
-    '<div>答對 ' + correct + '/' + total + ' 題</div></div>';
+  var elapsed = state.startTime ? Math.round((Date.now() - state.startTime) / 60000) : 0;
+  var avgSec = total > 0 ? Math.round(elapsed * 60 / total) : 0;
 
-  // Per-framework breakdown
-  html += '<div style="margin:1.5rem 0;">';
+  var html = '';
+
+  // ── Score ring + KPIs (ResultScreen style) ──
+  html += '<div class="result-hero">';
+  html += '<div class="result-ring" style="--pct:' + pct + '">';
+  html += '<div class="result-ring-inner"><b>' + pct + '</b><span>本次分數</span></div>';
+  html += '</div>';
+  html += '<div class="result-hero-copy">';
+  html += '<div class="label-eyebrow">弱點分析 · ' + TQE.escHtml(mod.name) + '</div>';
+  html += '<h1>' + (pct >= 70 ? '表現不錯！' : '需要加強') + '</h1>';
+  html += '<div class="result-kpis">';
+  html += '<div class="kpi"><b>' + correct + '/' + total + '</b><span>正確題數</span></div>';
+  html += '<div class="kpi"><b>' + avgSec + '<span style="font-size:14px;color:var(--text-mute)">s</span></b><span>每題平均</span></div>';
+  html += '<div class="kpi"><b>' + pct + '<span style="font-size:14px;color:var(--text-mute)">%</span></b><span>通過機率</span></div>';
+  html += '<div class="kpi"><b>' + weakFws.length + '</b><span>弱點數</span></div>';
+  html += '</div></div></div>';
+
+  // ── Per-framework breakdown ──
+  html += '<div class="breakdown"><h3>各' + TQE.escHtml(TQE.term('framework')) + '熟練度變化</h3>';
   Object.entries(fwScores).forEach(function(entry){
     var fid = entry[0], fs = entry[1];
     var avg = fs.count > 0 ? fs.total / fs.count : 0;
     var isWeak = avg < 3;
     if(isWeak) weakFws.push(fid);
     var barPct = Math.round(avg / 4 * 100);
-    var color = isWeak ? 'var(--red)' : 'var(--green)';
-    html += '<div style="margin-bottom:.8rem;">' +
-      '<div style="display:flex;justify-content:space-between;font-size:.9rem;">' +
-      '<span>' + TQE.escHtml(fid + ' ' + fs.name) + '</span>' +
-      '<span style="font-weight:700;color:' + color + ';">' + avg.toFixed(1) + '/4</span></div>' +
-      '<div style="background:var(--g100);border-radius:4px;height:6px;margin-top:.2rem;">' +
-      '<div style="height:100%;border-radius:4px;width:' + barPct + '%;background:' + color + ';"></div></div></div>';
+    var color = isWeak ? 'var(--clay)' : 'var(--forest-500)';
+    html += '<div class="breakdown-row">' +
+      '<div class="breakdown-name">' + TQE.escHtml(fid + ' ' + fs.name) + '</div>' +
+      '<div class="breakdown-bar"><span style="width:' + barPct + '%;background:' + color + '"></span></div>' +
+      '<div class="breakdown-pct">' + barPct + '%</div>' +
+      '<div class="breakdown-delta">' + avg.toFixed(1) + '/4</div></div>';
   });
   html += '</div>';
 
@@ -518,35 +910,44 @@ function renderReport(){
   Object.keys(fwScores).forEach(function(fid){
     var fs = fwScores[fid];
     radarLabels.push(fs.name);
-    radarData.push(fs.count > 0 ? Math.round(fs.total / fs.count * 25) : 0); // normalize to 0-100
-    radarSelfData.push((state.phase1.ratings[fid] || 0) * 20); // 1-5 → 0-100
+    radarData.push(fs.count > 0 ? Math.round(fs.total / fs.count * 25) : 0);
+    radarSelfData.push((state.phase1.ratings[fid] || 0) * 20);
   });
 
-  html += '<div style="max-width:400px;margin:1.5rem auto;"><canvas id="tqeRadarChart" width="400" height="400"></canvas></div>';
+  html += '<div style="max-width:400px;margin:var(--space-5) auto;"><canvas id="tqeRadarChart" width="400" height="400"></canvas></div>';
 
   state.weakFws = weakFws;
 
-  // Actions
-  html += '<div style="text-align:center;margin-top:2rem;">';
+  // ── Recommendation cards ──
+  html += '<div class="section-head" style="margin-bottom:var(--space-4);"><div>' +
+    '<h2 style="font-size:20px;margin:0;">系統為你準備的下一步</h2></div></div>';
+  html += '<div class="recommend-grid">';
   if(weakFws.length > 0){
-    html += '<p style="color:var(--red);margin-bottom:1rem;">需加強：' + weakFws.map(function(fid){ return fwScores[fid].name; }).join('、') + '</p>';
-    html += '<button class="btn btn-primary" onclick="TQE_UI.goLayer2()">弱項練習 →</button> ';
+    var weakNames = weakFws.map(function(fid){ return fwScores[fid].name; }).join('、');
+    html += '<div class="recommend"><span class="recommend-tag">建議動作</span>' +
+      '<h4>弱項練習：' + TQE.escHtml(weakNames) + '</h4>' +
+      '<p>系統已鎖定你的弱點，透過 AI 動態出題加強。</p>' +
+      '<div class="recommend-foot"><span>AI 出題</span>' +
+      '<button class="btn btn-primary btn-sm" onclick="TQE_UI.goLayer2()">開始</button></div></div>';
   }
-  html += '<button class="btn btn-gold" onclick="TQE_UI.showExamSelection()">模擬考（選考科） →</button>';
+  html += '<div class="recommend"><span class="recommend-tag">模擬考</span>' +
+    '<h4>計時模擬正式考試</h4>' +
+    '<p>按考科範圍完整模擬，驗證你的實力。</p>' +
+    '<div class="recommend-foot"><span>75 MIN</span>' +
+    '<button class="btn btn-outline btn-sm" onclick="TQE_UI.showExamSelection()">開始模考</button></div></div>';
   html += '</div>';
+
+  html += '<div style="display:flex;justify-content:center;margin-top:var(--space-7);">' +
+    '<button class="btn btn-ghost" onclick="TQE_UI.showScreen(\'tqeScreenEntry\');TQE_UI.setEntryView(\'home\');">回首頁</button></div>';
 
   area.innerHTML = html;
   TQE.saveSession();
-
-  // Render radar chart (Chart.js)
   renderRadarChart(radarLabels, radarData, radarSelfData);
 }
 
 function renderRadarChart(labels, testData, selfData){
   var canvas = document.getElementById('tqeRadarChart');
   if(!canvas) return;
-
-  // Load Chart.js if not already loaded
   if(typeof Chart === 'undefined'){
     var script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
@@ -559,53 +960,19 @@ function renderRadarChart(labels, testData, selfData){
 
 function _drawRadar(canvas, labels, testData, selfData){
   if(typeof Chart === 'undefined') return;
-  var style = getComputedStyle(document.documentElement);
-  var blue = style.getPropertyValue('--blue').trim() || '#1A73E8';
-  var gold = style.getPropertyValue('--gold').trim() || '#F9AB00';
-
   new Chart(canvas, {
     type: 'radar',
     data: {
       labels: labels,
       datasets: [
-        {
-          label: '測驗表現',
-          data: testData,
-          borderColor: blue,
-          backgroundColor: blue + '20',
-          borderWidth: 2,
-          pointBackgroundColor: blue
-        },
-        {
-          label: '自評信心',
-          data: selfData,
-          borderColor: gold,
-          backgroundColor: gold + '20',
-          borderWidth: 2,
-          borderDash: [5, 5],
-          pointBackgroundColor: gold
-        }
+        { label: '測驗表現', data: testData, borderColor: '#0F9D8A', backgroundColor: '#0F9D8A20', borderWidth: 2, pointBackgroundColor: '#0F9D8A' },
+        { label: '自評信心', data: selfData, borderColor: '#F9AB00', backgroundColor: '#F9AB0020', borderWidth: 2, borderDash: [5, 5], pointBackgroundColor: '#F9AB00' }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      scales: {
-        r: {
-          beginAtZero: true,
-          max: 100,
-          ticks: { stepSize: 25, font: { size: 11 }, backdropColor: 'transparent' },
-          pointLabels: { font: { size: 13, family: 'Noto Sans TC, sans-serif' } },
-          grid: { color: '#E8EAED' },
-          angleLines: { color: '#E8EAED' }
-        }
-      },
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { font: { size: 12, family: 'Noto Sans TC, sans-serif' }, padding: 16 }
-        }
-      }
+      responsive: true, maintainAspectRatio: true,
+      scales: { r: { beginAtZero: true, max: 100, ticks: { stepSize: 25, font: { size: 11 }, backdropColor: 'transparent' }, pointLabels: { font: { size: 13, family: 'Noto Sans TC, sans-serif' } }, grid: { color: '#E8EAED' }, angleLines: { color: '#E8EAED' } } },
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 12, family: 'Noto Sans TC, sans-serif' }, padding: 16 } } }
     }
   });
 }
@@ -620,7 +987,6 @@ function sendChat(qid){
   var msg = input.value.trim();
   if(!msg) return;
 
-  // Lock UI: clear input + visually disable button + input
   input.value = '';
   input.blur();
   input.disabled = true;
@@ -632,7 +998,6 @@ function sendChat(qid){
   body.scrollTop = body.scrollHeight;
 
   _chatCooldown = true;
-  // Unlock after 3s + reply received
   function unlock(){
     _chatCooldown = false;
     if(input){ input.disabled = false; }
@@ -683,9 +1048,7 @@ function sendChat(qid){
   });
 }
 
-// ─── Phase 5 / Layer 2 / Exam: delegate to learn-layer2.js ───
-// These are provided by the layer2 module
-
+// ─── Layer 2 / Exam: delegate to learn-layer2.js ───
 function goLayer2(){
   if(typeof global.TQE_Layer2 !== 'undefined' && global.TQE_Layer2.goLayer2){
     global.TQE_Layer2.goLayer2();
@@ -705,6 +1068,7 @@ function goExam(){
 // ─── Public API ───
 global.TQE_UI = {
   showScreen: showScreen,
+  updateTopNav: updateTopNav,
   renderEntry: renderEntry,
   setEntryView: setEntryView,
   selectLevel: selectLevel,
@@ -712,6 +1076,9 @@ global.TQE_UI = {
   startSubjectExam: startSubjectExam,
   showExamSelection: showExamSelection,
   startLearning: startLearning,
+  renderLearnScreen: renderLearnScreen,
+  _switchLearnTab: _switchLearnTab,
+  _learnAnswer: _learnAnswer,
   rateFramework: rateFramework,
   goPhase2: goPhase2,
   chooseDebateSide: chooseDebateSide,

@@ -9,70 +9,107 @@ permalink: /ipas/learn/
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>iPAS 淨零碳規劃管理師 · 三問法學習系統</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;900&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/learn.css">
 </head>
 <body>
 
-<div class="tqe-top-bar" id="tqeTopBar" style="display:none;">
-  <span id="tqeTopTitle"></span>
-  <span id="tqeTopPhase" style="float:right;font-weight:700;"></span>
-  <div class="progress-bar"><div class="progress-fill" id="tqeProgressFill" style="width:0%"></div></div>
-</div>
-
-<div class="tqe-screen active" id="tqeScreenEntry">
-  <div class="tqe-entry">
-    <h1>iPAS 淨零碳規劃管理師 · 三問法學習系統</h1>
-    <p class="tagline">用框架 × 爭議 × 鑑別題，建立真正的理解</p>
-
-    <div id="tqeAuthSection" style="margin-bottom:1.5rem;width:100%;max-width:320px;">
-      <button class="btn" id="tqeBtnGoogleLogin" onclick="ThreeQuestionEngine.googleLogin()" style="width:100%;padding:.6rem 1rem;background:#fff;border:2px solid var(--g200);border-radius:12px;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Google 登入
+<header class="topnav" id="tqeTopNav">
+  <div class="topnav-inner">
+    <div class="brand">
+      <div class="brand-mark">iP</div>
+      <div><div class="brand-name">iPAS 三問法</div><div class="brand-sub">淨零碳規劃管理師</div></div>
+    </div>
+    <nav class="nav-links" id="tqeNavLinks"></nav>
+    <div class="nav-spacer"></div>
+    <div id="tqeAuthSection">
+      <button class="btn btn-outline btn-sm" id="tqeBtnGoogleLogin" onclick="ThreeQuestionEngine.googleLogin()" style="gap:6px;">
+        <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        登入
       </button>
-      <div id="tqeAuthStatus" style="font-size:.85rem;margin-top:.4rem;color:var(--g400);">登入可追蹤學習歷程，初級練習免登入</div>
+      <span id="tqeAuthStatus" style="font-size:12px;color:var(--text-mute);margin-left:8px;"></span>
     </div>
-
-    <input type="text" id="tqeInputName" placeholder="輸入暱稱" maxlength="20" autocomplete="off">
-    <p class="hint">暱稱只用於畫面顯示</p>
-    <div id="tqeModuleList" style="margin-top:2rem;width:100%;max-width:480px;text-align:left;"></div>
-    <button class="btn btn-primary btn-block" style="max-width:320px;margin-top:1.5rem;" onclick="TQE_UI.startLearning()" id="tqeBtnStart" disabled>選擇模組開始學習</button>
-
-    <div style="margin-top:2rem;text-align:center;">
-      <a href="/sustainability-100/" style="font-size:.85rem;color:var(--g400);text-decoration:none;">← 回到永續 100 講</a>
-      <a id="tqeTeacherLink" href="analytics.html" style="display:none;margin-left:1rem;font-size:.85rem;color:var(--purple);font-weight:700;">📊 講師後台</a>
-    </div>
+    <div class="avatar" id="tqeUserAvatar" style="display:none"></div>
+    <a id="tqeTeacherLink" href="analytics.html" style="display:none;font-size:13px;color:var(--forest-700);font-weight:600;">講師後台</a>
   </div>
+</header>
+
+<!-- Screen: Entry (Home Dashboard) -->
+<div class="tqe-screen active" id="tqeScreenEntry">
+  <div id="tqeEntryArea"></div>
+  <div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
 </div>
 
-<div class="tqe-screen" id="tqeScreenPhase1"><div class="tqe-container" id="tqePhase1Area"></div><div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--g400);text-decoration:none;">← 回 iPAS 學習系統</a></div></div>
-<div class="tqe-screen" id="tqeScreenPhase2"><div class="tqe-container" id="tqePhase2Area"></div><div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--g400);text-decoration:none;">← 回 iPAS 學習系統</a></div></div>
-<div class="tqe-screen" id="tqeScreenPhase3"><div class="tqe-container" id="tqePhase3Area"></div><div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--g400);text-decoration:none;">← 回 iPAS 學習系統</a></div></div>
-<div class="tqe-screen" id="tqeScreenPhase4"><div class="tqe-container" id="tqePhase4Area"></div><div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--g400);text-decoration:none;">← 回 iPAS 學習系統</a></div></div>
+<!-- Screen: Learn (3-tab view) -->
+<div class="tqe-screen" id="tqeScreenLearn">
+  <div class="learn-shell">
+    <aside class="learn-side-left">
+      <div id="tqeLearnTOC"></div>
+      <div id="tqeLearnProgress"></div>
+    </aside>
+    <main>
+      <div id="tqeLearnHead"></div>
+      <div class="three-q" id="tqeThreeQTabs"></div>
+      <div id="tqeLearnContent"></div>
+      <div class="learn-footer" id="tqeLearnFooter"></div>
+    </main>
+    <aside class="learn-side-right">
+      <div id="tqeConceptMap"></div>
+    </aside>
+  </div>
+  <div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
+</div>
 
+<!-- Screen: Phase 1 (Framework Rating) -->
+<div class="tqe-screen" id="tqeScreenPhase1">
+  <div class="tqe-container" id="tqePhase1Area"></div>
+  <div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
+</div>
+
+<!-- Screen: Phase 2 (Debate) -->
+<div class="tqe-screen" id="tqeScreenPhase2">
+  <div class="tqe-container" id="tqePhase2Area"></div>
+  <div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
+</div>
+
+<!-- Screen: Phase 3 (Quiz) -->
+<div class="tqe-screen" id="tqeScreenPhase3">
+  <div class="tqe-container" id="tqePhase3Area"></div>
+  <div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
+</div>
+
+<!-- Screen: Phase 4 (Report) -->
+<div class="tqe-screen" id="tqeScreenPhase4">
+  <div class="tqe-container" id="tqePhase4Area"></div>
+  <div style="text-align:center;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
+</div>
+
+<!-- Screen: Layer 2 (Weak-point Practice) -->
 <div class="tqe-screen" id="tqeScreenLayer2">
   <div class="tqe-container">
-    <div class="phase-header"><div class="phase-tag" style="background:var(--purple);">弱項練習</div><h2 id="tqeL2Title">弱項練習</h2><p id="tqeL2Subtitle"></p></div>
+    <div class="phase-header"><div class="phase-tag" style="background:var(--plum,var(--purple));">弱項練習</div><h2 id="tqeL2Title">弱項練習</h2><p id="tqeL2Subtitle"></p></div>
     <div id="tqeL2Info" class="info purple"></div>
     <div id="tqeL2LevelBar"></div>
     <div id="tqeL2Progress"></div>
     <div id="tqeL2QuizArea"></div>
-    <div style="text-align:center;margin-top:2rem;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--g400);text-decoration:none;">← 回 iPAS 學習系統</a></div>
+    <div style="text-align:center;margin-top:2rem;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
   </div>
 </div>
 
+<!-- Screen: Exam -->
 <div class="tqe-screen" id="tqeScreenExam">
   <div class="tqe-container">
     <div style="text-align:center;margin-bottom:1rem;"><span style="font-size:2rem;font-weight:900;" id="tqeExamTimer">75:00</span></div>
-    <div id="tqeExamLoadProgress" style="text-align:center;color:var(--g400);"></div>
+    <div id="tqeExamLoadProgress" style="text-align:center;color:var(--text-mute);"></div>
     <div id="tqeExamArea"></div>
-    <div style="text-align:center;margin-top:2rem;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--g400);text-decoration:none;">← 回 iPAS 學習系統</a></div>
+    <div style="text-align:center;margin-top:2rem;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
   </div>
 </div>
 
+<!-- Screen: Exam Result -->
 <div class="tqe-screen" id="tqeScreenExamResult">
-  <div class="tqe-container" id="tqeExamResultArea"></div>
-  <div style="text-align:center;margin-top:1rem;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--g400);text-decoration:none;">← 回 iPAS 學習系統</a></div>
+  <div class="result-shell" id="tqeExamResultArea"></div>
+  <div style="text-align:center;margin-top:1rem;padding-bottom:1rem;"><a href="/sustainability-100/ipas/learn/" style="font-size:.85rem;color:var(--text-mute);text-decoration:none;">← 回 iPAS 學習系統</a></div>
 </div>
 
 <!-- Firebase 8.x (compat) -->
@@ -99,10 +136,29 @@ permalink: /ipas/learn/
   TQE_UI.renderEntry();
   ThreeQuestionEngine.initFirebase(function(user) {
     TQE_UI.renderEntry();
-    // Show teacher link
     if (user && user.email === 'alan.chen75@gmail.com') {
       var link = document.getElementById('tqeTeacherLink');
       if (link) link.style.display = 'inline-block';
+    }
+    // Update auth UI
+    var loginBtn = document.getElementById('tqeBtnGoogleLogin');
+    var avatar = document.getElementById('tqeUserAvatar');
+    var authStatus = document.getElementById('tqeAuthStatus');
+    if (user) {
+      if (loginBtn) loginBtn.style.display = 'none';
+      if (avatar) {
+        avatar.style.display = 'grid';
+        avatar.textContent = (user.displayName || user.email || '').charAt(0);
+        avatar.title = user.displayName || user.email;
+        avatar.style.cursor = 'pointer';
+        avatar.onclick = function() {
+          if (confirm('登出？')) ThreeQuestionEngine.googleLogout();
+        };
+      }
+      if (authStatus) authStatus.textContent = '';
+    } else {
+      if (loginBtn) loginBtn.style.display = 'inline-flex';
+      if (avatar) avatar.style.display = 'none';
     }
   });
 </script>

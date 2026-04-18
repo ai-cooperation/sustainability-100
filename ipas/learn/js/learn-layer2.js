@@ -800,6 +800,7 @@ function finishExam(){
   var score = total > 0 ? Math.round(correct / total * 100) : 0;
   var passed = score >= 70;
   var elapsed = Math.round((Date.now() - exam.startTime) / 60000);
+  var avgSec = answered > 0 ? Math.round(elapsed * 60 / answered) : 0;
 
   // Subject info
   var subjects = TQE.getSubjects();
@@ -809,22 +810,25 @@ function finishExam(){
   var area = document.getElementById('tqeExamResultArea');
   if(!area) return;
 
-  var html = '<div class="phase-header"><div class="phase-tag" style="background:' + (passed ? 'var(--green)' : 'var(--red)') + ';">' + TQE.escHtml(examTitle) + ' 結果</div>' +
-    '<h2>' + (passed ? '通過！' : '未通過') + '</h2></div>';
+  var html = '';
 
-  html += '<div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem;">' +
-    '<div class="card" style="min-width:140px;text-align:center;cursor:default;">' +
-    '<div style="font-size:3rem;font-weight:900;color:' + (passed ? 'var(--green)' : 'var(--red)') + ';">' + score + '</div>' +
-    '<div style="font-size:.85rem;color:var(--g600);">分數（70 及格）</div></div>' +
-    '<div class="card" style="min-width:140px;text-align:center;cursor:default;">' +
-    '<div style="font-size:2rem;font-weight:900;color:var(--blue);">' + correct + '/' + answered + '</div>' +
-    '<div style="font-size:.85rem;color:var(--g600);">答對</div></div>' +
-    '<div class="card" style="min-width:140px;text-align:center;cursor:default;">' +
-    '<div style="font-size:2rem;font-weight:900;color:var(--gold);">' + elapsed + ' 分</div>' +
-    '<div style="font-size:.85rem;color:var(--g600);">用時</div></div></div>';
+  // ── Score ring + hero copy ──
+  html += '<div class="result-hero">';
+  html += '<div class="result-ring" style="--pct:' + score + '">';
+  html += '<div class="result-ring-inner"><b>' + score + '</b><span>本次分數</span></div>';
+  html += '</div>';
+  html += '<div class="result-hero-copy">';
+  html += '<div class="label-eyebrow">' + TQE.escHtml(examTitle) + '</div>';
+  html += '<h1>' + (passed ? '通過！' : '未通過 — 繼續加油') + '</h1>';
+  html += '<p>' + (passed ? '恭喜通過！預估真實考試及格率高。' : '未達 70 分及格標準，建議回到弱項練習加強。') + '</p>';
 
-  html += '<div class="info ' + (passed ? 'green' : 'red') + '" style="text-align:center;font-size:1.1rem;">' +
-    '<strong>' + (passed ? '恭喜通過！預估真實考試及格率高' : '未達及格標準，建議回到弱項練習加強') + '</strong></div>';
+  // ── KPI row ──
+  html += '<div class="result-kpis">';
+  html += '<div class="kpi"><b>' + correct + ' / ' + answered + '</b><span>正確題數</span></div>';
+  html += '<div class="kpi"><b>' + avgSec + '<span style="font-size:14px;color:var(--text-mute)">s</span></b><span>每題平均</span></div>';
+  html += '<div class="kpi"><b>' + score + '<span style="font-size:14px;color:var(--text-mute)">%</span></b><span>通過機率</span></div>';
+  html += '<div class="kpi"><b>' + elapsed + '<span style="font-size:14px;color:var(--text-mute)">m</span></b><span>用時</span></div>';
+  html += '</div></div></div>';
 
   // Per-framework accuracy (collect from all exam modules)
   var examModules = [];
@@ -838,6 +842,8 @@ function finishExam(){
     var mod = TQE.getModule(state.moduleId);
     if(mod) examModules.push(mod);
   }
+
+  var newWeakCount = 0;
 
   if(examModules.length > 0){
     var fwStats = {};
@@ -853,38 +859,60 @@ function finishExam(){
       }
     });
 
-    html += '<h3 style="margin:1.5rem 0 .8rem;">各概念掌握度</h3>';
+    // ── Module breakdown bars ──
+    html += '<div class="breakdown"><h3>各' + term('framework') + '掌握度</h3>';
     Object.keys(fwStats).forEach(function(fid){
       var s = fwStats[fid];
       if(s.total === 0) return;
       var pct = Math.round(s.correct / s.total * 100);
-      var color = pct >= 70 ? 'var(--green)' : pct >= 50 ? 'var(--gold)' : 'var(--red)';
-      html += '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">' +
-        '<span style="display:inline-block;min-width:50px;text-align:center;padding:.2rem .5rem;border-radius:8px;background:' + color + ';color:#fff;font-weight:700;font-size:.85rem;">' + pct + '%</span>' +
-        '<div><strong>' + s.name + '</strong> <span style="color:var(--g400);font-size:.85rem;">' + s.correct + '/' + s.total + '</span></div></div>';
+      var isWeak = pct < 50;
+      if(isWeak) newWeakCount++;
+      var barColor = pct >= 70 ? 'var(--forest-500)' : pct >= 50 ? 'var(--amber)' : 'var(--clay)';
+      html += '<div class="breakdown-row">' +
+        '<div class="breakdown-name">' + TQE.escHtml(s.name) + '</div>' +
+        '<div class="breakdown-bar"><span style="width:' + pct + '%;background:' + barColor + '"></span></div>' +
+        '<div class="breakdown-pct">' + pct + '%</div>' +
+        '<div class="breakdown-delta">' + s.correct + '/' + s.total + '</div></div>';
     });
+    html += '</div>';
 
-    // Wrong questions review
+    // ── Wrong questions review ──
     var wrongQs = exam.questions.filter(function(q){ return exam.answers[q.id] && exam.answers[q.id] !== q.correct; });
     if(wrongQs.length > 0){
-      html += '<h3 style="margin:1.5rem 0 .8rem;">錯題回顧</h3>';
+      html += '<div class="breakdown"><h3>錯題回顧</h3>';
       wrongQs.slice(0, 15).forEach(function(q){
         var yourChoice = q.options.find(function(o){ return o.key === exam.answers[q.id]; });
         var correctChoice = q.options.find(function(o){ return o.key === q.correct; });
-        html += '<div class="card" style="cursor:default;border-left:4px solid var(--red);margin-bottom:1rem;">' +
-          '<p style="font-weight:700;font-size:.95rem;margin-bottom:.8rem;">' + q.stem + '</p>' +
-          '<p style="font-size:.9rem;color:var(--red);margin-bottom:.3rem;"><strong>你選 ' + exam.answers[q.id] + '：</strong>' + (yourChoice ? yourChoice.text : '') + '</p>' +
-          '<p style="font-size:.9rem;color:var(--green);margin-bottom:.5rem;"><strong>正確 ' + q.correct + '：</strong>' + (correctChoice ? correctChoice.text : '') + '</p>' +
-          (q.explanation ? '<p style="font-size:.9rem;color:var(--navy);background:var(--blue-lt);padding:.5rem .8rem;border-radius:8px;margin-top:.5rem;"><strong>解析：</strong>' + q.explanation + '</p>' : '') +
+        html += '<div style="padding:var(--space-4) 0;border-bottom:1px solid var(--border);">' +
+          '<p style="font-weight:500;font-size:14px;margin:0 0 var(--space-2);">' + TQE.escHtml(q.stem) + '</p>' +
+          '<p style="font-size:13px;color:var(--clay);margin:0 0 var(--space-1);"><strong>你選 ' + exam.answers[q.id] + '：</strong>' + TQE.escHtml(yourChoice ? yourChoice.text : '') + '</p>' +
+          '<p style="font-size:13px;color:var(--forest-700);margin:0;">' +
+          '<strong>正確 ' + q.correct + '：</strong>' + TQE.escHtml(correctChoice ? correctChoice.text : '') + '</p>' +
+          (q.explanation ? '<p style="font-size:13px;color:var(--text-soft);margin:var(--space-2) 0 0;padding:var(--space-2) var(--space-3);background:var(--bg-soft);border-radius:var(--radius-sm);border-left:3px solid var(--forest-500);">' + TQE.escHtml(q.explanation) + '</p>' : '') +
           '</div>';
       });
+      html += '</div>';
     }
   }
 
-  // Actions
-  html += '<div style="text-align:center;margin-top:2rem;">' +
-    '<button class="btn btn-primary" onclick="TQE_Layer2.goLayer2()" style="margin-right:.5rem;">回到弱項練習</button>' +
-    '<button class="btn btn-secondary" onclick="location.reload()">返回首頁</button></div>';
+  // ── Recommendation cards ──
+  html += '<div class="section-head" style="margin-bottom:var(--space-4);"><div>' +
+    '<h2 style="font-size:20px;margin:0;">下一步</h2></div></div>';
+  html += '<div class="recommend-grid">';
+  html += '<div class="recommend"><span class="recommend-tag">建議動作</span>' +
+    '<h4>重看弱項模組</h4>' +
+    '<p>回到弱項練習，AI 根據你的錯題動態出題加強。</p>' +
+    '<div class="recommend-foot"><span>AI 出題</span>' +
+    '<button class="btn btn-primary btn-sm" onclick="TQE_Layer2.goLayer2()">開始</button></div></div>';
+  html += '<div class="recommend"><span class="recommend-tag">模擬考</span>' +
+    '<h4>排程下次模擬考</h4>' +
+    '<p>建議複習後再考一次，預期分數會提升。</p>' +
+    '<div class="recommend-foot"><span>75 MIN</span>' +
+    '<button class="btn btn-outline btn-sm" onclick="location.reload()">返回首頁</button></div></div>';
+  html += '</div>';
+
+  html += '<div style="display:flex;justify-content:center;margin-top:var(--space-7);">' +
+    '<button class="btn btn-ghost" onclick="location.reload()">回首頁</button></div>';
 
   area.innerHTML = html;
   TQE.saveSession();
