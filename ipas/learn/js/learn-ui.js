@@ -76,15 +76,18 @@ function updateTopNav(screenId){
   var nav = document.getElementById('tqeNavLinks');
   if(!nav) return;
   var links = [
-    { id: 'tqeScreenEntry', label: '首頁' },
-    { id: 'tqeScreenLearn', label: '模組' },
-    { id: 'tqeScreenLayer2', label: '弱項練習' },
-    { id: 'tqeScreenStats', label: '成績' }
+    { id: 'tqeScreenEntry', label: '首頁', action: 'TQE_UI.showScreen(\'tqeScreenEntry\')' },
+    { id: 'tqeScreenLearn', label: '模組', action: 'TQE_UI.showScreen(\'tqeScreenEntry\')' },
+    { id: 'tqeScreenLayer2', label: '弱項練習', action: 'TQE_UI.goLayer2()' },
+    { id: 'tqeScreenStats', label: '成績', action: 'TQE_UI.showScreen(\'tqeScreenStats\')' }
   ];
+  // Highlight: 模組 active when on Learn or Entry, 弱項練習 when on Layer2
   var html = '';
   links.forEach(function(l){
-    var active = screenId === l.id ? ' active' : '';
-    html += '<button class="nav-link' + active + '" onclick="TQE_UI.showScreen(\'' + l.id + '\')">' + l.label + '</button>';
+    var isActive = screenId === l.id;
+    if(l.id === 'tqeScreenLearn' && (screenId === 'tqeScreenLearn' || screenId === 'tqeScreenPhase1' || screenId === 'tqeScreenPhase2' || screenId === 'tqeScreenPhase3' || screenId === 'tqeScreenPhase4')) isActive = true;
+    var active = isActive ? ' active' : '';
+    html += '<button class="nav-link' + active + '" onclick="' + l.action + '">' + l.label + '</button>';
   });
   nav.innerHTML = html;
 }
