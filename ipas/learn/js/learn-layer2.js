@@ -534,108 +534,100 @@ function generateExamQuestions(){
   var targetTotal = subject ? (subject.total || 50) : 50;
   var scopeEl = document.getElementById('tqeExamLoadProgress');
   var scopeLabel = subject ? subject.name : (examModules[0].examSubject ? examModules[0].examSubject.name : examModules[0].name);
-  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong>（' + targetTotal + ' 題）<br>組卷中...';
+  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong>（' + targetTotal + ' 題）<br>分析學員程度中...';
 
-  // ─── Step 1: Assess learner ability from Phase 3 scores ───
-  var totalScore = 0, totalCount = 0;
+  // ─── Step 1: Assess learner — per-framework scores + find weak/strong ───
+  var fwScoreMap = {}; // fwId → { total, count, name, moduleId, isWeak }
   examModules.forEach(function(m){
+    m.frameworks.forEach(function(fw){
+      fwScoreMap[fw.id] = { total: 0, count: 0, name: fw.name, moduleId: m.id, desc: fw.desc };
+    });
     m.questions.forEach(function(q){
-      if(state.phase3.scores && state.phase3.scores[q.id]){
-        totalScore += state.phase3.scores[q.id];
-        totalCount++;
+      if(state.phase3.scores && state.phase3.scores[q.id] && fwScoreMap[q.framework]){
+        fwScoreMap[q.framework].total += state.phase3.scores[q.id];
+        fwScoreMap[q.framework].count++;
       }
     });
   });
-  // avg 0-4 scale; default to medium (2) if no data
-  var avgAbility = totalCount > 0 ? totalScore / totalCount : 2;
-  // Classify: high (avg>=3), medium (1.5-3), low (<1.5)
-  var diffRatioHard, diffRatioEasy;
-  if(avgAbility >= 3){
-    diffRatioHard = 0.6; diffRatioEasy = 0.4; // 高手：60% 高中 / 40% 一般基礎
-  } else if(avgAbility >= 1.5){
-    diffRatioHard = 0.5; diffRatioEasy = 0.5; // 一般：50/50
-  } else {
-    diffRatioHard = 0.4; diffRatioEasy = 0.6; // 需加強：40% 高中 / 60% 一般基礎
+
+  var weakFws = []; // frameworks with avg < 3
+  var strongFws = [];
+  var allFwIds = Object.keys(fwScoreMap);
+  allFwIds.forEach(function(fid){
+    var fs = fwScoreMap[fid];
+    var avg = fs.count > 0 ? fs.total / fs.count : 2;
+    fs.avg = avg;
+    fs.isWeak = avg < 3;
+    if(fs.isWeak) weakFws.push(fid);
+    else strongFws.push(fid);
+  });
+  // If no Phase 3 data, treat all as neutral
+  if(weakFws.length === 0 && strongFws.length === 0){
+    weakFws = allFwIds.slice(0, Math.ceil(allFwIds.length / 2));
+    strongFws = allFwIds.slice(Math.ceil(allFwIds.length / 2));
   }
+  // If everything is weak or everything is strong
+  if(weakFws.length === 0) weakFws = allFwIds.slice(0, 1);
+  if(strongFws.length === 0) strongFws = allFwIds.slice(-1);
+
+  var totalScore = 0, totalCount = 0;
+  allFwIds.forEach(function(fid){ totalScore += fwScoreMap[fid].total; totalCount += fwScoreMap[fid].count; });
+  var avgAbility = totalCount > 0 ? totalScore / totalCount : 2;
   var abilityLabel = avgAbility >= 3 ? '進階' : avgAbility >= 1.5 ? '中等' : '基礎';
+  var aiLevel = avgAbility >= 3 ? 4 : avgAbility >= 1.5 ? 3 : 2;
 
-  // ─── Step 2: Module-balanced allocation ───
-  var perModule = Math.floor(targetTotal / examModules.length);
-  var remainder = targetTotal - perModule * examModules.length;
-
-  // Collect pool per module, shuffle each
-  var moduleQuotas = [];
-  examModules.forEach(function(m, idx){
-    var quota = perModule + (idx < remainder ? 1 : 0);
-    var qs = m.questions.map(function(q){
-      return Object.assign({}, q, { _sourceModule: m.id, _difficulty: classifyDifficulty(q) });
+  // ─── Step 2: Pool questions — all content pack questions (ensure coverage) ───
+  var pool = [];
+  examModules.forEach(function(m){
+    m.questions.forEach(function(q){
+      pool.push(Object.assign({}, q, { _sourceModule: m.id }));
     });
-    // Shuffle
-    for(var i = qs.length - 1; i > 0; i--){
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = qs[i]; qs[i] = qs[j]; qs[j] = tmp;
-    }
-    moduleQuotas.push({ module: m, questions: qs, quota: quota });
   });
-
-  // ─── Step 3: Difficulty-tiered selection from pool ───
-  var poolSelected = [];
-  moduleQuotas.forEach(function(mq){
-    var hardCount = Math.round(mq.quota * diffRatioHard);
-    var easyCount = mq.quota - hardCount;
-
-    var hardQs = mq.questions.filter(function(q){ return q._difficulty === 'hard' || q._difficulty === 'medium'; });
-    var easyQs = mq.questions.filter(function(q){ return q._difficulty === 'easy' || q._difficulty === 'basic'; });
-    // If not enough in a tier, take from the other
-    var selected = [];
-    selected = selected.concat(hardQs.slice(0, hardCount));
-    selected = selected.concat(easyQs.slice(0, easyCount));
-    // Fill remainder from any available
-    if(selected.length < mq.quota){
-      var usedIds = {};
-      selected.forEach(function(q){ usedIds[q.id] = true; });
-      var rest = mq.questions.filter(function(q){ return !usedIds[q.id]; });
-      selected = selected.concat(rest.slice(0, mq.quota - selected.length));
-    }
-    poolSelected = poolSelected.concat(selected);
-  });
-
-  // Tag as pool source
-  exam.questions = poolSelected.map(function(q){
+  // Shuffle pool
+  for(var pi = pool.length - 1; pi > 0; pi--){
+    var pj = Math.floor(Math.random() * (pi + 1));
+    var ptmp = pool[pi]; pool[pi] = pool[pj]; pool[pj] = ptmp;
+  }
+  exam.questions = pool.map(function(q){
     return Object.assign({}, q, { id: 'EX-' + q.id, source: 'pool' });
   });
 
   var poolCount = exam.questions.length;
-  if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong><br>' +
-    '程度：' + abilityLabel + '（難題比例 ' + Math.round(diffRatioHard * 100) + '%）<br>' +
-    '題庫已選 ' + poolCount + ' / ' + targetTotal + ' 題' +
-    (poolCount < targetTotal ? '，AI 補題中...' : '');
-
-  // ─── Step 4: AI supplements remaining (background, non-blocking) ───
   var needed = targetTotal - poolCount;
+
   if(needed <= 0){
+    // Pool alone is enough (S3/S4 have 45-47 questions)
+    exam.questions = exam.questions.slice(0, targetTotal);
     _startExamNow(scopeEl);
     return;
   }
 
-  // Collect frameworks across all modules
-  var allFrameworks = [];
-  var fwIdsSeen = {};
-  examModules.forEach(function(m){
-    m.frameworks.forEach(function(f){
-      if(!fwIdsSeen[f.id]){ fwIdsSeen[f.id] = true; allFrameworks.push(f); }
+  // ─── Step 3: AI generates remaining — 70% weak frameworks, 30% strong ───
+  var weakCount = Math.round(needed * 0.7);
+  var strongCount = needed - weakCount;
+
+  // Build blind spot context from Phase 3 wrong answers
+  var blindSpotLines = [];
+  weakFws.forEach(function(fid){
+    var fs = fwScoreMap[fid];
+    var mod = TQE.getModule(fs.moduleId);
+    if(!mod) return;
+    var wrongQs = mod.questions.filter(function(q){
+      return q.framework === fid && state.phase3.answers && state.phase3.answers[q.id] && state.phase3.answers[q.id] !== q.correct;
     });
+    var gaps = wrongQs.map(function(q){
+      var chosen = state.phase3.answers[q.id];
+      return (q.diagnosis && q.diagnosis[chosen]) ? q.diagnosis[chosen].gap : '';
+    }).filter(Boolean);
+    if(gaps.length > 0){
+      blindSpotLines.push('「' + fs.name + '」盲區：' + gaps.slice(0, 3).join('；'));
+    }
   });
+  var blindSpotText = blindSpotLines.length > 0 ? blindSpotLines.join('\n') : '';
 
-  // Determine AI difficulty level based on learner ability
-  var aiLevel = avgAbility >= 3 ? 4 : avgAbility >= 1.5 ? 3 : 2;
-  var promptMod = examModules[0];
-
-  // AI generates remaining questions, then start exam
-  // Timeout: if AI takes > 20s, start with what we have
   if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong><br>' +
-    '程度：' + abilityLabel + '（難題比例 ' + Math.round(diffRatioHard * 100) + '%）<br>' +
-    'AI 正在生成補充題（' + needed + ' 題）...';
+    '程度：' + abilityLabel + ' · 弱項 ' + weakFws.length + ' 個框架<br>' +
+    '題庫 ' + poolCount + ' 題 + AI 針對弱項生成 ' + needed + ' 題中...';
 
   var aiDone = false;
   var timeoutId = setTimeout(function(){
@@ -644,52 +636,32 @@ function generateExamQuestions(){
       if(scopeEl) scopeEl.textContent = 'AI 超時，以現有 ' + exam.questions.length + ' 題開考';
       _startExamNow(scopeEl);
     }
-  }, 20000);
+  }, 25000);
 
-  // Generate AI questions per module, evenly distributed
-  var perModuleNeeded = {};
-  var neededPerMod = Math.floor(needed / examModules.length);
-  var neededRemainder = needed - neededPerMod * examModules.length;
-  examModules.forEach(function(m, idx){
-    perModuleNeeded[m.id] = neededPerMod + (idx < neededRemainder ? 1 : 0);
-  });
-
+  // Build two AI calls: one for weak frameworks, one for strong
   var chain = Promise.resolve();
-  examModules.forEach(function(targetMod){
-    var count = perModuleNeeded[targetMod.id];
-    if(count <= 0) return;
-    chain = chain.then(function(){
-      var modFws = targetMod.frameworks.map(function(f){ return f.id; });
-      var prompt = TQE.buildQuestionPrompt(targetMod, modFws, aiLevel, count);
 
-      return TQE.callGroq(prompt, 8192).then(function(text){
-        var aiQs = TQE.parseAIQuestions(text);
-        if(scopeEl) scopeEl.textContent = 'AI 已生成 ' + (exam.questions.length + aiQs.length) + ' / ' + targetTotal + ' 題...';
-        var mapped = aiQs.map(function(q, idx){
-          var diag = q.diagnosis || {};
-          (q.options || []).filter(function(o){ return o.key !== q.correct; }).forEach(function(o){
-            if(!diag[o.key] || !diag[o.key].followup){
-              var correctText = (q.options.find(function(x){ return x.key === q.correct; }) || {}).text || '';
-              diag[o.key] = {
-                gap: diag[o.key]?.gap || q.explanation || '',
-                followup: '你選的「' + o.text.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。差異在哪？'
-              };
-            }
-          });
-          return Object.assign({}, q, {
-            id: 'EX-AI-' + targetMod.id + '-' + (idx + 1),
-            framework: modFws[idx % modFws.length] || 'F1',
-            source: 'groq', _sourceModule: targetMod.id, diagnosis: diag
-          });
-        });
-        TQE.postProcessQuestions(mapped);
-        exam.questions = exam.questions.concat(mapped);
-        cacheQuestions(targetMod.id, aiLevel, mapped);
-      }).catch(function(e){
-        console.warn('Exam AI failed for ' + targetMod.id + ':', e.message);
-      });
+  // Call 1: Weak framework questions (70%)
+  if(weakCount > 0){
+    chain = chain.then(function(){
+      // Pick a module that has weak frameworks
+      var weakMod = TQE.getModule(fwScoreMap[weakFws[0]].moduleId) || examModules[0];
+      var prompt = TQE.buildQuestionPrompt(weakMod, weakFws, aiLevel, weakCount);
+      if(blindSpotText){
+        prompt = prompt.replace('【硬性規則】', '【學生具體盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n【硬性規則】');
+      }
+      return _callAndAppendAI(prompt, weakMod, weakFws, 'weak', scopeEl, targetTotal);
     });
-  });
+  }
+
+  // Call 2: Strong framework questions (30%)
+  if(strongCount > 0){
+    chain = chain.then(function(){
+      var strongMod = TQE.getModule(fwScoreMap[strongFws[0]].moduleId) || examModules[0];
+      var prompt = TQE.buildQuestionPrompt(strongMod, strongFws, Math.min(aiLevel + 1, 4), strongCount);
+      return _callAndAppendAI(prompt, strongMod, strongFws, 'strong', scopeEl, targetTotal);
+    });
+  }
 
   chain.then(function(){
     if(!aiDone){
@@ -697,6 +669,35 @@ function generateExamQuestions(){
       clearTimeout(timeoutId);
       _startExamNow(scopeEl);
     }
+  });
+}
+
+function _callAndAppendAI(prompt, mod, fwIds, tag, scopeEl, targetTotal){
+  return TQE.callGroq(prompt, 8192).then(function(text){
+    var aiQs = TQE.parseAIQuestions(text);
+    if(scopeEl) scopeEl.textContent = 'AI 已生成 ' + (exam.questions.length + aiQs.length) + ' / ' + targetTotal + ' 題...';
+    var mapped = aiQs.map(function(q, idx){
+      var diag = q.diagnosis || {};
+      (q.options || []).filter(function(o){ return o.key !== q.correct; }).forEach(function(o){
+        if(!diag[o.key] || !diag[o.key].followup){
+          var correctText = (q.options.find(function(x){ return x.key === q.correct; }) || {}).text || '';
+          diag[o.key] = {
+            gap: diag[o.key]?.gap || q.explanation || '',
+            followup: '你選的「' + o.text.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。差異在哪？'
+          };
+        }
+      });
+      return Object.assign({}, q, {
+        id: 'EX-AI-' + tag + '-' + (idx + 1),
+        framework: fwIds[idx % fwIds.length] || 'F1',
+        source: 'groq', _sourceModule: mod.id, diagnosis: diag
+      });
+    });
+    TQE.postProcessQuestions(mapped);
+    exam.questions = exam.questions.concat(mapped);
+    cacheQuestions(mod.id, 3, mapped);
+  }).catch(function(e){
+    console.warn('Exam AI (' + tag + ') failed:', e.message);
   });
 }
 
