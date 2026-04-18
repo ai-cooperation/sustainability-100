@@ -724,7 +724,13 @@ function classifyDifficulty(q){
 }
 
 function _startExamNow(scopeEl){
-  if(scopeEl) scopeEl.textContent = '組卷完成！共 ' + exam.questions.length + ' 題';
+  var total = exam.questions.length;
+  var aiCount = exam.questions.filter(function(q){ return q.source === 'groq'; }).length;
+  var poolCount = total - aiCount;
+  var label = '組卷完成！共 ' + total + ' 題';
+  if(aiCount > 0) label += '（題庫 ' + poolCount + ' + AI 弱項 ' + aiCount + '）';
+  else if(total < 50) label += '（AI 出題未成功，以現有題庫作答）';
+  if(scopeEl) scopeEl.textContent = label;
 
   // Shuffle
   for(var i = exam.questions.length - 1; i > 0; i--){
