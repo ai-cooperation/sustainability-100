@@ -63,6 +63,11 @@ function showScreen(id){
   window.scrollTo(0, 0);
   updateTopNav(id);
 
+  // Auto-render stats screen when navigating to it
+  if(id === 'tqeScreenStats') renderStatsScreen();
+  // Auto-render entry when navigating home
+  if(id === 'tqeScreenEntry') renderEntry();
+
   if(TQE.getConfig().onPhaseChange) TQE.getConfig().onPhaseChange(id, state);
 }
 
@@ -74,7 +79,7 @@ function updateTopNav(screenId){
     { id: 'tqeScreenEntry', label: '首頁' },
     { id: 'tqeScreenLearn', label: '模組' },
     { id: 'tqeScreenLayer2', label: '弱項練習' },
-    { id: 'tqeScreenExamResult', label: '成績' }
+    { id: 'tqeScreenStats', label: '成績' }
   ];
   var html = '';
   links.forEach(function(l){
@@ -1048,6 +1053,193 @@ function goExam(){
   }
 }
 
+// ─── Stats Screen (成績總覽) ───
+function renderStatsScreen(){
+  var area = document.getElementById('tqeStatsArea');
+  if(!area) return;
+
+  var pack = TQE.getConfig().contentPack;
+  if(!pack){ area.innerHTML = ''; return; }
+
+  var modules = TQE.getAllModules();
+  var levels = TQE.getLevels();
+  var stats = _loadStats();
+  var totalAnswered = stats.answered || 0;
+  var accuracy = totalAnswered > 0 ? Math.round((stats.correct || 0) / totalAnswered * 100) : 0;
+  var streak = stats.streak || 0;
+  var examHistory = stats.examHistory || [];
+
+  var html = '';
+
+  // ── Empty state ──
+  if(totalAnswered === 0 && examHistory.length === 0){
+    html += '<div style="text-align:center;padding:var(--space-8) var(--space-4);">';
+    html += '<h2 style="color:var(--text-soft);">還沒開始學習</h2>';
+    html += '<p style="color:var(--text-mute);margin-bottom:var(--space-5);">完成模組的鑑別測驗或模擬考後，這裡會顯示你的學習歷程與弱點分析。</p>';
+    html += '<button class="btn btn-primary btn-lg" onclick="TQE_UI.showScreen(\'tqeScreenEntry\')">選一個模組開始 →</button>';
+    html += '</div>';
+    area.innerHTML = html;
+    return;
+  }
+
+  // ── Header + KPIs ──
+  html += '<div class="phase-header"><h2>學習成績總覽</h2></div>';
+
+  html += '<div class="result-kpis" style="margin-bottom:var(--space-6);">';
+  html += '<div class="kpi"><b>' + totalAnswered + '</b><span>總作答題數</span></div>';
+  html += '<div class="kpi"><b>' + accuracy + '<span style="font-size:14px;color:var(--text-mute)">%</span></b><span>平均正確率</span></div>';
+  html += '<div class="kpi"><b>' + streak + '</b><span>連續學習天</span></div>';
+  var completedModules = 0;
+  modules.forEach(function(m){ if(stats.moduleMastery && stats.moduleMastery[m.id] > 0) completedModules++; });
+  html += '<div class="kpi"><b>' + completedModules + ' / ' + modules.length + '</b><span>已學模組</span></div>';
+  html += '</div>';
+
+  // ── Module Mastery Matrix ──
+  html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
+  html += '<h3 style="margin:0 0 var(--space-4);">各模組熟練度矩陣</h3>';
+
+  levels.forEach(function(lv){
+    var lvMods = modules.filter(function(m){ return m.level === lv.id; });
+    if(lvMods.length === 0) return;
+
+    html += '<div style="margin-bottom:var(--space-4);">';
+    html += '<div style="font-size:13px;font-weight:600;color:var(--text-soft);margin-bottom:var(--space-2);">' + TQE.escHtml(lv.name) + '</div>';
+
+    lvMods.forEach(function(m){
+      var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
+      var barColor = mastery === 0 ? 'var(--ink-300)' : mastery >= 70 ? 'var(--forest-500)' : mastery >= 50 ? 'var(--amber)' : 'var(--clay)';
+      var label = mastery === 0 ? '未開始' : mastery + '%';
+
+      html += '<div class="breakdown-row">';
+      html += '<div class="breakdown-name" style="min-width:180px;">' + TQE.escHtml(m.id + ' ' + m.name) + '</div>';
+      html += '<div class="breakdown-bar"><span style="width:' + Math.max(mastery, 2) + '%;background:' + barColor + '"></span></div>';
+      html += '<div class="breakdown-pct">' + label + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // ── Radar Chart (all modules with data) ──
+  var radarLabels = [];
+  var radarData = [];
+  var hasRadarData = false;
+  modules.forEach(function(m){
+    var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
+    radarLabels.push(m.name.length > 8 ? m.name.substring(0, 8) + '…' : m.name);
+    radarData.push(mastery);
+    if(mastery > 0) hasRadarData = true;
+  });
+
+  if(hasRadarData){
+    html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
+    html += '<h3 style="margin:0 0 var(--space-3);">能力雷達圖</h3>';
+    html += '<div style="max-width:450px;margin:0 auto;"><canvas id="tqeStatsRadar" width="450" height="450"></canvas></div>';
+    html += '</div>';
+  }
+
+  // ── Weak Topics ──
+  var weakTopics = [];
+  modules.forEach(function(m){
+    var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
+    if(mastery > 0 && mastery < 60){
+      weakTopics.push({ id: m.id, name: m.name, mastery: mastery });
+    }
+  });
+  if(weakTopics.length > 0){
+    weakTopics.sort(function(a, b){ return a.mastery - b.mastery; });
+    html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
+    html += '<h3 style="margin:0 0 var(--space-3);">弱點模組（熟練度 &lt; 60%）</h3>';
+    weakTopics.forEach(function(w, i){
+      html += '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;' + (i < weakTopics.length - 1 ? 'border-bottom:1px solid var(--border);' : '') + '">';
+      html += '<div style="width:24px;height:24px;border-radius:50%;background:var(--clay);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0;">' + (i + 1) + '</div>';
+      html += '<div style="flex:1;"><strong>' + TQE.escHtml(w.name) + '</strong><br><span style="font-size:13px;color:var(--text-mute);">' + w.id + '</span></div>';
+      html += '<div style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--clay);">' + w.mastery + '%</div>';
+      html += '</div>';
+    });
+    html += '<button class="btn btn-primary" style="width:100%;margin-top:var(--space-4);" onclick="TQE_UI.goLayer2()">開始弱項練習 →</button>';
+    html += '</div>';
+  }
+
+  // ── Exam History ──
+  if(examHistory.length > 0){
+    html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
+    html += '<h3 style="margin:0 0 var(--space-3);">模擬考歷史</h3>';
+    examHistory.slice().reverse().forEach(function(ex, i){
+      var passed = ex.score >= 70;
+      var date = ex.date || '';
+      html += '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) 0;' + (i < examHistory.length - 1 ? 'border-bottom:1px solid var(--border);' : '') + '">';
+      html += '<div class="readiness-ring" style="--pct:' + ex.score + ';width:48px;height:48px;flex-shrink:0;"><span style="font-size:14px;">' + ex.score + '</span></div>';
+      html += '<div style="flex:1;">';
+      html += '<strong>' + TQE.escHtml(ex.subject || '模擬考') + '</strong>';
+      html += '<br><span style="font-size:13px;color:var(--text-mute);">' + date + ' · ' + (ex.correct || 0) + '/' + (ex.total || 0) + ' 題 · ' + (ex.elapsed || 0) + ' 分鐘</span>';
+      html += '</div>';
+      html += '<span class="tag ' + (passed ? 'tag-accent' : '') + '">' + (passed ? '通過' : '未通過') + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  // ── Actions ──
+  html += '<div style="display:flex;gap:var(--space-3);justify-content:center;flex-wrap:wrap;margin-top:var(--space-5);">';
+  html += '<button class="btn btn-primary" onclick="TQE_UI.showScreen(\'tqeScreenEntry\')">回首頁</button>';
+  html += '<button class="btn btn-outline" onclick="TQE_UI.showExamSelection()">開始模擬考</button>';
+  html += '</div>';
+
+  area.innerHTML = html;
+
+  // Draw radar chart
+  if(hasRadarData){
+    _drawStatsRadar(radarLabels, radarData);
+  }
+}
+
+function _drawStatsRadar(labels, data){
+  var canvas = document.getElementById('tqeStatsRadar');
+  if(!canvas) return;
+  if(typeof Chart === 'undefined'){
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+    script.onload = function(){ _doDrawStatsRadar(canvas, labels, data); };
+    document.head.appendChild(script);
+  } else {
+    _doDrawStatsRadar(canvas, labels, data);
+  }
+}
+
+function _doDrawStatsRadar(canvas, labels, data){
+  if(typeof Chart === 'undefined') return;
+  var style = getComputedStyle(document.documentElement);
+  var green = style.getPropertyValue('--forest-600')?.trim() || '#0F9D8A';
+
+  new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '熟練度',
+        data: data,
+        borderColor: green,
+        backgroundColor: green + '20',
+        borderWidth: 2,
+        pointBackgroundColor: green
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { stepSize: 25, font: { size: 11 } },
+          pointLabels: { font: { size: 12, family: 'Noto Sans TC' } }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
 // ─── Public API ───
 global.TQE_UI = {
   showScreen: showScreen,
@@ -1071,7 +1263,8 @@ global.TQE_UI = {
   goReport: goReport,
   sendChat: sendChat,
   goLayer2: goLayer2,
-  goExam: goExam
+  goExam: goExam,
+  renderStatsScreen: renderStatsScreen
 };
 
 })(typeof window !== 'undefined' ? window : global);

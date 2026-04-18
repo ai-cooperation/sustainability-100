@@ -889,6 +889,27 @@ function finishExam(){
     '<button class="btn btn-ghost" onclick="location.reload()">回首頁</button></div>';
 
   area.innerHTML = html;
+
+  // Save exam result to stats history
+  try {
+    var statsKey = 'tqe_s100_stats';
+    var statsRaw = localStorage.getItem(statsKey);
+    var stats = statsRaw ? JSON.parse(statsRaw) : {};
+    if(!stats.examHistory) stats.examHistory = [];
+    stats.examHistory.push({
+      date: new Date().toLocaleDateString('zh-TW'),
+      subject: examTitle,
+      score: score,
+      correct: correct,
+      total: total,
+      elapsed: elapsed,
+      passed: passed
+    });
+    // Keep last 20 exams
+    if(stats.examHistory.length > 20) stats.examHistory = stats.examHistory.slice(-20);
+    localStorage.setItem(statsKey, JSON.stringify(stats));
+  } catch(e){ /* silent */ }
+
   TQE.saveSession();
   TQE.saveProgress('exam_complete');
 }
