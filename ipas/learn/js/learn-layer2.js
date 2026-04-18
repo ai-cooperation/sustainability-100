@@ -602,10 +602,7 @@ function generateExamQuestions(){
     return;
   }
 
-  // ─── Step 3: AI generates remaining — 70% weak frameworks, 30% strong ───
-  var weakCount = Math.round(needed * 0.7);
-  var strongCount = needed - weakCount;
-
+  // ─── Step 3: AI generates remaining — one call per 10 questions (reliable) ───
   // Build blind spot context from Phase 3 wrong answers
   var blindSpotLines = [];
   weakFws.forEach(function(fid){
@@ -620,10 +617,18 @@ function generateExamQuestions(){
       return (q.diagnosis && q.diagnosis[chosen]) ? q.diagnosis[chosen].gap : '';
     }).filter(Boolean);
     if(gaps.length > 0){
-      blindSpotLines.push('「' + fs.name + '」盲區：' + gaps.slice(0, 3).join('；'));
+      blindSpotLines.push('「' + fs.name + '」盲區：' + gaps.slice(0, 2).join('；'));
     }
   });
-  var blindSpotText = blindSpotLines.length > 0 ? blindSpotLines.join('\n') : '';
+  var blindSpotText = blindSpotLines.slice(0, 3).join('\n');
+
+  // Collect all framework info across exam modules (for prompt context)
+  var allFwInfo = [];
+  examModules.forEach(function(m){
+    m.frameworks.forEach(function(f){
+      allFwInfo.push({ id: f.id, name: f.name, desc: f.desc, moduleId: m.id });
+    });
+  });
 
   if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong><br>' +
     '程度：' + abilityLabel + ' · 弱項 ' + weakFws.length + ' 個框架<br>' +
@@ -636,32 +641,57 @@ function generateExamQuestions(){
       if(scopeEl) scopeEl.textContent = 'AI 超時，以現有 ' + exam.questions.length + ' 題開考';
       _startExamNow(scopeEl);
     }
-  }, 25000);
+  }, 30000);
 
-  // Build two AI calls: one for weak frameworks, one for strong
+  // Split into batches of 10 (proven reliable at 4-8 seconds each)
+  var batchSize = 10;
+  var batches = [];
+  var remaining = needed;
+  while(remaining > 0){
+    batches.push(Math.min(batchSize, remaining));
+    remaining -= batchSize;
+  }
+
+  // 70% of questions target weak frameworks, 30% strong
+  var weakTotal = Math.round(needed * 0.7);
+
   var chain = Promise.resolve();
-
-  // Call 1: Weak framework questions (70%)
-  if(weakCount > 0){
+  var generated = 0;
+  batches.forEach(function(count, batchIdx){
     chain = chain.then(function(){
-      // Pick a module that has weak frameworks
-      var weakMod = TQE.getModule(fwScoreMap[weakFws[0]].moduleId) || examModules[0];
-      var prompt = TQE.buildQuestionPrompt(weakMod, weakFws, aiLevel, weakCount);
-      if(blindSpotText){
-        prompt = prompt.replace('【硬性規則】', '【學生具體盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n【硬性規則】');
-      }
-      return _callAndAppendAI(prompt, weakMod, weakFws, 'weak', scopeEl, targetTotal);
-    });
-  }
+      // Determine which frameworks this batch focuses on
+      var isWeakBatch = generated < weakTotal;
+      var targetFwIds = isWeakBatch ? weakFws : strongFws;
+      if(targetFwIds.length === 0) targetFwIds = allFwIds;
 
-  // Call 2: Strong framework questions (30%)
-  if(strongCount > 0){
-    chain = chain.then(function(){
-      var strongMod = TQE.getModule(fwScoreMap[strongFws[0]].moduleId) || examModules[0];
-      var prompt = TQE.buildQuestionPrompt(strongMod, strongFws, Math.min(aiLevel + 1, 4), strongCount);
-      return _callAndAppendAI(prompt, strongMod, strongFws, 'strong', scopeEl, targetTotal);
+      // Build framework description from all modules (not just one)
+      var fwDesc = targetFwIds.map(function(fid){
+        var info = allFwInfo.find(function(f){ return f.id === fid; });
+        return info ? (TQE.term('framework') + '「' + info.name + '」：' + info.desc) : '';
+      }).filter(Boolean).join('\n');
+
+      var pack = TQE.getConfig().contentPack;
+      var examName = pack?.examInfo?.name || '認證考試';
+
+      // Compact prompt — proven to work reliably at 10 questions
+      var prompt = '你是' + examName + '的專業出題委員。\n\n' +
+        '【出題範圍】\n' + fwDesc + '\n\n' +
+        (isWeakBatch && blindSpotText ? '【學生盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n' : '') +
+        '【難度】Level ' + aiLevel + '\n\n' +
+        '【規則】\n' +
+        '1. 題幹以「某企業」開頭，至少 60 字實務情境\n' +
+        '2. 選項每個 35-50 字，格式「做法，因為＋理由」，字數差距 ≤ 5 字\n' +
+        '3. 正確選項不可是最長的\n' +
+        '4. 每個錯誤選項附 diagnosis：{gap: "30-50字", followup: "40-80字"}\n\n' +
+        '生成 ' + count + ' 題。回傳純 JSON 以 [ 開頭，key 用英文：stem, options([{key,text}]), correct, explanation, diagnosis。';
+
+      generated += count;
+
+      if(scopeEl) scopeEl.textContent = 'AI 生成中... (' + (batchIdx + 1) + '/' + batches.length + ')';
+
+      return _callAndAppendAI(prompt, examModules[0], targetFwIds, 'batch' + batchIdx, scopeEl, targetTotal);
     });
-  }
+  });
 
   chain.then(function(){
     if(!aiDone){
