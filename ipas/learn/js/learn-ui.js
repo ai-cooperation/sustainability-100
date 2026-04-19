@@ -820,7 +820,8 @@ function answerQ(qid, chosen){
   if(isCorrect){
     var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
     fb.innerHTML = '<div class="info green"><strong>正確！</strong> 對應' + TQE.term('framework') + '「' + (fw ? fw.name : '') + '」。</div>' +
-      '<button class="btn btn-primary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">下一題 →</button>';
+      '<button class="btn btn-primary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">下一題 →</button>' +
+      _reportLink(state.moduleId, qid);
   } else {
     var diag = q.diagnosis ? q.diagnosis[chosen] : null;
     var hasDiag = diag && diag.gap && diag.gap !== '';
@@ -851,7 +852,8 @@ function answerQ(qid, chosen){
       '<input type="text" id="chatInput-' + qid + '" placeholder="輸入你的想法..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();TQE_UI.sendChat(\'' + qid + '\');}">' +
       '<button onclick="TQE_UI.sendChat(\'' + qid + '\')">送出</button>' +
       '</div></div>' +
-      '<button class="btn btn-secondary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">繼續下一題 →</button>';
+      '<button class="btn btn-secondary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">繼續下一題 →</button>' +
+      _reportLink(state.moduleId, qid);
   }
 }
 
@@ -1385,6 +1387,34 @@ function _doDrawScoreTrend(canvas, examHistory){
   });
 }
 
+// ─── Question Report UI ───
+var REPORT_REASONS = ['答案有誤', '題幹不清楚', '選項重複或矛盾', '超出考試範圍', '其他'];
+
+function _reportLink(moduleId, qid){
+  return '<div style="text-align:right;margin-top:var(--space-2);">' +
+    '<button class="btn btn-ghost" style="font-size:12px;color:var(--text-mute);padding:2px 6px;" ' +
+    'onclick="TQE_UI.showReportMenu(\'' + moduleId + '\',\'' + qid + '\',this)">🚩 題目有誤</button>' +
+    '<div id="reportMenu-' + qid + '" style="display:none;margin-top:var(--space-2);text-align:left;padding:var(--space-3);background:var(--bg-soft);border-radius:var(--radius);border:1px solid var(--border);">' +
+    '<div style="font-size:13px;font-weight:600;margin-bottom:var(--space-2);">選擇回報原因：</div>' +
+    REPORT_REASONS.map(function(r){
+      return '<button class="btn btn-outline btn-sm" style="margin:2px;font-size:12px;" ' +
+        'onclick="TQE_UI.submitReport(\'' + moduleId + '\',\'' + qid + '\',\'' + r + '\',this)">' + r + '</button>';
+    }).join('') +
+    '</div></div>';
+}
+
+function showReportMenu(moduleId, qid, btn){
+  var menu = document.getElementById('reportMenu-' + qid);
+  if(!menu) return;
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function submitReport(moduleId, qid, reason, btn){
+  TQE.reportQuestion(moduleId, qid, reason);
+  var menu = document.getElementById('reportMenu-' + qid);
+  if(menu) menu.innerHTML = '<div style="font-size:13px;color:var(--forest-700);">✅ 已回報，感謝！</div>';
+}
+
 // ─── Public API ───
 global.TQE_UI = {
   showScreen: showScreen,
@@ -1407,6 +1437,9 @@ global.TQE_UI = {
   nextQ: nextQ,
   goReport: goReport,
   sendChat: sendChat,
+  showReportMenu: showReportMenu,
+  submitReport: submitReport,
+  _reportLink: _reportLink,
   goLayer2: goLayer2,
   goExam: goExam,
   renderStatsScreen: renderStatsScreen

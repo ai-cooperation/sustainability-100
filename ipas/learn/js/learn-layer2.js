@@ -370,7 +370,8 @@ function answerL2(qid, chosen){
     fb.innerHTML =
       '<div class="info green"><strong>正確！</strong> ' + (q.explanation || '') + '</div>' +
       (l2.correctStreak === 0 && l2.level > 1 ? '<div class="info blue" style="margin-top:.5rem;"><strong>升級！</strong> 進入 Level ' + l2.level + '</div>' : '') +
-      '<button class="btn btn-primary btn-block" onclick="TQE_Layer2.nextL2()" style="margin-top:.5rem;">下一題 →</button>';
+      '<button class="btn btn-primary btn-block" onclick="TQE_Layer2.nextL2()" style="margin-top:.5rem;">下一題 →</button>' +
+      UI._reportLink(state.moduleId, qid);
   } else {
     var diag = q.diagnosis ? q.diagnosis[chosen] : null;
     var chosenText = (q.options.find(function(o){ return o.key === chosen; }) || {}).text || '';
@@ -398,7 +399,8 @@ function answerL2(qid, chosen){
       '<input type="text" id="l2chatInput-' + qid + '" placeholder="輸入你的想法..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();TQE_Layer2.sendL2Chat(\'' + qid + '\');}">' +
       '<button onclick="TQE_Layer2.sendL2Chat(\'' + qid + '\')">送出</button>' +
       '</div></div>' +
-      '<button class="btn btn-secondary btn-block" onclick="TQE_Layer2.nextL2()" style="margin-top:.5rem;">下一題 →</button>';
+      '<button class="btn btn-secondary btn-block" onclick="TQE_Layer2.nextL2()" style="margin-top:.5rem;">下一題 →</button>' +
+      UI._reportLink(state.moduleId, qid);
   }
 
   renderL2Level();
@@ -1032,6 +1034,7 @@ function finishExam(){
           '<input type="text" id="examChatInput-' + q.id + '" placeholder="輸入你的想法..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();TQE_Layer2.sendExamChat(\'' + q.id + '\');}">' +
           '<button onclick="TQE_Layer2.sendExamChat(\'' + q.id + '\')">送出</button>' +
           '</div></div>' +
+          UI._reportLink(q._sourceModule || state.moduleId, q.id) +
           '</div></div>';
       });
       html += '</div>';

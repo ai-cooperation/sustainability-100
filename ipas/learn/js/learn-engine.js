@@ -286,6 +286,22 @@ function saveExamResult(examData) {
   } catch (e) { /* silent */ }
 }
 
+// ─── Question Report ───
+function reportQuestion(moduleId, questionId, reason) {
+  try {
+    if (typeof firebase === 'undefined') return;
+    const packId = _config.contentPack?.id || 'default';
+    const odID = localStorage.getItem('_tqe_odid') || 'unknown';
+    firebase.database().ref(packId + '/analytics/reports').push({
+      moduleId: moduleId,
+      qId: questionId,
+      reason: reason,
+      by: state.uid || odID,
+      ts: firebase.database.ServerValue.TIMESTAMP
+    });
+  } catch (e) { /* silent */ }
+}
+
 // ─── AI API calls ───
 async function callGroq(prompt, maxTokens) {
   const models = ['meta-llama/llama-4-scout-17b-16e-instruct', 'qwen/qwen3-32b'];
@@ -557,6 +573,7 @@ global.ThreeQuestionEngine = {
   saveProgress: saveProgress,
   saveBlindSpot: saveBlindSpot,
   saveExamResult: saveExamResult,
+  reportQuestion: reportQuestion,
 
   // AI
   callGroq: callGroq,
