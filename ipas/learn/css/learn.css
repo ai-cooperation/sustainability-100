@@ -3,6 +3,86 @@
    Aesthetic: Notion/Linear-clean × 永續綠 × 中文閱讀優先
    ═══════════════════════════════════════════════════════ */
 
+/* ─── OKLCH Fallback for Safari < 15.4 ─────────────────── */
+@supports not (color: oklch(50% 0.1 150)) {
+  :root {
+    --forest-950: #1a3326; --forest-900: #224430; --forest-800: #2d5c3f;
+    --forest-700: #3b7a53; --forest-600: #0F9D8A; --forest-500: #4cb88a;
+    --forest-400: #7dd4ac; --forest-300: #bbe5cc; --forest-200: #dff2e8;
+    --forest-100: #f0f8f3; --forest-50: #f7fcf9;
+    --ink-950: #1a1f1c; --ink-900: #262b28; --ink-800: #363b38;
+    --ink-700: #4d5250; --ink-600: #656a68; --ink-500: #7d8280;
+    --ink-400: #989c9a; --ink-300: #c5c8c6; --ink-200: #e2e4e3;
+    --ink-100: #f0f1f0; --ink-50: #f8f8f8; --paper: #fdfdfd;
+    --amber: #d4a017; --clay: #c0573b; --sky: #4a8fc2; --plum: #8a4fb5;
+    --accent: #0F9D8A; --accent-soft: #e6f4f1; --accent-ink: #224430;
+    --bg: #fdfdfd; --bg-soft: #f8f8f8; --bg-mute: #f0f1f0;
+    --surface: #fff; --border: #e2e4e3; --border-strong: #c5c8c6;
+    --text: #1a1f1c; --text-soft: #4d5250; --text-mute: #7d8280;
+    --gold-lt: #fef5db; --red-lt: #fdeee9; --purple-lt: #f5edfb;
+  }
+  .tag-accent {
+    border-color: rgba(15, 157, 138, 0.2);
+  }
+  .tqe-top-bar {
+    background: rgba(34, 68, 48, 0.92);
+    border-bottom-color: rgba(59, 122, 83, 0.3);
+  }
+  .tqe-chat { border-color: rgba(138, 79, 181, 0.3); }
+  .tqe-chat-header { background: rgba(138, 79, 181, 0.12); border-bottom-color: rgba(138, 79, 181, 0.16); }
+  .tqe-chat-msg.from-ai { background: #f5edfb; }
+  .tqe-chat-input input:focus { border-color: #8a4fb5; box-shadow: 0 0 0 3px rgba(138, 79, 181, 0.12); }
+  .streak-chip {
+    background: rgba(212, 160, 23, 0.18);
+    color: rgba(212, 160, 23, 0.8);
+    border-color: rgba(212, 160, 23, 0.28);
+  }
+  .option-btn.correct { background: rgba(76, 184, 138, 0.1); }
+  .option-btn.wrong { background: rgba(192, 87, 59, 0.08); }
+  .info.blue { background: #f0f8f3; }
+  .info.green { background: rgba(76, 184, 138, 0.08); }
+  .info.gold { background: #fef5db; }
+  .info.red { background: #fdeee9; }
+  .info.purple { background: #f5edfb; }
+  .controversy { background: rgba(192, 87, 59, 0.06); border-color: rgba(192, 87, 59, 0.2); }
+  .module-flag { background: rgba(192, 87, 59, 0.16); color: rgba(192, 87, 59, 0.6); border-color: rgba(192, 87, 59, 0.32); }
+  .concept-pill.weak { background: rgba(192, 87, 59, 0.14); border-color: rgba(192, 87, 59, 0.24); }
+
+  /* Buttons with direct oklch */
+  .btn-gold:hover { background: #c49315; }
+  .btn-purple:hover { background: #7340a0; }
+
+  /* Side buttons */
+  .side-btn.chosen-b {
+    border-color: var(--amber);
+    background: #fef5db;
+    color: #6b4e10;
+  }
+
+  /* Entry input focus */
+  .tqe-entry input:focus {
+    border-color: var(--forest-600);
+    box-shadow: 0 0 0 3px rgba(15, 157, 138, 0.14);
+  }
+
+  /* Option buttons */
+  .option-btn.correct .opt-label { background: var(--forest-600); color: #fff; }
+  .option-btn.wrong .opt-label { background: var(--clay); color: #fff; }
+
+  /* DQ choice variants */
+  .dq-choice.correct { border-color: var(--forest-600); background: rgba(76, 184, 138, 0.12); }
+  .dq-choice.wrong { border-color: var(--clay); background: rgba(192, 87, 59, 0.10); }
+
+  /* Chat input button hover */
+  .tqe-chat-input button:hover { background: #7340a0; }
+
+  /* Clock */
+  .clock-label { color: rgba(255, 255, 255, 0.6); }
+
+  /* Screen switcher */
+  .screen-switcher button { color: rgba(255, 255, 255, 0.6); }
+}
+
 /* ─── Design Tokens ────────────────────────────────────── */
 :root {
   /* Typography */
@@ -1168,9 +1248,69 @@ input, textarea { font-family: inherit; }
   .result-kpis { grid-template-columns: 1fr 1fr; }
 }
 
+@media (max-width: 480px) {
+  /* Top bar: hamburger-ready compact layout */
+  .tqe-top-bar-inner { padding: 10px 16px 8px; gap: var(--space-3); }
+  .tqe-top-bar .nav-links { gap: 2px; margin-left: var(--space-2); overflow-x: auto; }
+  .tqe-top-bar .nav-link { padding: 4px 8px; font-size: 12px; white-space: nowrap; }
+  .tqe-top-bar .brand-name { font-size: 13px; }
+
+  /* Container & section padding */
+  .tqe-container { padding: var(--space-3) var(--space-3); }
+  .section { padding: var(--space-5) 16px; }
+  .home-hero { padding: var(--space-5) 16px var(--space-4); }
+  .hero-title { font-size: 28px !important; }
+  .hero-lede { font-size: 15px; }
+
+  /* Buttons: minimum touch target */
+  .btn { padding: 10px 16px; font-size: 13px; min-height: 44px; }
+  .btn-sm { padding: 8px 12px; min-height: 36px; }
+  .side-btn { padding: var(--space-3); font-size: 13px; min-height: 44px; }
+
+  /* Quiz: prevent overflow */
+  .quiz-stem { font-size: 14px; padding: var(--space-3); word-break: break-word; }
+  .option-btn { font-size: 13px; padding: var(--space-2) var(--space-3); min-height: 44px; }
+  .option-btn .opt-label { width: 24px; height: 24px; font-size: 12px; }
+
+  /* Chat: full width on mobile */
+  .tqe-chat-msg { max-width: 92%; }
+  .tqe-chat-input input { font-size: 15px; /* prevent iOS zoom */ }
+  .tqe-chat-input button { padding: 8px 12px; }
+
+  /* Result page */
+  .result-ring { width: 120px; height: 120px; }
+  .result-ring-inner b { font-size: 32px; }
+  .result-kpis { grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  .kpi { padding: var(--space-3); }
+  .kpi b { font-size: 20px; }
+
+  /* Breakdown: single-column on very narrow screens */
+  .breakdown-row { grid-template-columns: 1fr; gap: var(--space-1); }
+  .breakdown-name { font-size: 13px; }
+  .breakdown-bar { height: 6px; }
+  .breakdown-pct { text-align: left; }
+
+  /* Recommend cards */
+  .recommend-grid { grid-template-columns: 1fr; }
+  .recommend h4 { font-size: 15px; }
+
+  /* Framework grid */
+  .framework-grid { grid-template-columns: 1fr; }
+  .controversy-sides { grid-template-columns: 1fr; }
+
+  /* Auth section */
+  #tqeAuthSection { max-width: 100% !important; }
+}
+
 @media (max-width: 380px) {
   .tqe-entry h1 { font-size: 20px; }
   .quiz-stem { font-size: 13px; }
   .option-btn { font-size: 12px; }
-  .btn { font-size: 12px; }
+  .btn { font-size: 12px; min-height: 40px; }
+  .hero-title { font-size: 24px !important; }
+  .section-head h2 { font-size: 20px; }
+
+  /* Prevent horizontal overflow */
+  .tqe-top-bar .nav-links { display: none; }
+  .result-hero { gap: var(--space-3); }
 }

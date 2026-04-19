@@ -52,6 +52,30 @@ function _updateStatsAfterPhase3(){
   if(!stats.moduleMastery) stats.moduleMastery = {};
   var mastery = total > 0 ? Math.round(correct / total * 100) : 0;
   stats.moduleMastery[state.moduleId] = mastery;
+
+  // Per-framework mastery (overwrite per module, not cumulative — avoids double-count)
+  if(!stats.fwMastery) stats.fwMastery = {};
+  mod.frameworks.forEach(function(fw){
+    var fwCorrect = 0, fwTotal = 0;
+    mod.questions.forEach(function(q){
+      if(q.framework === fw.id && state.phase3.answers[q.id]){
+        fwTotal++;
+        if(state.phase3.answers[q.id] === q.correct) fwCorrect++;
+      }
+    });
+    if(fwTotal > 0){
+      // Overwrite this module's fw data (not accumulate), keyed by moduleId+fwId
+      stats.fwMastery[mod.id + ':' + fw.id] = {
+        correct: fwCorrect,
+        total: fwTotal,
+        pct: Math.round(fwCorrect / fwTotal * 100),
+        lastDate: today,
+        moduleId: mod.id,
+        fwName: fw.name
+      };
+    }
+  });
+
   _saveStats(stats);
 }
 
@@ -140,14 +164,29 @@ function renderEntry(){
   var streak = stats.streak || 0;
   var passPct = Math.min(accuracy, 95);
 
-  // Find weak topics from module mastery
+  // Find weak topics from per-framework historical data
   var weakTopics = [];
+  var fwMastery = stats.fwMastery || {};
+  var hasFwData = Object.keys(fwMastery).length > 0;
   modules.forEach(function(m){
-    var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
-    if(mastery < 60 && mastery > 0){
+    if(hasFwData){
       m.frameworks.forEach(function(fw){
-        weakTopics.push({ title: fw.name, module: m.id, acc: mastery, attempts: 0 });
+        var key = m.id + ':' + fw.id;
+        var fwData = fwMastery[key];
+        if(fwData && fwData.total > 0){
+          if(fwData.pct < 60){
+            weakTopics.push({ title: fw.name, module: m.id, acc: fwData.pct, attempts: fwData.total });
+          }
+        }
       });
+    } else {
+      // Fallback: module-level mastery
+      var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
+      if(mastery < 60 && mastery > 0){
+        m.frameworks.forEach(function(fw){
+          weakTopics.push({ title: fw.name, module: m.id, acc: mastery, attempts: 0 });
+        });
+      }
     }
   });
   weakTopics.sort(function(a, b){ return a.acc - b.acc; });
@@ -553,18 +592,21 @@ function _renderLearnTabContent(mod){
 
   if(_learnTab === 'controversy'){
     html += '<div class="lede">';
-    html += '<p>每一條路徑，都會在產業內引起一次爭論。我們不跳過爭論——<strong>爭論本身就是考點</strong>。</p>';
+    html += '<p>每一條路徑，都會在產業內引起一次爭論。我們不跳過爭論——<strong>爭論本身就是考點</strong>。選邊站，才能真正理解。</p>';
     mod.debates.forEach(function(d){
-      html += '<div class="controversy">';
-      html += '<div class="controversy-eyebrow">爭議案例</div>';
-      html += '<h4>' + TQE.escHtml(d.title) + '</h4>';
-      html += '<p style="margin:0;font-size:14px;color:var(--text-soft);">' + TQE.escHtml(d.scenario) + '</p>';
-      html += '<div class="controversy-sides">';
-      html += '<div class="controversy-side"><b>✓ ' + TQE.escHtml(d.sideA.label) + '</b>' + (d.sideA.args || []).map(TQE.escHtml).join('；') + '</div>';
-      html += '<div class="controversy-side"><b>✗ ' + TQE.escHtml(d.sideB.label) + '</b>' + (d.sideB.args || []).map(TQE.escHtml).join('；') + '</div>';
+      var hasChosen = state.phase2.choices[d.id];
+      html += '<div class="debate-scenario" id="learnDebate-' + d.id + '">';
+      html += '<h3>' + TQE.escHtml(d.title) + '</h3>';
+      html += '<p>' + TQE.escHtml(d.scenario) + '</p>';
+      html += '<div class="side-btns">';
+      html += '<button class="side-btn' + (hasChosen === 'A' ? ' chosen-a' : '') + '" onclick="TQE_UI._learnChooseSide(\'' + d.id + '\',\'A\')">' + TQE.escHtml(d.sideA.label) + '</button>';
+      html += '<button class="side-btn' + (hasChosen === 'B' ? ' chosen-b' : '') + '" onclick="TQE_UI._learnChooseSide(\'' + d.id + '\',\'B\')">' + TQE.escHtml(d.sideB.label) + '</button>';
       html += '</div>';
-      if(d.insight) html += '<div style="margin-top:var(--space-3);font-size:14px;color:var(--text-soft);border-left:3px solid var(--forest-500);padding-left:var(--space-3);"><strong>洞察：</strong>' + TQE.escHtml(d.insight) + '</div>';
-      html += '</div>';
+      html += '<div class="debate-reveal' + (hasChosen ? ' show' : '') + '" id="learnReveal-' + d.id + '">';
+      html += '<div class="info blue"><strong>正方：</strong>' + (d.sideA.args || []).map(TQE.escHtml).join('；') + '</div>';
+      html += '<div class="info gold"><strong>反方：</strong>' + (d.sideB.args || []).map(TQE.escHtml).join('；') + '</div>';
+      if(d.insight) html += '<div class="info green"><strong>洞察：</strong>' + TQE.escHtml(d.insight) + '</div>';
+      html += '</div></div>';
     });
     html += '</div>';
   }
@@ -598,6 +640,15 @@ function _renderLearnTabContent(mod){
   }
 
   el.innerHTML = html;
+}
+
+function _learnChooseSide(debateId, side){
+  state.phase2.choices[debateId] = side;
+  var btns = document.querySelectorAll('#learnDebate-' + debateId + ' .side-btn');
+  btns.forEach(function(b){ b.className = 'side-btn'; });
+  btns[side === 'A' ? 0 : 1].classList.add('chosen-' + side.toLowerCase());
+  var reveal = document.getElementById('learnReveal-' + debateId);
+  if(reveal) reveal.classList.add('show');
 }
 
 function _startPhase3FromLearn(){
@@ -1164,6 +1215,14 @@ function renderStatsScreen(){
     html += '</div>';
   }
 
+  // ── Score Trend Chart ──
+  if(examHistory.length >= 2){
+    html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
+    html += '<h3 style="margin:0 0 var(--space-3);">分數趨勢</h3>';
+    html += '<div style="max-width:600px;margin:0 auto;"><canvas id="tqeScoreTrend" width="600" height="300"></canvas></div>';
+    html += '</div>';
+  }
+
   // ── Exam History ──
   if(examHistory.length > 0){
     html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
@@ -1194,6 +1253,11 @@ function renderStatsScreen(){
   // Draw radar chart
   if(hasRadarData){
     _drawStatsRadar(radarLabels, radarData);
+  }
+
+  // Draw score trend line chart
+  if(examHistory.length >= 2){
+    _drawScoreTrend(examHistory);
   }
 }
 
@@ -1243,6 +1307,80 @@ function _doDrawStatsRadar(canvas, labels, data){
   });
 }
 
+// ─── Score Trend Chart ───
+function _drawScoreTrend(examHistory){
+  var canvas = document.getElementById('tqeScoreTrend');
+  if(!canvas) return;
+  if(typeof Chart === 'undefined'){
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+    script.onload = function(){ _doDrawScoreTrend(canvas, examHistory); };
+    document.head.appendChild(script);
+  } else {
+    _doDrawScoreTrend(canvas, examHistory);
+  }
+}
+
+function _doDrawScoreTrend(canvas, examHistory){
+  if(typeof Chart === 'undefined') return;
+  var labels = examHistory.map(function(ex){ return ex.date || ''; });
+  var scores = examHistory.map(function(ex){ return ex.score; });
+  var passLine = examHistory.map(function(){ return 70; });
+
+  var style = getComputedStyle(document.documentElement);
+  var green = style.getPropertyValue('--forest-600')?.trim() || '#0F9D8A';
+
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: '模擬考分數',
+          data: scores,
+          borderColor: green,
+          backgroundColor: green + '20',
+          borderWidth: 2,
+          pointBackgroundColor: green,
+          pointRadius: 4,
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: '及格線 (70)',
+          data: passLine,
+          borderColor: '#E57373',
+          borderWidth: 1.5,
+          borderDash: [6, 4],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { stepSize: 10, font: { size: 11 } },
+          grid: { color: '#E8EAED' }
+        },
+        x: {
+          ticks: { font: { size: 11 } },
+          grid: { display: false }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 12, family: 'Noto Sans TC' }, padding: 16 }
+        }
+      }
+    }
+  });
+}
+
 // ─── Public API ───
 global.TQE_UI = {
   showScreen: showScreen,
@@ -1256,6 +1394,7 @@ global.TQE_UI = {
   startLearning: startLearning,
   renderLearnScreen: renderLearnScreen,
   _switchLearnTab: _switchLearnTab,
+  _learnChooseSide: _learnChooseSide,
   _startPhase3FromLearn: _startPhase3FromLearn,
   rateFramework: rateFramework,
   goPhase2: goPhase2,

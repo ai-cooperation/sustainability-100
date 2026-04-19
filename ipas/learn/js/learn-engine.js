@@ -279,6 +279,11 @@ async function callGemini(prompt) {
 function buildQuestionPrompt(module, targetFws, level, count) {
   const pack = _config.contentPack;
   const examInfo = pack?.examInfo || {};
+  const qs = pack?.questionStyle || {};
+  const optMin = (qs.optionLength || [38, 45])[0];
+  const optMax = (qs.optionLength || [38, 45])[1];
+  const diffMax = qs.diffMax || 5;
+  const stemMin = qs.stemMin || 60;
 
   const fwInfo = targetFws.map(function(fid) {
     const fw = module.frameworks.find(function(f) { return f.id === fid; });
@@ -307,9 +312,9 @@ function buildQuestionPrompt(module, targetFws, level, count) {
     '【難度】Level ' + level + ' — ' + levelDesc + '\n\n' +
     (trends ? '【考試趨勢】\n' + trends + '\n\n' : '') +
     '【硬性規則 — 必須全部遵守】\n' +
-    '1. 題幹：以「某企業/某公司/某工廠」開頭，描述具體實務情境，至少 60 字。\n' +
-    '2. 四個選項：每個 38-45 字（嚴格），格式「具體做法或判斷，因為＋專業理由」。\n' +
-    '3. 四選項的字數差距 ≤ 5 字（最長減最短 ≤ 5）。違反此條最嚴重。\n' +
+    '1. 題幹：以「某企業/某公司/某工廠」開頭，描述具體實務情境，至少 ' + stemMin + ' 字。\n' +
+    '2. 四個選項：每個 ' + optMin + '-' + optMax + ' 字（嚴格），格式「具體做法或判斷，因為＋專業理由」。\n' +
+    '3. 四選項的字數差距 ≤ ' + diffMax + ' 字（最長減最短 ≤ ' + diffMax + '）。違反此條最嚴重。\n' +
     '4. 正確答案絕對不可以是四個選項中最長的那個。\n' +
     '5. 答案分布：' + count + ' 題正確答案嚴格依序為 ' + answerSeq.join(',') + '，不可更改。\n' +
     '6. diagnosis：每題必須有恰好 3 個 diagnosis（對應 3 個錯誤選項），每個包含 gap（30-50字）和 followup（40-80字，提到題目具體概念）。\n' +
@@ -371,6 +376,12 @@ function _tryParseArray(str) {
 }
 
 function postProcessQuestions(questions) {
+  const pack = _config.contentPack;
+  const qs = pack?.questionStyle || {};
+  const optMin = (qs.optionLength || [38, 45])[0];
+  const optMax = (qs.optionLength || [38, 45])[1];
+  const diffMax = qs.diffMax || 5;
+
   questions.forEach(function(q) {
     if (!q.options || q.options.length < 4) return;
 

@@ -33,6 +33,7 @@ function term(key){
 function cacheQuestions(moduleId, level, questions){
   try {
     if(typeof firebase === 'undefined') return;
+    if(!TQE.isLoggedIn()) return; // skip cache for unauthenticated users
     var packId = TQE.getConfig().contentPack?.id || 'default';
     questions.forEach(function(q){
       if(!q.id || !q.stem) return;
@@ -94,7 +95,35 @@ function goLayer2(){
     totalGenerated: 0, _reportShown: false };
 
   var mod = TQE.getModule(state.moduleId);
-  if(!mod) return;
+  if(!mod){
+    // No module selected — show module picker
+    var modules = TQE.getAllModules();
+    var stats = {};
+    try { var raw = localStorage.getItem('tqe_s100_stats'); stats = raw ? JSON.parse(raw) : {}; } catch(e){}
+    var area = document.getElementById('tqeL2QuizArea');
+    if(!area) return;
+    var h = '<div class="info blue" style="text-align:center;margin-bottom:var(--space-4);">' +
+      '<strong>請先選擇要練習的模組</strong><br>弱項練習會根據你在該模組的錯題動態出題。</div>';
+    modules.forEach(function(m){
+      var mastery = (stats.moduleMastery && stats.moduleMastery[m.id]) || 0;
+      var isWeak = mastery > 0 && mastery < 60;
+      h += '<div class="card card-pad" style="cursor:pointer;margin-bottom:var(--space-3);' +
+        (isWeak ? 'border-left:3px solid var(--clay);' : '') + '" ' +
+        'onclick="ThreeQuestionEngine.state.moduleId=\'' + m.id + '\';TQE_Layer2.goLayer2();">' +
+        '<h3 style="margin:0 0 var(--space-1);">' + TQE.escHtml(m.id + ' — ' + m.name) + '</h3>' +
+        '<p style="font-size:14px;color:var(--text-soft);margin:0;">' +
+        m.frameworks.length + ' 個' + TQE.escHtml(term('framework')) +
+        ' | 熟練度 ' + mastery + '%' +
+        (isWeak ? ' <span style="color:var(--clay);font-weight:600;">← 建議加強</span>' : '') +
+        '</p></div>';
+    });
+    area.innerHTML = h;
+    var subtitleEl = document.getElementById('tqeL2Subtitle');
+    if(subtitleEl) subtitleEl.textContent = '';
+    var infoEl = document.getElementById('tqeL2Info');
+    if(infoEl) infoEl.innerHTML = '';
+    return;
+  }
 
   if(l2.targetFws.length === 0){
     l2.level = 2;
@@ -536,18 +565,38 @@ function generateExamQuestions(){
   var scopeLabel = subject ? subject.name : (examModules[0].examSubject ? examModules[0].examSubject.name : examModules[0].name);
   if(scopeEl) scopeEl.innerHTML = '<strong>範圍：' + scopeLabel + '</strong>（' + targetTotal + ' 題）<br>分析學員程度中...';
 
-  // ─── Step 1: Assess learner — per-framework scores + find weak/strong ───
+  // ─── Step 1: Assess learner — historical + current session ───
+  // Load historical per-framework mastery from localStorage (overwrite-based, no double-count)
+  var histStats = {};
+  try {
+    var rawStats = localStorage.getItem('tqe_s100_stats');
+    histStats = rawStats ? JSON.parse(rawStats) : {};
+  } catch(e){ histStats = {}; }
+  var histFw = histStats.fwMastery || {};
+
   var fwScoreMap = {}; // fwId → { total, count, name, moduleId, isWeak }
   examModules.forEach(function(m){
     m.frameworks.forEach(function(fw){
-      fwScoreMap[fw.id] = { total: 0, count: 0, name: fw.name, moduleId: m.id, desc: fw.desc };
+      // Read historical data (keyed by moduleId:fwId)
+      var hist = histFw[m.id + ':' + fw.id];
+      var histCorrect = hist ? hist.correct : 0;
+      var histTotal = hist ? hist.total : 0;
+      fwScoreMap[fw.id] = {
+        total: histCorrect,
+        count: histTotal,
+        name: fw.name, moduleId: m.id, desc: fw.desc
+      };
     });
-    m.questions.forEach(function(q){
-      if(state.phase3.scores && state.phase3.scores[q.id] && fwScoreMap[q.framework]){
-        fwScoreMap[q.framework].total += state.phase3.scores[q.id];
-        fwScoreMap[q.framework].count++;
-      }
-    });
+    // If current session has Phase 3 data not yet saved to localStorage, add it
+    var hasHistForModule = Object.keys(histFw).some(function(k){ return k.indexOf(m.id + ':') === 0; });
+    if(!hasHistForModule){
+      m.questions.forEach(function(q){
+        if(state.phase3.scores && state.phase3.scores[q.id] && fwScoreMap[q.framework]){
+          fwScoreMap[q.framework].total += (state.phase3.answers[q.id] === q.correct ? 1 : 0);
+          fwScoreMap[q.framework].count++;
+        }
+      });
+    }
   });
 
   var weakFws = []; // frameworks with avg < 3
@@ -653,16 +702,6 @@ function generateExamQuestions(){
 
   _startExamNow(scopeEl);
 
-  // 70% weak, 30% strong, 3 questions per batch
-  var weakTotal = Math.round(needed * 0.7);
-  var strongTotal = needed - weakTotal;
-  var weakBatches = [];
-  var rem = weakTotal;
-  while(rem > 0){ weakBatches.push(Math.min(3, rem)); rem -= 3; }
-  var strongBatches = [];
-  rem = strongTotal;
-  while(rem > 0){ strongBatches.push(Math.min(3, rem)); rem -= 3; }
-
   function _findModuleForFws(fwIds){
     for(var i = 0; i < examModules.length; i++){
       var hasFw = fwIds.some(function(fid){
@@ -673,26 +712,68 @@ function generateExamQuestions(){
     return examModules[0];
   }
 
-  // Background AI generation — questions are appended while student is answering pool
+  // Background: first load cached questions, then AI fills remaining
   var chain = Promise.resolve();
 
-  weakBatches.forEach(function(count, idx){
-    chain = chain.then(function(){
-      var weakMod = _findModuleForFws(weakFws);
-      var prompt = TQE.buildQuestionPrompt(weakMod, weakFws, aiLevel, count);
-      if(blindSpotText){
-        prompt = prompt.replace('【硬性規則', '【學生具體盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n【硬性規則');
-      }
-      return _callAndAppendAI(prompt, weakMod, weakFws, 'weak' + idx);
+  // Step 1: Load cached AI questions to reduce API calls
+  chain = chain.then(function(){
+    return Promise.all(examModules.map(function(m){
+      return loadCachedQuestions(m.id, aiLevel, 15);
+    }));
+  }).then(function(cacheResults){
+    var existingStems = {};
+    exam.questions.forEach(function(q){ if(q.stem) existingStems[(q.stem).substring(0,80) + '|' + (q.correct || '')] = true; });
+    (cacheResults || []).forEach(function(arr){
+      (arr || []).forEach(function(q){
+        var stemKey = (q.stem || '').substring(0,80) + '|' + (q.correct || '');
+        if(stemKey.length > 1 && !existingStems[stemKey]){
+          exam.questions.push(Object.assign({}, q, {
+            id: 'EX-C' + Math.random().toString(36).substr(2,5),
+            source: 'cached'
+          }));
+          existingStems[stemKey] = true;
+        }
+      });
     });
+    needed = Math.max(0, targetTotal - exam.questions.length);
   });
 
-  strongBatches.forEach(function(count, idx){
-    chain = chain.then(function(){
-      var strongMod = _findModuleForFws(strongFws);
-      var prompt = TQE.buildQuestionPrompt(strongMod, strongFws, Math.min(aiLevel + 1, 4), count);
-      return _callAndAppendAI(prompt, strongMod, strongFws, 'strong' + idx);
-    });
+  // Step 2: AI generates remaining (3 per batch, 70% weak / 30% strong)
+  chain = chain.then(function(){
+    if(needed <= 0) return;
+    var weakTotal = Math.round(needed * 0.7);
+    var strongTotal = needed - weakTotal;
+
+    var aiChain = Promise.resolve();
+
+    var wRem = weakTotal, wIdx = 0;
+    while(wRem > 0){
+      (function(count, idx){
+        aiChain = aiChain.then(function(){
+          var weakMod = _findModuleForFws(weakFws);
+          var prompt = TQE.buildQuestionPrompt(weakMod, weakFws, aiLevel, count);
+          if(blindSpotText){
+            prompt = prompt.replace('【硬性規則', '【學生具體盲區 — 請針對這些出題】\n' + blindSpotText + '\n\n【硬性規則');
+          }
+          return _callAndAppendAI(prompt, weakMod, weakFws, 'weak' + idx);
+        });
+      })(Math.min(3, wRem), wIdx);
+      wRem -= 3; wIdx++;
+    }
+
+    var sRem = strongTotal, sIdx = 0;
+    while(sRem > 0){
+      (function(count, idx){
+        aiChain = aiChain.then(function(){
+          var strongMod = _findModuleForFws(strongFws);
+          var prompt = TQE.buildQuestionPrompt(strongMod, strongFws, Math.min(aiLevel + 1, 4), count);
+          return _callAndAppendAI(prompt, strongMod, strongFws, 'strong' + idx);
+        });
+      })(Math.min(3, sRem), sIdx);
+      sRem -= 3; sIdx++;
+    }
+
+    return aiChain;
   });
 }
 
@@ -910,20 +991,46 @@ function finishExam(){
     });
     html += '</div>';
 
-    // ── Wrong questions review ──
+    // ── Wrong questions review with AI chat ──
     var wrongQs = exam.questions.filter(function(q){ return exam.answers[q.id] && exam.answers[q.id] !== q.correct; });
     if(wrongQs.length > 0){
-      html += '<div class="breakdown"><h3>錯題回顧</h3>';
+      html += '<div class="breakdown"><h3>錯題回顧（點擊展開 AI 追問）</h3>';
       wrongQs.slice(0, 15).forEach(function(q){
-        var yourChoice = q.options.find(function(o){ return o.key === exam.answers[q.id]; });
+        var chosen = exam.answers[q.id];
+        var yourChoice = q.options.find(function(o){ return o.key === chosen; });
         var correctChoice = q.options.find(function(o){ return o.key === q.correct; });
+        var diag = q.diagnosis ? q.diagnosis[chosen] : null;
+        var chosenText = yourChoice ? yourChoice.text : '';
+        var correctText = correctChoice ? correctChoice.text : '';
+
+        var initialFollowup;
+        if(diag && diag.followup){
+          initialFollowup = diag.followup;
+        } else {
+          initialFollowup = '你選的「' + chosenText.substring(0, 30) + '」，但正確答案是「' + correctText.substring(0, 30) + '」。這兩者的關鍵差異在哪？';
+        }
+
         html += '<div style="padding:var(--space-4) 0;border-bottom:1px solid var(--border);">' +
+          '<div onclick="TQE_Layer2.toggleExamWrong(\'' + q.id + '\')" style="cursor:pointer;">' +
           '<p style="font-weight:500;font-size:14px;margin:0 0 var(--space-2);">' + TQE.escHtml(q.stem) + '</p>' +
-          '<p style="font-size:13px;color:var(--clay);margin:0 0 var(--space-1);"><strong>你選 ' + exam.answers[q.id] + '：</strong>' + TQE.escHtml(yourChoice ? yourChoice.text : '') + '</p>' +
+          '<p style="font-size:13px;color:var(--clay);margin:0 0 var(--space-1);"><strong>你選 ' + chosen + '：</strong>' + TQE.escHtml(chosenText) + '</p>' +
           '<p style="font-size:13px;color:var(--forest-700);margin:0;">' +
-          '<strong>正確 ' + q.correct + '：</strong>' + TQE.escHtml(correctChoice ? correctChoice.text : '') + '</p>' +
-          (q.explanation ? '<p style="font-size:13px;color:var(--text-soft);margin:var(--space-2) 0 0;padding:var(--space-2) var(--space-3);background:var(--bg-soft);border-radius:var(--radius-sm);border-left:3px solid var(--forest-500);">' + TQE.escHtml(q.explanation) + '</p>' : '') +
-          '</div>';
+          '<strong>正確 ' + q.correct + '：</strong>' + TQE.escHtml(correctText) + '</p>' +
+          '<div id="examToggleHint-' + q.id + '" style="font-size:12px;color:var(--text-mute);margin-top:var(--space-1);">▼ 點擊展開 AI 追問</div>' +
+          '</div>' +
+          '<div id="examWrongDetail-' + q.id + '" style="display:none;margin-top:var(--space-3);">' +
+          (q.explanation ? '<p style="font-size:13px;color:var(--text-soft);margin:0 0 var(--space-2);padding:var(--space-2) var(--space-3);background:var(--bg-soft);border-radius:var(--radius-sm);border-left:3px solid var(--forest-500);">' + TQE.escHtml(q.explanation) + '</p>' : '') +
+          (diag ? '<div class="info gold" style="margin-bottom:var(--space-3);"><strong>你的盲區：</strong>' + TQE.escHtml(diag.gap) + '</div>' : '') +
+          '<div class="tqe-chat" id="examChat-' + q.id + '">' +
+          '<div class="tqe-chat-header">AI 追問引擎</div>' +
+          '<div class="tqe-chat-body" id="examChatBody-' + q.id + '">' +
+          '<div class="tqe-chat-msg from-ai">' + TQE.escHtml(initialFollowup) + '</div>' +
+          '</div>' +
+          '<div class="tqe-chat-input">' +
+          '<input type="text" id="examChatInput-' + q.id + '" placeholder="輸入你的想法..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();TQE_Layer2.sendExamChat(\'' + q.id + '\');}">' +
+          '<button onclick="TQE_Layer2.sendExamChat(\'' + q.id + '\')">送出</button>' +
+          '</div></div>' +
+          '</div></div>';
       });
       html += '</div>';
     }
@@ -974,6 +1081,87 @@ function finishExam(){
   TQE.saveProgress('exam_complete');
 }
 
+// ─── Exam Wrong-Q AI Chat ───
+function toggleExamWrong(qid){
+  var el = document.getElementById('examWrongDetail-' + qid);
+  if(!el) return;
+  var isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  var hint = document.getElementById('examToggleHint-' + qid);
+  if(hint) hint.textContent = isHidden ? '▲ 收合' : '▼ 點擊展開 AI 追問';
+}
+
+var _examChatCooldown = false;
+
+function sendExamChat(qid){
+  if(_examChatCooldown) return;
+  var input = document.getElementById('examChatInput-' + qid);
+  if(!input) return;
+  var msg = input.value.trim();
+  if(!msg) return;
+
+  input.value = '';
+  input.blur();
+  input.disabled = true;
+  var btn = input.parentNode.querySelector('button');
+  if(btn){ btn.disabled = true; btn.style.opacity = '.5'; btn.textContent = '送出中'; }
+
+  var body = document.getElementById('examChatBody-' + qid);
+  body.innerHTML += '<div class="tqe-chat-msg from-user">' + TQE.escHtml(msg) + '</div>';
+  body.scrollTop = body.scrollHeight;
+
+  _examChatCooldown = true;
+  function unlock(){
+    _examChatCooldown = false;
+    if(input){ input.disabled = false; }
+    if(btn){ btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '送出'; }
+  }
+  var unlockTimer = setTimeout(unlock, 3000);
+
+  body.innerHTML += '<div class="tqe-chat-msg from-ai" id="examAiLoading-' + qid + '" style="opacity:.5;">思考中...</div>';
+  body.scrollTop = body.scrollHeight;
+
+  var q = exam.questions.find(function(x){ return x.id === qid; });
+  if(!q){ unlock(); return; }
+  var chosen = exam.answers[qid];
+
+  var mod = null;
+  if(q._sourceModule) mod = TQE.getModule(q._sourceModule);
+  if(!mod) mod = TQE.getModule(state.moduleId);
+  var fw = mod ? mod.frameworks.find(function(f){ return f.id === q.framework; }) : null;
+
+  var chatMsgs = Array.from(body.querySelectorAll('.tqe-chat-msg')).map(function(el){
+    var role = el.classList.contains('from-user') ? '學生' : '助教';
+    return role + '：' + el.textContent.trim();
+  }).filter(function(t){ return t.indexOf('思考中') === -1; }).slice(-6).join('\n');
+
+  var pack = TQE.getConfig().contentPack;
+  var prompt = '你是' + (pack ? pack.name : '學習系統') + '的學習助教，風格像一個很會教的學長姐 — 用白話、比喻、生活化例子。\n\n' +
+    '學生在模擬考後回顧錯題。\n\n' +
+    '【原始題目】\n' + q.stem + '\n\n' +
+    '【選項】\n' + q.options.map(function(o){ return o.key + '. ' + o.text; }).join('\n') + '\n\n' +
+    '學生選了：' + chosen + '\n正確答案：' + q.correct + '\n' +
+    (fw ? '相關' + term('framework') + '：' + fw.name + ' — ' + fw.desc + '\n' : '') +
+    '\n【對話紀錄】\n' + chatMsgs + '\n\n學生最新回覆：「' + msg + '」\n\n' +
+    '用蘇格拉底式提問引導：肯定正確部分，用反例/比喻幫他看到漏掉的維度，用引導問題收尾。3-4 句話，繁體中文，不要 markdown。';
+
+  TQE.callGemini(prompt).then(function(reply){
+    var el = document.getElementById('examAiLoading-' + qid);
+    if(el) el.remove();
+    body.innerHTML += '<div class="tqe-chat-msg from-ai">' + TQE.escHtml(reply === '[RATE_LIMIT]' ? 'AI 額度暫時用完，請等 30 秒再試。' : (reply || '抱歉，AI 暫時無法回應。')) + '</div>';
+    body.scrollTop = body.scrollHeight;
+    clearTimeout(unlockTimer);
+    unlock();
+  }).catch(function(){
+    var el = document.getElementById('examAiLoading-' + qid);
+    if(el) el.remove();
+    body.innerHTML += '<div class="tqe-chat-msg from-ai">抱歉，AI 暫時無法回應，請繼續回顧其他題目。</div>';
+    body.scrollTop = body.scrollHeight;
+    clearTimeout(unlockTimer);
+    unlock();
+  });
+}
+
 // ─── Navigation ───
 function backToReport(){
   UI.goReport();
@@ -989,7 +1177,9 @@ global.TQE_Layer2 = {
   answerExam: answerExam,
   finishExam: finishExam,
   generateL2Questions: generateL2Questions,
-  sendL2Chat: sendL2Chat
+  sendL2Chat: sendL2Chat,
+  toggleExamWrong: toggleExamWrong,
+  sendExamChat: sendExamChat
 };
 
 })(typeof window !== 'undefined' ? window : global);
