@@ -1057,7 +1057,43 @@ function finishExam(){
 
   area.innerHTML = html;
 
-  // Save exam result to stats history
+  // ─── Persist exam data ───
+
+  // 1. Per-question analytics → Firebase (anonymous + logged-in)
+  //    saveBlindSpot writes to analytics/questions + analytics/frameworks (aggregate)
+  //    and users_auth/{uid}/answers (per-user)
+  exam.questions.forEach(function(q){
+    var chosen = exam.answers[q.id];
+    if(!chosen) return;
+    var isCorrect = chosen === q.correct;
+    var moduleId = q._sourceModule || state.moduleId;
+    // Temporarily set moduleId for saveBlindSpot (it uses state.moduleId)
+    var origModule = state.moduleId;
+    state.moduleId = moduleId;
+    TQE.saveBlindSpot(q, chosen, isCorrect);
+    state.moduleId = origModule;
+  });
+
+  // 2. Collect wrong answers for localStorage review + Firebase detail
+  var wrongForStorage = wrongQs.slice(0, 20).map(function(q){
+    var chosen = exam.answers[q.id];
+    var yourOpt = q.options.find(function(o){ return o.key === chosen; });
+    var correctOpt = q.options.find(function(o){ return o.key === q.correct; });
+    var diag = q.diagnosis ? q.diagnosis[chosen] : null;
+    return {
+      qid: q.id,
+      stem: q.stem,
+      chosen: chosen,
+      correct: q.correct,
+      chosenText: yourOpt ? yourOpt.text : '',
+      correctText: correctOpt ? correctOpt.text : '',
+      explanation: q.explanation || '',
+      gap: diag ? diag.gap : '',
+      framework: q.framework || ''
+    };
+  });
+
+  // 3. localStorage: examHistory with wrong answers
   try {
     var statsKey = 'tqe_s100_stats';
     var statsRaw = localStorage.getItem(statsKey);
@@ -1070,12 +1106,30 @@ function finishExam(){
       correct: correct,
       total: total,
       elapsed: elapsed,
-      passed: passed
+      passed: passed,
+      wrongAnswers: wrongForStorage
     });
     // Keep last 20 exams
     if(stats.examHistory.length > 20) stats.examHistory = stats.examHistory.slice(-20);
     localStorage.setItem(statsKey, JSON.stringify(stats));
   } catch(e){ /* silent */ }
+
+  // 4. Firebase: logged-in user exam detail
+  TQE.saveExamResult({
+    subject: examTitle,
+    subjectId: exam.subjectId || '',
+    score: score,
+    correct: correct,
+    total: total,
+    elapsed: elapsed,
+    passed: passed,
+    answers: exam.answers,
+    wrongAnswers: wrongForStorage,
+    weakFrameworks: Object.keys(fwStats).filter(function(fid){
+      var s = fwStats[fid];
+      return s.total > 0 && Math.round(s.correct / s.total * 100) < 50;
+    })
+  });
 
   TQE.saveSession();
   TQE.saveProgress('exam_complete');

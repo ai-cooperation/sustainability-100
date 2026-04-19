@@ -237,6 +237,55 @@ function saveBlindSpot(question, chosen, isCorrect) {
   } catch (e) { /* silent */ }
 }
 
+// ─── Exam result persistence (logged-in users) ───
+function saveExamResult(examData) {
+  try {
+    if (typeof firebase === 'undefined') return;
+    const packId = _config.contentPack?.id || 'default';
+    const ts = Date.now();
+
+    // Logged-in: full exam detail under user profile
+    if (state.uid) {
+      firebase.database().ref(packId + '/users_auth/' + state.uid + '/exams/' + ts).set({
+        subject: examData.subject || '',
+        subjectId: examData.subjectId || '',
+        score: examData.score,
+        correct: examData.correct,
+        total: examData.total,
+        elapsed: examData.elapsed,
+        passed: examData.passed,
+        weakFrameworks: examData.weakFrameworks || [],
+        answers: examData.answers || {},
+        wrongCount: (examData.wrongAnswers || []).length,
+        ts: firebase.database.ServerValue.TIMESTAMP
+      });
+
+      // Update user-level exam summary
+      firebase.database().ref(packId + '/users_auth/' + state.uid + '/examSummary').transaction(function(data) {
+        if (!data) data = { totalExams: 0, bestScore: 0, avgScore: 0, _totalScore: 0 };
+        data.totalExams = (data.totalExams || 0) + 1;
+        data._totalScore = (data._totalScore || 0) + examData.score;
+        data.avgScore = Math.round(data._totalScore / data.totalExams);
+        if (examData.score > (data.bestScore || 0)) data.bestScore = examData.score;
+        data.lastExam = examData.subject;
+        data.lastDate = new Date().toISOString().slice(0, 10);
+        return data;
+      });
+    }
+
+    // Anonymous aggregate: exam-level analytics (all users)
+    firebase.database().ref(packId + '/analytics/exams/' + (examData.subjectId || 'unknown')).transaction(function(data) {
+      if (!data) data = { totalAttempts: 0, totalScore: 0, passCount: 0 };
+      data.totalAttempts = (data.totalAttempts || 0) + 1;
+      data.totalScore = (data.totalScore || 0) + examData.score;
+      if (examData.passed) data.passCount = (data.passCount || 0) + 1;
+      data.avgScore = Math.round(data.totalScore / data.totalAttempts);
+      data.passRate = Math.round(data.passCount / data.totalAttempts * 100);
+      return data;
+    });
+  } catch (e) { /* silent */ }
+}
+
 // ─── AI API calls ───
 async function callGroq(prompt, maxTokens) {
   const models = ['meta-llama/llama-4-scout-17b-16e-instruct', 'qwen/qwen3-32b'];
@@ -507,6 +556,7 @@ global.ThreeQuestionEngine = {
   // Data
   saveProgress: saveProgress,
   saveBlindSpot: saveBlindSpot,
+  saveExamResult: saveExamResult,
 
   // AI
   callGroq: callGroq,
