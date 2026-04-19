@@ -391,20 +391,6 @@ function setEntryView(view){
   renderEntry();
 }
 
-function selectLevel(lvId){
-  var levels = TQE.getLevels();
-  var lv = levels.find(function(l){ return l.id === lvId; });
-  if(lv && lv.requiresLogin && !TQE.isLoggedIn()){
-    var authStatus = document.getElementById('tqeAuthStatus');
-    if(authStatus) authStatus.textContent = '此等級需要 Google 登入';
-    _entryView = 'level-' + lvId;
-    renderEntry();
-    return;
-  }
-  _entryView = 'level-' + lvId;
-  renderEntry();
-}
-
 function startSubjectExam(subjectId){
   var subjects = TQE.getSubjects();
   var subj = subjects.find(function(s){ return s.id === subjectId; });
@@ -1279,10 +1265,6 @@ function renderStatsScreen(){
   }
 }
 
-function _drawStatsRadar(labels, data){
-  _drawStatsRadarById('tqeStatsRadar', labels, data);
-}
-
 function _drawStatsRadarById(canvasId, labels, data){
   var canvas = document.getElementById(canvasId);
   if(!canvas) return;
@@ -1409,7 +1391,6 @@ global.TQE_UI = {
   updateTopNav: updateTopNav,
   renderEntry: renderEntry,
   setEntryView: setEntryView,
-  selectLevel: selectLevel,
   selectModule: selectModule,
   startSubjectExam: startSubjectExam,
   showExamSelection: showExamSelection,

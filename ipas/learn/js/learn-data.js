@@ -38,6 +38,11 @@ const S100_CONTENT = {
     "level3": "實務情境",
     "level4": "陷阱題"
   },
+  "questionStyle": {
+    "optionLength": [38, 45],
+    "diffMax": 5,
+    "stemMin": 60
+  },
   "examInfo": {
     "name": "iPAS 淨零碳規劃管理師",
     "duration": "75 分鐘",

@@ -773,7 +773,9 @@ function generateExamQuestions(){
       sRem -= 3; sIdx++;
     }
 
-    return aiChain;
+    return aiChain.catch(function(e){
+      console.warn('Exam AI generation failed:', e && e.message);
+    });
   });
 }
 
