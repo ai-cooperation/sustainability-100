@@ -1107,7 +1107,7 @@ function goExam(){
   }
 }
 
-// ─── Stats Screen (成績總覽) ───
+// ─── Stats Screen (成績總覽) — 按等級分區 ───
 function renderStatsScreen(){
   var area = document.getElementById('tqeStatsArea');
   if(!area) return;
@@ -1122,6 +1122,7 @@ function renderStatsScreen(){
   var accuracy = totalAnswered > 0 ? Math.round((stats.correct || 0) / totalAnswered * 100) : 0;
   var streak = stats.streak || 0;
   var examHistory = stats.examHistory || [];
+  var subjects = TQE.getSubjects();
 
   var html = '';
 
@@ -1148,56 +1149,92 @@ function renderStatsScreen(){
   html += '<div class="kpi"><b>' + completedModules + ' / ' + modules.length + '</b><span>已學模組</span></div>';
   html += '</div>';
 
-  // ── Module Mastery Matrix ──
-  html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
-  html += '<h3 style="margin:0 0 var(--space-4);">各模組熟練度矩陣</h3>';
+  // ── Per-level sections: mastery + radar + exam history ──
+  var _radarsToDraw = []; // collect for post-innerHTML drawing
 
   levels.forEach(function(lv){
     var lvMods = modules.filter(function(m){ return m.level === lv.id; });
     if(lvMods.length === 0) return;
 
-    html += '<div style="margin-bottom:var(--space-4);">';
-    html += '<div style="font-size:13px;font-weight:600;color:var(--text-soft);margin-bottom:var(--space-2);">' + TQE.escHtml(lv.name) + '</div>';
+    // Check if this level has any data
+    var lvHasData = lvMods.some(function(m){ return stats.moduleMastery && stats.moduleMastery[m.id] > 0; });
+    var lvExams = examHistory.filter(function(ex){
+      // Match by subject: find subjects belonging to this level
+      var lvSubjectNames = subjects.filter(function(s){ return s.level === lv.id; }).map(function(s){ return s.name; });
+      return lvSubjectNames.indexOf(ex.subject) >= 0;
+    });
 
+    // Login gate for l2
+    var lock = lv.requiresLogin && !TQE.isLoggedIn();
+
+    html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
+    html += '<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4);">';
+    html += '<h3 style="margin:0;font-size:18px;">' + TQE.escHtml(lv.name) + '</h3>';
+    if(lock) html += '<span class="tag">🔒 需登入</span>';
+    html += '</div>';
+
+    if(lock && !lvHasData){
+      html += '<p style="color:var(--text-mute);font-size:14px;">登入後解鎖中級學習數據。</p>';
+      html += '</div>';
+      return;
+    }
+
+    // ── Mastery bars ──
     lvMods.forEach(function(m){
       var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
       var barColor = mastery === 0 ? 'var(--ink-300)' : mastery >= 70 ? 'var(--forest-500)' : mastery >= 50 ? 'var(--amber)' : 'var(--clay)';
       var label = mastery === 0 ? '未開始' : mastery + '%';
-
       html += '<div class="breakdown-row">';
-      html += '<div class="breakdown-name" style="min-width:180px;">' + TQE.escHtml(m.id + ' ' + m.name) + '</div>';
+      html += '<div class="breakdown-name" style="min-width:160px;">' + TQE.escHtml(m.id + ' ' + m.name) + '</div>';
       html += '<div class="breakdown-bar"><span style="width:' + Math.max(mastery, 2) + '%;background:' + barColor + '"></span></div>';
       html += '<div class="breakdown-pct">' + label + '</div>';
       html += '</div>';
     });
-    html += '</div>';
+
+    // ── Radar chart (per level) ──
+    var rLabels = [], rData = [], hasRData = false;
+    lvMods.forEach(function(m){
+      var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
+      rLabels.push(m.name.length > 8 ? m.name.substring(0, 8) + '…' : m.name);
+      rData.push(mastery);
+      if(mastery > 0) hasRData = true;
+    });
+
+    if(hasRData && lvMods.length >= 3){
+      var canvasId = 'tqeStatsRadar-' + lv.id;
+      html += '<div style="max-width:350px;margin:var(--space-4) auto 0;"><canvas id="' + canvasId + '" width="350" height="350"></canvas></div>';
+      _radarsToDraw.push({ canvasId: canvasId, labels: rLabels, data: rData });
+    }
+
+    // ── Exam history for this level ──
+    if(lvExams.length > 0){
+      html += '<div style="margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--border);">';
+      html += '<div style="font-size:13px;font-weight:600;color:var(--text-soft);margin-bottom:var(--space-3);">模擬考歷史</div>';
+      lvExams.slice().reverse().slice(0, 10).forEach(function(ex, i){
+        var passed = ex.score >= 70;
+        var date = ex.date || '';
+        html += '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;' + (i < lvExams.length - 1 ? 'border-bottom:1px solid var(--border);' : '') + '">';
+        html += '<div class="readiness-ring" style="--pct:' + ex.score + ';width:40px;height:40px;flex-shrink:0;"><span style="font-size:13px;">' + ex.score + '</span></div>';
+        html += '<div style="flex:1;">';
+        html += '<strong style="font-size:14px;">' + TQE.escHtml(ex.subject || '模擬考') + '</strong>';
+        html += '<br><span style="font-size:12px;color:var(--text-mute);">' + date + ' · ' + (ex.correct || 0) + '/' + (ex.total || 0) + ' 題 · ' + (ex.elapsed || 0) + ' 分鐘</span>';
+        html += '</div>';
+        html += '<span class="tag ' + (passed ? 'tag-accent' : '') + '" style="font-size:11px;">' + (passed ? '通過' : '未通過') + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>'; // end card
   });
-  html += '</div>';
 
-  // ── Radar Chart (all modules with data) ──
-  var radarLabels = [];
-  var radarData = [];
-  var hasRadarData = false;
-  modules.forEach(function(m){
-    var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
-    radarLabels.push(m.name.length > 8 ? m.name.substring(0, 8) + '…' : m.name);
-    radarData.push(mastery);
-    if(mastery > 0) hasRadarData = true;
-  });
-
-  if(hasRadarData){
-    html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
-    html += '<h3 style="margin:0 0 var(--space-3);">能力雷達圖</h3>';
-    html += '<div style="max-width:450px;margin:0 auto;"><canvas id="tqeStatsRadar" width="450" height="450"></canvas></div>';
-    html += '</div>';
-  }
-
-  // ── Weak Topics ──
+  // ── Weak Topics (cross-level, action-oriented) ──
   var weakTopics = [];
   modules.forEach(function(m){
     var mastery = stats.moduleMastery ? (stats.moduleMastery[m.id] || 0) : 0;
     if(mastery > 0 && mastery < 60){
-      weakTopics.push({ id: m.id, name: m.name, mastery: mastery });
+      var lv = levels.find(function(l){ return l.id === m.level; });
+      weakTopics.push({ id: m.id, name: m.name, mastery: mastery, levelName: lv ? lv.name : '' });
     }
   });
   if(weakTopics.length > 0){
@@ -1207,7 +1244,7 @@ function renderStatsScreen(){
     weakTopics.forEach(function(w, i){
       html += '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;' + (i < weakTopics.length - 1 ? 'border-bottom:1px solid var(--border);' : '') + '">';
       html += '<div style="width:24px;height:24px;border-radius:50%;background:var(--clay);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0;">' + (i + 1) + '</div>';
-      html += '<div style="flex:1;"><strong>' + TQE.escHtml(w.name) + '</strong><br><span style="font-size:13px;color:var(--text-mute);">' + w.id + '</span></div>';
+      html += '<div style="flex:1;"><strong>' + TQE.escHtml(w.name) + '</strong><br><span style="font-size:13px;color:var(--text-mute);">' + w.id + ' · ' + TQE.escHtml(w.levelName) + '</span></div>';
       html += '<div style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--clay);">' + w.mastery + '%</div>';
       html += '</div>';
     });
@@ -1215,30 +1252,11 @@ function renderStatsScreen(){
     html += '</div>';
   }
 
-  // ── Score Trend Chart ──
+  // ── Score Trend Chart (all exams) ──
   if(examHistory.length >= 2){
     html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
     html += '<h3 style="margin:0 0 var(--space-3);">分數趨勢</h3>';
     html += '<div style="max-width:600px;margin:0 auto;"><canvas id="tqeScoreTrend" width="600" height="300"></canvas></div>';
-    html += '</div>';
-  }
-
-  // ── Exam History ──
-  if(examHistory.length > 0){
-    html += '<div class="card card-pad" style="margin-bottom:var(--space-5);">';
-    html += '<h3 style="margin:0 0 var(--space-3);">模擬考歷史</h3>';
-    examHistory.slice().reverse().forEach(function(ex, i){
-      var passed = ex.score >= 70;
-      var date = ex.date || '';
-      html += '<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3) 0;' + (i < examHistory.length - 1 ? 'border-bottom:1px solid var(--border);' : '') + '">';
-      html += '<div class="readiness-ring" style="--pct:' + ex.score + ';width:48px;height:48px;flex-shrink:0;"><span style="font-size:14px;">' + ex.score + '</span></div>';
-      html += '<div style="flex:1;">';
-      html += '<strong>' + TQE.escHtml(ex.subject || '模擬考') + '</strong>';
-      html += '<br><span style="font-size:13px;color:var(--text-mute);">' + date + ' · ' + (ex.correct || 0) + '/' + (ex.total || 0) + ' 題 · ' + (ex.elapsed || 0) + ' 分鐘</span>';
-      html += '</div>';
-      html += '<span class="tag ' + (passed ? 'tag-accent' : '') + '">' + (passed ? '通過' : '未通過') + '</span>';
-      html += '</div>';
-    });
     html += '</div>';
   }
 
@@ -1250,10 +1268,10 @@ function renderStatsScreen(){
 
   area.innerHTML = html;
 
-  // Draw radar chart
-  if(hasRadarData){
-    _drawStatsRadar(radarLabels, radarData);
-  }
+  // Draw per-level radar charts
+  _radarsToDraw.forEach(function(r){
+    _drawStatsRadarById(r.canvasId, r.labels, r.data);
+  });
 
   // Draw score trend line chart
   if(examHistory.length >= 2){
@@ -1262,7 +1280,11 @@ function renderStatsScreen(){
 }
 
 function _drawStatsRadar(labels, data){
-  var canvas = document.getElementById('tqeStatsRadar');
+  _drawStatsRadarById('tqeStatsRadar', labels, data);
+}
+
+function _drawStatsRadarById(canvasId, labels, data){
+  var canvas = document.getElementById(canvasId);
   if(!canvas) return;
   if(typeof Chart === 'undefined'){
     var script = document.createElement('script');
