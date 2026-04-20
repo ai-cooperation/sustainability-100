@@ -466,7 +466,7 @@ function sendL2Chat(qid){
   }).filter(function(t){ return t.indexOf('思考中') === -1; }).slice(-6).join('\n');
 
   var pack = TQE.getConfig().contentPack;
-  var prompt = '你是' + (pack ? pack.name : '學習系統') + '的學習助教，風格像一個很會教的學長姐 — 用白話、比喻、生活化例子。\n\n' +
+  var prompt = '你是' + (pack ? pack.name : '學習系統') + '的學習助教，用白話、比喻、生活化例子，稱呼學生為「同學」。\n\n' +
     '學生在學習「' + (mod ? mod.name : '') + '」模組。\n\n' +
     '【原始題目】\n' + q.stem + '\n\n' +
     '【選項】\n' + q.options.map(function(o){ return o.key + '. ' + o.text; }).join('\n') + '\n\n' +
@@ -1209,7 +1209,7 @@ function sendExamChat(qid){
   }).filter(function(t){ return t.indexOf('思考中') === -1; }).slice(-6).join('\n');
 
   var pack = TQE.getConfig().contentPack;
-  var prompt = '你是' + (pack ? pack.name : '學習系統') + '的學習助教，風格像一個很會教的學長姐 — 用白話、比喻、生活化例子。\n\n' +
+  var prompt = '你是' + (pack ? pack.name : '學習系統') + '的學習助教，用白話、比喻、生活化例子，稱呼學生為「同學」。\n\n' +
     '學生在模擬考後回顧錯題。\n\n' +
     '【原始題目】\n' + q.stem + '\n\n' +
     '【選項】\n' + q.options.map(function(o){ return o.key + '. ' + o.text; }).join('\n') + '\n\n' +
