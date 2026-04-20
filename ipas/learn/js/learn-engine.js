@@ -341,6 +341,10 @@ async function callGroq(prompt, maxTokens) {
   return callGemini(prompt);
 }
 
+// Track which AI model was used for the last call
+let _lastAIModel = '';
+function getLastAIModel() { return _lastAIModel; }
+
 async function callGemini(prompt) {
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
@@ -357,7 +361,10 @@ async function callGemini(prompt) {
     if (res.ok) {
       const data = await res.json();
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (text) return text;
+      if (text) {
+        _lastAIModel = data.modelVersion || 'Workers AI';
+        return text;
+      }
     }
   } catch (e) { /* fall through to Gemini */ }
 
@@ -370,11 +377,13 @@ async function callGemini(prompt) {
     });
     if (!res.ok) {
       if (res.status === 429) return '[RATE_LIMIT]';
+      _lastAIModel = 'Gemini (failed)';
       return '';
     }
     const data = await res.json();
+    _lastAIModel = data.modelVersion || 'Gemini';
     return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  } catch (e) { return ''; }
+  } catch (e) { _lastAIModel = ''; return ''; }
 }
 
 // ─── AI question generation ───
@@ -615,6 +624,7 @@ global.ThreeQuestionEngine = {
   // AI
   callGroq: callGroq,
   callGemini: callGemini,
+  getLastAIModel: getLastAIModel,
   buildQuestionPrompt: buildQuestionPrompt,
   parseAIQuestions: parseAIQuestions,
   postProcessQuestions: postProcessQuestions,

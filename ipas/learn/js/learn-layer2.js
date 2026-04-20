@@ -478,7 +478,9 @@ function sendL2Chat(qid){
   TQE.callGemini(prompt).then(function(reply){
     var el = document.getElementById('l2aiLoading-' + qid);
     if(el) el.remove();
-    body.innerHTML += '<div class="tqe-chat-msg from-ai">' + TQE.escHtml(reply === '[RATE_LIMIT]' ? 'AI 額度暫時用完，請等 30 秒再試。' : (reply || '抱歉，AI 暫時無法回應。')) + '</div>';
+    var model = TQE.getLastAIModel();
+    var badge = model ? '<span style="font-size:10px;color:var(--text-mute);font-family:var(--font-mono);margin-left:4px;">(' + TQE.escHtml(model) + ')</span>' : '';
+    body.innerHTML += '<div class="tqe-chat-msg from-ai">' + TQE.escHtml(reply === '[RATE_LIMIT]' ? 'AI 額度暫時用完，請等 30 秒再試。' : (reply || '抱歉，AI 暫時無法回應。')) + badge + '</div>';
     body.scrollTop = body.scrollHeight;
     clearTimeout(unlockTimer);
     unlock();
@@ -1219,7 +1221,9 @@ function sendExamChat(qid){
   TQE.callGemini(prompt).then(function(reply){
     var el = document.getElementById('examAiLoading-' + qid);
     if(el) el.remove();
-    body.innerHTML += '<div class="tqe-chat-msg from-ai">' + TQE.escHtml(reply === '[RATE_LIMIT]' ? 'AI 額度暫時用完，請等 30 秒再試。' : (reply || '抱歉，AI 暫時無法回應。')) + '</div>';
+    var model = TQE.getLastAIModel();
+    var badge = model ? '<span style="font-size:10px;color:var(--text-mute);font-family:var(--font-mono);margin-left:4px;">(' + TQE.escHtml(model) + ')</span>' : '';
+    body.innerHTML += '<div class="tqe-chat-msg from-ai">' + TQE.escHtml(reply === '[RATE_LIMIT]' ? 'AI 額度暫時用完，請等 30 秒再試。' : (reply || '抱歉，AI 暫時無法回應。')) + badge + '</div>';
     body.scrollTop = body.scrollHeight;
     clearTimeout(unlockTimer);
     unlock();
