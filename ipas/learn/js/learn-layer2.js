@@ -370,8 +370,8 @@ function answerL2(qid, chosen){
     fb.innerHTML =
       '<div class="info green"><strong>正確！</strong> ' + (q.explanation || '') + '</div>' +
       (l2.correctStreak === 0 && l2.level > 1 ? '<div class="info blue" style="margin-top:.5rem;"><strong>升級！</strong> 進入 Level ' + l2.level + '</div>' : '') +
-      '<button class="btn btn-primary btn-block" onclick="TQE_Layer2.nextL2()" style="margin-top:.5rem;">下一題 →</button>' +
-      UI._reportLink(state.moduleId, qid);
+      UI._reportLink(state.moduleId, qid) +
+      '<button class="btn btn-primary btn-block" onclick="TQE_Layer2.nextL2()" style="margin-top:.5rem;">下一題 →</button>';
   } else {
     var diag = q.diagnosis ? q.diagnosis[chosen] : null;
     var chosenText = (q.options.find(function(o){ return o.key === chosen; }) || {}).text || '';
@@ -399,8 +399,8 @@ function answerL2(qid, chosen){
       '<input type="text" id="l2chatInput-' + qid + '" placeholder="輸入你的想法..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();TQE_Layer2.sendL2Chat(\'' + qid + '\');}">' +
       '<button onclick="TQE_Layer2.sendL2Chat(\'' + qid + '\')">送出</button>' +
       '</div></div>' +
-      '<button class="btn btn-secondary btn-block" onclick="TQE_Layer2.nextL2()" style="margin-top:.5rem;">下一題 →</button>' +
-      UI._reportLink(state.moduleId, qid);
+      UI._reportLink(state.moduleId, qid) +
+      '<button class="btn btn-secondary btn-block" onclick="TQE_Layer2.nextL2()" style="margin-top:.5rem;">下一題 →</button>';
   }
 
   renderL2Level();
@@ -775,7 +775,18 @@ function generateExamQuestions(){
       sRem -= 3; sIdx++;
     }
 
-    return aiChain.catch(function(e){
+    // After all batches, check if still short and do one more fill attempt
+    return aiChain.then(function(){
+      var stillNeeded = targetTotal - exam.questions.length;
+      if(stillNeeded > 0 && stillNeeded <= 6){
+        var fillMod = _findModuleForFws(weakFws.length > 0 ? weakFws : strongFws);
+        var fillFws = weakFws.length > 0 ? weakFws : strongFws;
+        return _callAndAppendAI(
+          TQE.buildQuestionPrompt(fillMod, fillFws, aiLevel, Math.min(stillNeeded, 3)),
+          fillMod, fillFws, 'fill'
+        );
+      }
+    }).catch(function(e){
       console.warn('Exam AI generation failed:', e && e.message);
     });
   });
@@ -882,12 +893,13 @@ function renderExamQuestion(){
     }).join('') +
     '</div></div>';
 
-  // Nav info
+  // Nav info — always show submit button after answering half the questions
   var loadProgress = document.getElementById('tqeExamLoadProgress');
   if(loadProgress){
     var answeredCount = Object.keys(exam.answers).length;
+    var showSubmit = answeredCount >= Math.floor(total * 0.5);
     loadProgress.innerHTML = '<span style="font-size:.85rem;color:var(--g600);">已答 ' + answeredCount + ' / ' + total + '</span>' +
-      (answeredCount >= total - 1 ? ' <button class="btn btn-primary" onclick="TQE_Layer2.finishExam()" style="margin-left:1rem;">交卷</button>' : '');
+      (showSubmit ? ' <button class="btn btn-primary" onclick="TQE_Layer2.finishExam()" style="margin-left:1rem;">交卷</button>' : '');
   }
 }
 

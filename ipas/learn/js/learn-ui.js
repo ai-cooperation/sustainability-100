@@ -820,8 +820,8 @@ function answerQ(qid, chosen){
   if(isCorrect){
     var fw = mod.frameworks.find(function(f){ return f.id === q.framework; });
     fb.innerHTML = '<div class="info green"><strong>正確！</strong> 對應' + TQE.term('framework') + '「' + (fw ? fw.name : '') + '」。</div>' +
-      '<button class="btn btn-primary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">下一題 →</button>' +
-      _reportLink(state.moduleId, qid);
+      _reportLink(state.moduleId, qid) +
+      '<button class="btn btn-primary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">下一題 →</button>';
   } else {
     var diag = q.diagnosis ? q.diagnosis[chosen] : null;
     var hasDiag = diag && diag.gap && diag.gap !== '';
@@ -852,8 +852,8 @@ function answerQ(qid, chosen){
       '<input type="text" id="chatInput-' + qid + '" placeholder="輸入你的想法..." onkeydown="if(event.key===\'Enter\'){event.preventDefault();TQE_UI.sendChat(\'' + qid + '\');}">' +
       '<button onclick="TQE_UI.sendChat(\'' + qid + '\')">送出</button>' +
       '</div></div>' +
-      '<button class="btn btn-secondary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">繼續下一題 →</button>' +
-      _reportLink(state.moduleId, qid);
+      _reportLink(state.moduleId, qid) +
+      '<button class="btn btn-secondary" style="display:block;width:100%;margin-top:.8rem;" onclick="TQE_UI.nextQ()">繼續下一題 →</button>';
   }
 }
 
