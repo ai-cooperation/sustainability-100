@@ -351,7 +351,24 @@ async function callGemini(prompt) {
     generationConfig: { maxOutputTokens: 8192 }
   });
 
-  // Primary: Workers AI (Cloudflare internal, most stable)
+  // Primary: GemGate ACP (Gemini 3 Flash, best quality for follow-up)
+  try {
+    const res = await fetch(_config.apiProxy + '/api/gemgate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (text) {
+        _lastAIModel = data.modelVersion || 'GemGate';
+        return text;
+      }
+    }
+  } catch (e) { /* fall through */ }
+
+  // Fallback: Workers AI (Cloudflare internal, fast + stable)
   try {
     const res = await fetch(_config.apiProxy + '/api/chat', {
       method: 'POST',
@@ -366,24 +383,10 @@ async function callGemini(prompt) {
         return text;
       }
     }
-  } catch (e) { /* fall through to Gemini */ }
+  } catch (e) { /* fall through */ }
 
-  // Fallback: Gemini API
-  try {
-    const res = await fetch(_config.apiProxy + '/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: body
-    });
-    if (!res.ok) {
-      if (res.status === 429) return '[RATE_LIMIT]';
-      _lastAIModel = 'Gemini (failed)';
-      return '';
-    }
-    const data = await res.json();
-    _lastAIModel = data.modelVersion || 'Gemini';
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  } catch (e) { _lastAIModel = ''; return ''; }
+  _lastAIModel = '';
+  return '';
 }
 
 // ─── AI question generation ───
