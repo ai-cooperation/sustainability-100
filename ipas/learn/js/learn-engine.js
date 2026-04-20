@@ -94,9 +94,13 @@ function initFirebase(callback) {
     if (_config.firebase.authDomain) {
       // Handle redirect result (mobile login returns here after Google auth)
       firebase.auth().getRedirectResult().then(function(result) {
-        // result.user will be picked up by onAuthStateChanged below
+        if (result && result.user) {
+          console.log('Redirect login success:', result.user.email);
+        }
       }).catch(function(e) {
-        console.warn('Redirect login error:', e.message);
+        console.warn('Redirect login error:', e.code, e.message);
+        const statusEl = document.getElementById('tqeAuthStatus');
+        if (statusEl && e.code) statusEl.textContent = 'Redirect 錯誤：' + e.code;
       });
 
       firebase.auth().onAuthStateChanged(function(user) {
@@ -130,14 +134,19 @@ function isLoggedIn() {
 function googleLogin() {
   if (typeof firebase === 'undefined') return;
   const provider = new firebase.auth.GoogleAuthProvider();
-  // MOBILE: 先嘗試 popup（大部分現代手機瀏覽器支援），
-  // 失敗才 fallback 到 redirect（popup 被擋的情況）
-  firebase.auth().signInWithPopup(provider).catch(function(e) {
+  const statusEl = document.getElementById('tqeAuthStatus');
+  if (statusEl) statusEl.textContent = '登入中...';
+
+  // MOBILE: 先嘗試 popup，失敗才 fallback 到 redirect
+  firebase.auth().signInWithPopup(provider).then(function(result) {
+    if (statusEl) statusEl.textContent = '';
+  }).catch(function(e) {
     if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' ||
         e.code === 'auth/cancelled-popup-request') {
-      // Popup 被擋或被關 → fallback to redirect
+      if (statusEl) statusEl.textContent = 'Popup 被擋，改用 redirect...';
       firebase.auth().signInWithRedirect(provider);
     } else {
+      if (statusEl) statusEl.textContent = '登入失敗：' + e.code;
       console.error('Login failed:', e.code, e.message);
     }
   });
