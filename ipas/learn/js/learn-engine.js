@@ -92,6 +92,13 @@ function initFirebase(callback) {
   try {
     _fb = firebase.initializeApp(_config.firebase);
     if (_config.firebase.authDomain) {
+      // Handle redirect result (mobile login returns here after Google auth)
+      firebase.auth().getRedirectResult().then(function(result) {
+        // result.user will be picked up by onAuthStateChanged below
+      }).catch(function(e) {
+        console.warn('Redirect login error:', e.message);
+      });
+
       firebase.auth().onAuthStateChanged(function(user) {
         _authUser = user;
         if (user) {
