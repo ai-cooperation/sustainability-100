@@ -130,13 +130,17 @@ function isLoggedIn() {
 function googleLogin() {
   if (typeof firebase === 'undefined') return;
   const provider = new firebase.auth.GoogleAuthProvider();
-  if (/iPhone|iPad|Android/i.test(navigator.userAgent)) {
-    firebase.auth().signInWithRedirect(provider);
-  } else {
-    firebase.auth().signInWithPopup(provider).catch(function(e) {
-      console.error('Login failed:', e.message);
-    });
-  }
+  // MOBILE: 先嘗試 popup（大部分現代手機瀏覽器支援），
+  // 失敗才 fallback 到 redirect（popup 被擋的情況）
+  firebase.auth().signInWithPopup(provider).catch(function(e) {
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' ||
+        e.code === 'auth/cancelled-popup-request') {
+      // Popup 被擋或被關 → fallback to redirect
+      firebase.auth().signInWithRedirect(provider);
+    } else {
+      console.error('Login failed:', e.code, e.message);
+    }
+  });
 }
 
 function googleLogout() {
