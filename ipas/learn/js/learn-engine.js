@@ -342,14 +342,31 @@ async function callGroq(prompt, maxTokens) {
 }
 
 async function callGemini(prompt) {
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { maxOutputTokens: 8192 }
+  });
+
+  // Primary: Workers AI (Cloudflare internal, most stable)
+  try {
+    const res = await fetch(_config.apiProxy + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      if (text) return text;
+    }
+  } catch (e) { /* fall through to Gemini */ }
+
+  // Fallback: Gemini API
   try {
     const res = await fetch(_config.apiProxy + '/api/gemini', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 8192 }
-      })
+      body: body
     });
     if (!res.ok) {
       if (res.status === 429) return '[RATE_LIMIT]';
