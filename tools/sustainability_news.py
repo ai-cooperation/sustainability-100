@@ -37,6 +37,8 @@ except ImportError:
 # ============================================================
 
 AI_HUB_BASE = os.environ.get("AI_HUB_URL", "http://127.0.0.1:8760")
+IMAGE_API_BASE = os.environ.get("IMAGE_API_BASE", AI_HUB_BASE)
+IMAGE_API_MODEL = os.environ.get("IMAGE_API_MODEL", "pro")
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_CHAT_ID = int(os.environ.get("TG_CHAT_ID", "8550440980"))
 
@@ -324,8 +326,8 @@ def generate_image(prompt: str, title_zh: str, filename: str) -> bool:
                 time.sleep(wait)
 
             resp = httpx.post(
-                f"{AI_HUB_BASE}/api/image/generate",
-                json={"prompt": full_prompt, "timeout": 180, "model": "pro"},
+                f"{IMAGE_API_BASE}/api/image/generate",
+                json={"prompt": full_prompt, "timeout": 180, "model": IMAGE_API_MODEL},
                 timeout=200,
             )
             # 503: distinguish quota exhaustion vs transient errors
@@ -468,7 +470,7 @@ def run_pipeline(dry_run=False, no_image=False, no_push=False):
         try:
             log.info("Warmup: 暖機 Chrome/Gemini (fast image)...")
             wr = httpx.post(
-                f"{AI_HUB_BASE}/api/image/generate",
+                f"{IMAGE_API_BASE}/api/image/generate",
                 json={"prompt": "A simple green gradient background", "model": "fast", "timeout": 90},
                 timeout=120,
             )

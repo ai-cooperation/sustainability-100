@@ -53,6 +53,8 @@ except ImportError:
 # ============================================================
 
 AI_HUB_BASE = os.environ.get("AI_HUB_URL", "http://127.0.0.1:8760")
+IMAGE_API_BASE = os.environ.get("IMAGE_API_BASE", AI_HUB_BASE)
+IMAGE_API_MODEL = os.environ.get("IMAGE_API_MODEL", "pro")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 LLM_BACKEND = os.environ.get("LLM_BACKEND", "aihub")  # "aihub" (gemini_chat) or "gemini-api"
@@ -415,7 +417,7 @@ def generate_image(prompt: str, title_zh: str, filename: str) -> bool:
                 time.sleep(wait)
 
             resp = httpx.post(
-                f"{AI_HUB_BASE}/api/image/generate",
+                f"{IMAGE_API_BASE}/api/image/generate",
                 json={"prompt": bg_prompt, "timeout": 180, "model": "fast"},
                 timeout=200,
             )
