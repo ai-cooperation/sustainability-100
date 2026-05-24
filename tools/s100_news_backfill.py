@@ -35,6 +35,11 @@ except ImportError:
 
 FONT_PATH = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
 FONT_INDEX = 3  # TC (Traditional Chinese)
+TITLE_IMAGE_SIZE = (1376, 768)
+TITLE_BAR_HEIGHT = 160
+TITLE_FONT_SIZE = 58
+TITLE_LINE_SPACING = 72
+TITLE_HORIZONTAL_PADDING = 120
 
 try:
     import feedparser
@@ -54,7 +59,7 @@ except ImportError:
 
 AI_HUB_BASE = os.environ.get("AI_HUB_URL", "http://127.0.0.1:8760")
 IMAGE_API_BASE = os.environ.get("IMAGE_API_BASE", AI_HUB_BASE)
-IMAGE_API_MODEL = os.environ.get("IMAGE_API_MODEL", "pro")
+IMAGE_API_MODEL = os.environ.get("IMAGE_API_MODEL", "fast")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 LLM_BACKEND = os.environ.get("LLM_BACKEND", "aihub")  # "aihub" (gemini_chat) or "gemini-api"
@@ -351,62 +356,94 @@ def analyze_article(article: dict, content: str) -> dict | None:
 # 圖片生成
 # ============================================================
 
-def _pil_overlay(img_bytes: bytes, title_zh: str) -> bytes:
-    """PIL overlay: add Chinese title on semi-transparent band at top of image."""
+def add_title_overlay(img_bytes: bytes, title_zh: str) -> Image.Image:
+    """PIL overlay: add Chinese title on a 1376x768 bottom gradient band."""
     img = Image.open(io.BytesIO(img_bytes)).convert("RGBA")
-    w, h = img.size
+    img = _fit_widescreen(img)
 
-    # Crop to 16:9 if square (Nano Banana fallback produces 878x878)
-    target_h = int(w * 9 / 16)
-    if h > target_h + 10:
-        img = img.crop((0, 0, w, target_h))
-        h = target_h
-
-    overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
 
-    # Semi-transparent dark band at top
-    band_h = int(h * 0.30)
-    draw.rectangle([(0, 0), (w, band_h)], fill=(0, 0, 0, 140))
+    bar_h = TITLE_BAR_HEIGHT
+    for i in range(bar_h):
+        alpha = int(220 * (i / bar_h))
+        y = img.height - bar_h + i
+        draw.rectangle([(0, y), (img.width, y)], fill=(0, 0, 0, alpha))
 
-    # Load font, auto-shrink to fit
-    font_size = int(w * 0.06)
-    font = ImageFont.truetype(FONT_PATH, font_size, index=FONT_INDEX)
-    bbox = draw.textbbox((0, 0), title_zh, font=font)
-    text_w = bbox[2] - bbox[0]
-    text_h = bbox[3] - bbox[1]
+    font = ImageFont.truetype(FONT_PATH, TITLE_FONT_SIZE, index=FONT_INDEX)
+    lines = _wrap_title(title_zh, font, img.width - TITLE_HORIZONTAL_PADDING)
 
-    max_text_w = int(w * 0.85)
-    while text_w > max_text_w and font_size > 24:
-        font_size -= 2
-        font = ImageFont.truetype(FONT_PATH, font_size, index=FONT_INDEX)
-        bbox = draw.textbbox((0, 0), title_zh, font=font)
-        text_w = bbox[2] - bbox[0]
-        text_h = bbox[3] - bbox[1]
+    block_h = TITLE_FONT_SIZE + (len(lines) - 1) * TITLE_LINE_SPACING
+    y_start = img.height - bar_h + (bar_h - block_h) // 2
+    for i, line in enumerate(lines):
+        bbox = draw.textbbox((0, 0), line, font=font)
+        tw = bbox[2] - bbox[0]
+        x = (img.width - tw) // 2
+        y = y_start + i * TITLE_LINE_SPACING
+        draw.text((x + 4, y + 4), line, font=font, fill=(0, 0, 0, 200))
+        draw.text((x, y), line, font=font, fill=(255, 255, 255, 240))
 
-    x = (w - text_w) // 2
-    y = (band_h - text_h) // 2
+    return Image.alpha_composite(img, overlay).convert("RGB")
 
-    # Shadow + white text
-    shadow = max(2, font_size // 20)
-    draw.text((x + shadow, y + shadow), title_zh, font=font, fill=(0, 0, 0, 200))
-    draw.text((x, y), title_zh, font=font, fill=(255, 255, 255, 255))
 
-    result = Image.alpha_composite(img, overlay).convert("RGB")
-    buf = io.BytesIO()
-    result.save(buf, "PNG", optimize=True)
-    return buf.getvalue()
+def _fit_widescreen(img: Image.Image) -> Image.Image:
+    """Resize/crop to 1376x768 without forcing a square image."""
+    target_w, target_h = TITLE_IMAGE_SIZE
+    if img.size == TITLE_IMAGE_SIZE:
+        return img
+
+    src_w, src_h = img.size
+    scale = max(target_w / src_w, target_h / src_h)
+    new_w = int(src_w * scale + 0.5)
+    new_h = int(src_h * scale + 0.5)
+    resized = img.resize((new_w, new_h), Image.LANCZOS)
+
+    left = max(0, (new_w - target_w) // 2)
+    top = max(0, (new_h - target_h) // 2)
+    return resized.crop((left, top, left + target_w, top + target_h))
+
+
+def _wrap_title(title: str, font, max_width: int) -> list[str]:
+    """智慧換行：在標點或空格處斷行。"""
+    if _text_width(title, font) <= max_width:
+        return [title]
+
+    break_chars = " ，、的了是在與：，；！？，"
+    mid = len(title) // 2
+    best = mid
+    for offset in range(len(title) // 2):
+        for pos in [mid + offset, mid - offset]:
+            if 0 <= pos < len(title) and title[pos] in break_chars:
+                best = pos + 1
+                break
+        else:
+            continue
+        break
+
+    line1 = title[:best].rstrip()
+    line2 = title[best:].lstrip()
+    if not line2:
+        line1 = title[:mid]
+        line2 = title[mid:]
+
+    return [line1, line2]
+
+
+def _text_width(text: str, font) -> int:
+    bbox = font.getbbox(text)
+    return bbox[2] - bbox[0]
 
 
 def generate_image(prompt: str, title_zh: str, filename: str) -> bool:
     """生成新聞配圖：text-free BG via Gemini + PIL overlay Chinese title."""
     bg_prompt = (
         f"Generate a professional sustainability news card background illustration. "
+        f"1376x768 widescreen 16:9 landscape aspect ratio, cinematic, "
         f"Dark green gradient background (#1b4332 to #2d6a4f). "
         f"DO NOT include any text, words, letters, or characters in the image. "
         f"Include subtle glowing eco-friendly icons and accents. "
         f"Scene context: {prompt}. "
-        f"Clean modern editorial style, 16:9 aspect ratio."
+        f"Clean modern editorial style, no text, no chinese characters, no watermarks, no logos."
     )
 
     for attempt in range(3):
@@ -425,14 +462,13 @@ def generate_image(prompt: str, title_zh: str, filename: str) -> bool:
             if data.get("success") and data.get("image_base64"):
                 img_data = base64.b64decode(data["image_base64"])
 
-                # PIL overlay Chinese title
-                final_data = _pil_overlay(img_data, title_zh)
+                final_img = add_title_overlay(img_data, title_zh)
 
                 os.makedirs(NEWS_IMG_DIR, exist_ok=True)
                 img_path = os.path.join(NEWS_IMG_DIR, filename)
-                with open(img_path, "wb") as f:
-                    f.write(final_data)
-                log.info(f"  圖片: {filename} ({len(final_data)} bytes, PIL overlay)")
+                final_img.save(img_path, "PNG", optimize=True)
+                file_size = os.path.getsize(img_path)
+                log.info(f"  圖片: {filename} ({file_size} bytes, PIL overlay)")
                 return True
 
             status = resp.status_code

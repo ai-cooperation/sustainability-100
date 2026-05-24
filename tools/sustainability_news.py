@@ -31,6 +31,11 @@ try:
 except ImportError:
     print("pip3 install httpx")
     sys.exit(1)
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    print("pip3 install Pillow")
+    sys.exit(1)
 
 # ============================================================
 # 設定
@@ -38,7 +43,13 @@ except ImportError:
 
 AI_HUB_BASE = os.environ.get("AI_HUB_URL", "http://127.0.0.1:8760")
 IMAGE_API_BASE = os.environ.get("IMAGE_API_BASE", AI_HUB_BASE)
-IMAGE_API_MODEL = os.environ.get("IMAGE_API_MODEL", "pro")
+IMAGE_API_MODEL = os.environ.get("IMAGE_API_MODEL", "fast")
+FONT_PATH = "/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc"
+TITLE_IMAGE_SIZE = (1376, 768)
+TITLE_BAR_HEIGHT = 160
+TITLE_FONT_SIZE = 58
+TITLE_LINE_SPACING = 72
+TITLE_HORIZONTAL_PADDING = 120
 TG_BOT_TOKEN = os.environ["TG_BOT_TOKEN"]
 TG_CHAT_ID = int(os.environ.get("TG_CHAT_ID", "8550440980"))
 
@@ -306,16 +317,14 @@ def analyze_article(article: dict, content: str) -> dict | None:
 # ============================================================
 
 def generate_image(prompt: str, title_zh: str, filename: str) -> bool:
-    """使用 Pro model 生成專業新聞配圖，含繁體中文標題。"""
+    """生成 text-free 寬屏背景圖，再用 PIL 疊加繁體中文標題。"""
     full_prompt = (
-        f"A professional sustainability news card in 16:9 landscape format. "
+        f"A professional sustainability news background image. "
+        f"1376x768 widescreen 16:9 landscape aspect ratio, cinematic, "
         f"The scene depicts {prompt} with cinematic lighting and rich color grading "
         f"in dark green-to-teal tones (#1b4332 to #2d6a4f). "
-        f"A semi-transparent dark gradient overlay covers the lower third of the image. "
-        f'On this overlay, the bold white Traditional Chinese title "{title_zh}" '
-        f"is displayed prominently as the visual focal point \u2014 large, sharp, and fully legible. "
         f"The overall aesthetic resembles an editorial news magazine cover with shallow depth of field. "
-        f"No watermarks, no logos, no extra decorative text."
+        f"no text, no chinese characters, no watermarks, no logos."
     )
 
     for attempt in range(3):
@@ -334,7 +343,7 @@ def generate_image(prompt: str, title_zh: str, filename: str) -> bool:
             if resp.status_code == 503:
                 detail = resp.json().get("detail", "")
                 if "quota" in detail.lower() and "exhausted" in detail.lower():
-                    log.warning(f"Pro quota exhausted: {detail}")
+                    log.warning(f"Image model quota exhausted: {detail}")
                     return False
                 # Transient error (timeout, tab crash) — retry
                 log.warning(f"  圖片暫時失敗 ({attempt + 1}/3): {detail}")
@@ -342,11 +351,12 @@ def generate_image(prompt: str, title_zh: str, filename: str) -> bool:
             data = resp.json()
             if data.get("success") and data.get("image_base64"):
                 img_data = base64.b64decode(data["image_base64"])
+                final_img = add_title_overlay(img_data, title_zh)
                 os.makedirs(NEWS_IMG_DIR, exist_ok=True)
                 img_path = os.path.join(NEWS_IMG_DIR, filename)
-                with open(img_path, "wb") as f:
-                    f.write(img_data)
-                log.info(f"圖片生成: {filename} ({len(img_data)} bytes, Pro)")
+                final_img.save(img_path, "PNG", optimize=True)
+                file_size = os.path.getsize(img_path)
+                log.info(f"圖片生成: {filename} ({file_size} bytes, {IMAGE_API_MODEL} + PIL overlay)")
                 return True
 
             status = resp.status_code
@@ -356,6 +366,85 @@ def generate_image(prompt: str, title_zh: str, filename: str) -> bool:
 
     log.warning(f"  圖片生成放棄（3 次失敗）")
     return False
+
+
+def add_title_overlay(img_data: bytes, title: str) -> Image.Image:
+    """PIL 疊加中文標題到 1376x768 圖片底部。"""
+    from io import BytesIO
+    img = Image.open(BytesIO(img_data)).convert("RGBA")
+    img = _fit_widescreen(img)
+
+    overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+
+    bar_h = TITLE_BAR_HEIGHT
+    for i in range(bar_h):
+        alpha = int(220 * (i / bar_h))
+        y = img.height - bar_h + i
+        draw.rectangle([(0, y), (img.width, y)], fill=(0, 0, 0, alpha))
+
+    font = ImageFont.truetype(FONT_PATH, TITLE_FONT_SIZE)
+    lines = _wrap_title(title, font, img.width - TITLE_HORIZONTAL_PADDING)
+
+    block_h = TITLE_FONT_SIZE + (len(lines) - 1) * TITLE_LINE_SPACING
+    y_start = img.height - bar_h + (bar_h - block_h) // 2
+    for i, line in enumerate(lines):
+        bbox = draw.textbbox((0, 0), line, font=font)
+        tw = bbox[2] - bbox[0]
+        x = (img.width - tw) // 2
+        y = y_start + i * TITLE_LINE_SPACING
+        draw.text((x + 4, y + 4), line, fill=(0, 0, 0, 200), font=font)
+        draw.text((x, y), line, fill=(255, 255, 255, 240), font=font)
+
+    return Image.alpha_composite(img, overlay).convert("RGB")
+
+
+def _fit_widescreen(img: Image.Image) -> Image.Image:
+    """Resize/crop to 1376x768 without forcing a square image."""
+    target_w, target_h = TITLE_IMAGE_SIZE
+    if img.size == TITLE_IMAGE_SIZE:
+        return img
+
+    src_w, src_h = img.size
+    scale = max(target_w / src_w, target_h / src_h)
+    new_w = int(src_w * scale + 0.5)
+    new_h = int(src_h * scale + 0.5)
+    resized = img.resize((new_w, new_h), Image.LANCZOS)
+
+    left = max(0, (new_w - target_w) // 2)
+    top = max(0, (new_h - target_h) // 2)
+    return resized.crop((left, top, left + target_w, top + target_h))
+
+
+def _wrap_title(title: str, font, max_width: int) -> list[str]:
+    """智慧換行：在標點或空格處斷行。"""
+    if _text_width(title, font) <= max_width:
+        return [title]
+
+    break_chars = " ，、的了是在與：，；！？，"
+    mid = len(title) // 2
+    best = mid
+    for offset in range(len(title) // 2):
+        for pos in [mid + offset, mid - offset]:
+            if 0 <= pos < len(title) and title[pos] in break_chars:
+                best = pos + 1
+                break
+        else:
+            continue
+        break
+
+    line1 = title[:best].rstrip()
+    line2 = title[best:].lstrip()
+    if not line2:
+        line1 = title[:mid]
+        line2 = title[mid:]
+
+    return [line1, line2]
+
+
+def _text_width(text: str, font) -> int:
+    bbox = font.getbbox(text)
+    return bbox[2] - bbox[0]
 
 
 # ============================================================
