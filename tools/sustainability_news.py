@@ -529,20 +529,15 @@ def git_commit_and_push(files: list[str]) -> bool:
 
 
 def send_tg(message: str):
-    """發送 TG 通知。"""
+    """送出告警。2026-11-16 起 Telegram 已停用，訊息經 legacy shim 轉送 ops-inbox
+    （ai-cooperation/ops-inbox）。只用於失敗與異常；例行新聞摘要不再通知。
+    不要改回 api.telegram.org。函式名保留以免動到呼叫端。"""
+    import subprocess
     try:
-        httpx.post(
-            f"https://api.telegram.org/bot{TG_BOT_TOKEN}/sendMessage",
-            json={
-                "chat_id": TG_CHAT_ID,
-                "text": message,
-                "parse_mode": "HTML",
-                "disable_web_page_preview": False,
-            },
-            timeout=10,
-        )
+        subprocess.run(["/usr/local/bin/telegram-notify.sh", str(message)], timeout=40, check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except Exception as e:
-        log.warning(f"TG 發送失敗: {e}")
+        log.warning(f"ops-inbox 通知失敗: {e}")
 
 
 # ============================================================
@@ -666,7 +661,7 @@ def run_pipeline(dry_run=False, no_image=False, no_push=False):
             lines.append(f"\u2022 <b>{title}</b>\n  {p['summary']}\n  {tags}\n")
 
         lines.append(f'\U0001F517 <a href="{news_url}">查看完整報導</a>')
-        send_tg("\n".join(lines))
+        pass  # 2026-11-16：例行摘要不再通知（Telegram 停用，失敗才送 ops-inbox）
         log.info("TG 通知已發送")
 
     log.info(f"\n完成！產出 {len(created_files)} 個檔案")
